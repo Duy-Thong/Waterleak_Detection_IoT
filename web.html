@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điều Khiển Relay</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .relay-status {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Điều Khiển Relay</h1>
+        <div class="relay-status">
+            <p>Trạng thái Relay: <span id="relayStatus">Đang tải...</span></p>
+        </div>
+        <div class="buttons">
+            <button id="turnOnBtn">Bật Relay</button>
+            <button id="turnOffBtn">Tắt Relay</button>
+        </div>
+    </div>
+    
+    <script>
+        const deviceId = "emyeuptit2025"; // Thay đổi thành device ID của bạn
+        const databaseURL = `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/${deviceId}/relay.json`;
+
+        // Hàm để lấy trạng thái relay từ Firebase
+        async function getRelayStatus() {
+            const response = await fetch(databaseURL);
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('relayStatus').textContent = data.control;
+            } else {
+                console.error("Lỗi khi lấy trạng thái relay:", response.statusText);
+            }
+        }
+
+        // Hàm để cập nhật trạng thái relay
+        async function updateRelayStatus(status) {
+            const response = await fetch(databaseURL, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ control: status })
+            });
+
+            if (response.ok) {
+                console.log(`Relay đã được cập nhật thành: ${status}`);
+                getRelayStatus(); // Cập nhật trạng thái sau khi thay đổi
+            } else {
+                console.error("Lỗi khi cập nhật trạng thái relay:", response.statusText);
+            }
+        }
+
+        // Sự kiện khi nhấn nút Bật Relay
+        document.getElementById('turnOnBtn').addEventListener('click', () => {
+            updateRelayStatus("ON");
+        });
+
+        // Sự kiện khi nhấn nút Tắt Relay
+        document.getElementById('turnOffBtn').addEventListener('click', () => {
+            updateRelayStatus("OFF");
+        });
+
+        // Lấy trạng thái relay khi trang được tải
+        window.onload = getRelayStatus;
+    </script>
+</body>
+</html>
