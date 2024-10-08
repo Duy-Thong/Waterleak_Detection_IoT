@@ -3,7 +3,7 @@ import { Line } from 'react-chartjs-2';
 
 const Chart = ({ chartData }) => (
     chartData && (
-        <div className="w-full max-w-2xl mt-6">
+        <div className="w-3/4 flex justify-center items-center">
             <Line
                 data={chartData}
                 options={{
@@ -22,11 +22,14 @@ const Chart = ({ chartData }) => (
                             },
                         },
                         tooltip: {
+                            enabled: true,
+                            mode: 'index', // Chế độ hiển thị tooltip
+                            intersect: false, // Hiển thị tooltip khi hover gần điểm
                             callbacks: {
                                 label: function (tooltipItem) {
-                                    const label = tooltipItem.dataset.label || ''; // Nhãn của dữ liệu
-                                    const value = tooltipItem.raw; // Giá trị dữ liệu
-                                    return `${label}: ${value}`; // Định dạng hiển thị tooltip
+                                    const label = tooltipItem.dataset.label || '';
+                                    const value = tooltipItem.raw;
+                                    return `${label}: ${value}`;
                                 }
                             }
                         }

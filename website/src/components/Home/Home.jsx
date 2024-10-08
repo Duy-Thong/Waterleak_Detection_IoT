@@ -193,17 +193,21 @@ const Home = () => {
             <Navbar onLogout={handleLogout} />
 
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8">
-                <h1 className='mb-3 text-xl md:text-2xl'><strong>Welcome, {username || 'User'}!</strong></h1>
-
-                <CurrentDeviceData latestData={latestData} className="w-full max-w-xs mx-auto" />
+                <h1 className='mb-3 text-xl md:text-2xl'><strong>Xin chào, {username || 'User'}!</strong></h1>
                 
-                <div className="flex flex-col md:flex-row justify-between items-center w-full md:w-1/2 mt-4">
+                {devices.length > 0 && (
+                    <RelayControl 
+                        relayState={relayState} 
+                        onToggleRelay={toggleRelay} 
+                    />
+                )}
+                <div className="flex flex-col md:flex-row justify-center items-center mt-4 mb-4 gap-4 ">
+                    <h2 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">Chọn thiết bị:</h2>
                     <DeviceSelector 
                         devices={devices} 
                         selectedDeviceId={selectedDeviceId} 
                         onDeviceChange={handleDeviceChange} 
                     />
-
                     <button 
                         className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                         onClick={handleManageDevice}
@@ -211,15 +215,10 @@ const Home = () => {
                         Quản lý thiết bị
                     </button>
                 </div>
-                
+                <CurrentDeviceData latestData={latestData} />
                 <Chart chartData={chartData} chartOptions={chartOptions} className="mt-4" />
 
-                {devices.length > 0 && (
-                    <RelayControl 
-                        relayState={relayState} 
-                        onToggleRelay={toggleRelay} 
-                    />
-                )}
+                
             </div>
         </div>
     );

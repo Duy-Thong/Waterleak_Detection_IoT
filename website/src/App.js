@@ -6,6 +6,8 @@ import Home from './components/Home/Home';
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
 import ManageDevices from './components/ManageDevices';
+import AccountManagement from './components/AccountManagement';
+import ForgotPassword from './components/ForgotPassword';
 function App() {
   return (
     <UserProvider>
@@ -15,6 +17,8 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path='/forgot-password' element={<ForgotPassword />} />
+          <Route path="/account-management" element={<AccountManagement />} />
           <Route path="/manage-devices" element={<ManageDevices />} />
         </Routes>
       </Router>

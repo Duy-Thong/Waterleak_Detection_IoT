@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, remove, update } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
+import { Input, Button, List, message, Form } from 'antd'; // Import Ant Design components
 
 const ManageDevices = () => {
     const [devices, setDevices] = useState([]);
@@ -29,13 +30,15 @@ const ManageDevices = () => {
         try {
             await remove(ref(db, `users/${userId}/devices/${deviceId}`));
             setDevices(devices.filter(device => device !== deviceId));
+            message.success('Xóa thiết bị thành công!'); // Show success message
         } catch (error) {
-            console.error("Error removing device:", error);
+            console.error("Lỗi khi xóa thiết bị:", error);
+            message.error('Có lỗi khi xóa thiết bị. Vui lòng thử lại.'); // Show error message
         }
     };
 
-    const handleAddDevice = async (e) => {
-        e.preventDefault(); // Prevent form submission
+    const handleAddDevice = async (values) => {
+        const { deviceId } = values;
         const db = getDatabase();
 
         try {
@@ -44,15 +47,15 @@ const ManageDevices = () => {
             const devicesSnapshot = await get(devicesRef);
 
             if (!devicesSnapshot.exists()) {
-                setError("No devices available for registration."); // Handle case where no devices exist
+                setError("Không có thiết bị nào có sẵn để đăng ký."); // Handle case where no devices exist
                 return;
             }
 
             const availableDevices = devicesSnapshot.val();
 
             // Check if the newDeviceId exists in the available devices
-            if (!availableDevices[newDeviceId]) {
-                setError("Device ID not found in the available devices list."); // Set error message
+            if (!availableDevices[deviceId]) {
+                setError("Không tìm thấy ID thiết bị trong danh sách thiết bị có sẵn."); // Set error message
                 return;
             }
 
@@ -61,74 +64,85 @@ const ManageDevices = () => {
             const userDevicesSnapshot = await get(userDevicesRef);
             const userDevices = userDevicesSnapshot.exists() ? userDevicesSnapshot.val() : {};
 
-            if (userDevices[newDeviceId]) {
-                setError("Device ID already exists in your devices."); // Set error message
+            if (userDevices[deviceId]) {
+                setError("ID thiết bị đã tồn tại trong danh sách thiết bị của bạn."); // Set error message
                 return; // Exit function
             }
 
             // Add new device ID to user's devices
             await update(userDevicesRef, {
-                [newDeviceId]: true
+                [deviceId]: true
             });
-            setDevices([...devices, newDeviceId]); // Update local devices state
+            setDevices([...devices, deviceId]); // Update local devices state
             setNewDeviceId(''); // Clear the input
             setError(''); // Clear error message
+            message.success('Thêm thiết bị thành công!'); // Show success message
         } catch (error) {
-            console.error("Error adding device:", error);
-            setError("Error adding device. Please try again."); // Set generic error message
+            console.error("Lỗi khi thêm thiết bị:", error);
+            message.error("Có lỗi khi thêm thiết bị. Vui lòng thử lại."); // Set generic error message
         }
     };
 
     return (
-        <div className="p-6 bg-white shadow-md rounded-lg flex flex-col justify-center items-center">
-            <h2 className="text-2xl font-semibold mb-6 text-gray-800 text-center">Manage Devices</h2>
-            {error && <p className="text-red-500">{error}</p>} {/* Display error message */}
+        <div className="flex items-center justify-center min-h-screen bg-gray-100"> {/* Centering styles */}
+            <div className="p-6 bg-white shadow-md rounded-lg flex flex-col justify-center items-center w-full max-w-md"> {/* Card container */}
+                <h2 className="text-2xl font-semibold mb-6 text-gray-800 text-center">Quản lý thiết bị</h2>
+                {error && <p className="text-red-500">{error}</p>} {/* Display error message */}
 
-            {devices.length > 0 ? (
-                <ul className="space-y-4 w-full max-w-md"> {/* Adjusted for responsiveness */}
-                    {devices.map((device) => (
-                        <li key={device} className="flex justify-between items-center p-4 bg-gray-100 border border-gray-300 rounded-md">
-                            <span className="text-lg font-medium text-gray-700">{device}</span>
-                            <button
-                                onClick={() => handleRemoveDevice(device)}
-                                className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition duration-300 ease-in-out"
-                            >
-                                Remove
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <p className="text-center text-gray-600">No devices found.</p>
-            )}
-
-            {/* Add Device Form */}
-            <form onSubmit={handleAddDevice} className="mt-6 w-full max-w-md"> {/* Form width adjusted */}
-                <div className="flex flex-col md:flex-row md:space-x-2">
-                    <input
-                        type="text"
-                        value={newDeviceId}
-                        onChange={(e) => setNewDeviceId(e.target.value)}
-                        placeholder="Enter Device ID"
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-md"
-                        required
+                {devices.length > 0 ? (
+                    <List
+                        className="space-y-4 w-full" // Adjusted for responsiveness
+                        bordered
+                        dataSource={devices}
+                        renderItem={device => (
+                            <List.Item>
+                                <div className="flex justify-between items-center w-full">
+                                    <span className="text-lg font-medium text-gray-700">{device}</span>
+                                    <Button
+                                        onClick={() => handleRemoveDevice(device)}
+                                        danger
+                                    >
+                                        Xóa
+                                    </Button>
+                                </div>
+                            </List.Item>
+                        )}
                     />
-                    <button
-                        type="submit"
-                        className="mt-2 md:mt-0 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-300 ease-in-out"
-                    >
-                        Add Device
-                    </button>
-                </div>
-            </form>
+                ) : (
+                    <p className="text-center text-gray-600">Không tìm thấy thiết bị nào.</p>
+                )}
 
-            <div className="mt-6 text-center w-full max-w-md"> {/* Adjusted for responsiveness */}
-                <button
-                    onClick={() => navigate('/home')} // Navigate back to home
-                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 ease-in-out w-full"
-                >
-                    Back to Home
-                </button>
+                {/* Add Device Form */}
+                <Form onFinish={handleAddDevice} className="mt-6 w-full"> {/* Form width adjusted */}
+                    <Form.Item
+                        name="deviceId"
+                        rules={[{ required: true, message: 'Vui lòng nhập ID thiết bị' }]}
+                    >
+                        <Input
+                            value={newDeviceId}
+                            onChange={(e) => setNewDeviceId(e.target.value)}
+                            placeholder="Nhập ID thiết bị"
+                        />
+                    </Form.Item>
+                    <Form.Item>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            className="w-full"
+                        >
+                            Thêm thiết bị
+                        </Button>
+                    </Form.Item>
+                </Form>
+
+                <div className="mt-6 text-center w-full"> {/* Adjusted for responsiveness */}
+                    <Button
+                        onClick={() => navigate('/home')} // Navigate back to home
+                        className="w-full"
+                    >
+                        Quay về trang chính
+                    </Button>
+                </div>
             </div>
         </div>
     );
