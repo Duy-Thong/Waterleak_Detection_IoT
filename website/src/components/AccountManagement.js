@@ -12,10 +12,10 @@ const AccountManagement = () => {
     const [username, setUsername] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [showChangePassword, setShowChangePassword] = useState(false); // State to toggle password form
-    const [currentPassword, setCurrentPassword] = useState(''); // State for current password
-    const [newPassword, setNewPassword] = useState(''); // State for new password
-    const [confirmPassword, setConfirmPassword] = useState(''); // State for confirm new password
+    const [showChangePassword, setShowChangePassword] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -43,21 +43,50 @@ const AccountManagement = () => {
         }
     }, [userId]);
 
+    const checkUsernameExists = async (newUsername) => {
+        const db = getDatabase();
+        const usersRef = ref(db, 'users');
+        try {
+            const snapshot = await get(usersRef);
+            if (snapshot.exists()) {
+                const users = snapshot.val();
+                // Check if the new username exists in the database
+                return Object.values(users).some(user => user.username === newUsername && user.id !== userId);
+            }
+            return false;
+        } catch (error) {
+            console.error("Error checking username:", error);
+            return false;
+        }
+    };
+
+    const isPasswordStrong = (password) => {
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+        return strongPasswordRegex.test(password);
+    };
+
     const handleUpdate = async (values) => {
+        const newUsername = username;
+        const usernameExists = await checkUsernameExists(newUsername);
+
+        if (usernameExists) {
+            setError('Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.');
+            return; // Prevent update
+        }
+
         const db = getDatabase();
         const userRef = ref(db, 'users/' + userId);
 
         try {
-            // Proceed with updating user data (only username)
             const updates = {
-                username,
+                username: newUsername,
             };
 
             await update(userRef, updates);
-            alert('Account information updated successfully.');
+            alert('Thông tin tài khoản đã được cập nhật thành công.');
         } catch (error) {
             console.error("Error updating user data:", error);
-            alert('Error updating account information.');
+            alert('Lỗi khi cập nhật thông tin tài khoản.');
         }
     };
 
@@ -69,32 +98,34 @@ const AccountManagement = () => {
             const snapshot = await get(userRef);
             const userData = snapshot.val();
 
-            // Check if the current password is correct
             if (userData.password !== currentPassword) {
                 setError('Mật khẩu cũ không chính xác');
                 return;
             }
 
-            // Check if new passwords match
             if (newPassword !== confirmPassword) {
                 setError('Mật khẩu mới không khớp');
                 return;
             }
 
-            // Update password
+            if (!isPasswordStrong(newPassword)) {
+                setError('Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
+                return; // Prevent update
+            }
+
             const updates = {
                 password: newPassword,
             };
 
             await update(userRef, updates);
-            alert('Password updated successfully.');
-            setShowChangePassword(false); // Hide the change password form
-            setCurrentPassword(''); // Clear fields after update
+            alert('Mật khẩu đã được cập nhật thành công.');
+            setShowChangePassword(false);
+            setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
         } catch (error) {
             console.error("Error updating password:", error);
-            alert('Error updating password.');
+            alert('Lỗi khi cập nhật mật khẩu.');
         }
     };
 
@@ -148,7 +179,7 @@ const AccountManagement = () => {
                 {/* Change Password Section */}
                 <Button
                     type="default"
-                    onClick={() => setShowChangePassword(!showChangePassword)} // Toggle password form
+                    onClick={() => setShowChangePassword(!showChangePassword)}
                     className="mt-4"
                 >
                     {showChangePassword ? 'Hủy đổi mật khẩu' : 'Đổi mật khẩu'}

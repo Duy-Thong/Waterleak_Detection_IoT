@@ -4,6 +4,7 @@ import { useUser } from '../../contexts/UserContext';
 import axios from 'axios'; 
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Title } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
+import { Typography, Button } from 'antd';
 
 // Import components
 import Navbar from '../Navbar';
@@ -13,7 +14,9 @@ import Chart from '../Chart';
 import RelayControl from '../RelayControl';
 
 // Register ChartJS components
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Title);
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
+
+const { Title: AntTitle } = Typography;
 
 const Home = () => {
     const [deviceData, setDeviceData] = useState(null);
@@ -173,16 +176,16 @@ const Home = () => {
     if (!userId) {
         return (
             <div className="flex flex-col min-h-screen bg-gray-100">
-                <Navbar onLogout={handleLogout} />
 
                 <div className="flex flex-col items-center justify-center flex-1">
                     <p className="text-red-500"><strong>Bạn cần đăng nhập để sử dụng các chức năng này.</strong></p>
-                    <button 
-                        className="px-4 py-2 mt-4 bg-gray-500 text-white rounded-md shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400" 
+                    <Button 
+                        className="mt-4" 
+                        type="primary"
                         onClick={() => navigate('/login')}
                     >
                         Đăng Nhập
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
@@ -193,7 +196,7 @@ const Home = () => {
             <Navbar onLogout={handleLogout} />
 
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8">
-                <h1 className='mb-3 text-xl md:text-2xl'><strong>Xin chào, {username || 'User'}!</strong></h1>
+                <AntTitle level={2}><strong>Xin chào, {username || 'User'}!</strong></AntTitle>
                 
                 {devices.length > 0 && (
                     <RelayControl 
@@ -202,23 +205,22 @@ const Home = () => {
                     />
                 )}
                 <div className="flex flex-col md:flex-row justify-center items-center mt-4 mb-4 gap-4 ">
-                    <h2 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">Chọn thiết bị:</h2>
+                    <AntTitle level={4} className="mt-4">Chọn thiết bị:</AntTitle>
                     <DeviceSelector 
                         devices={devices} 
                         selectedDeviceId={selectedDeviceId} 
                         onDeviceChange={handleDeviceChange} 
                     />
-                    <button 
-                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    <Button 
+                        className="mt-4" 
+                        type="primary" 
                         onClick={handleManageDevice}
                     >
                         Quản lý thiết bị
-                    </button>
+                    </Button>
                 </div>
                 <CurrentDeviceData latestData={latestData} />
                 <Chart chartData={chartData} chartOptions={chartOptions} className="mt-4" />
-
-                
             </div>
         </div>
     );

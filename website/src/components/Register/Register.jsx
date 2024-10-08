@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, push, set } from "firebase/database"; // Import `push` and `set` to auto-generate IDs
+import { ref, push, set, get } from "firebase/database"; // Import `get` to retrieve data
 import { database } from "../../firebase";  // Import from Firebase config
-import { Form, Input, Button } from 'antd'; // Import Ant Design components
+import { Form, Input, Button, message } from 'antd'; // Import Ant Design components
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -12,7 +12,44 @@ function Register() {
 
   const navigate = useNavigate();
 
+  const checkUsernameExists = async (username) => {
+    const usersRef = ref(database, 'users');
+    try {
+      const snapshot = await get(usersRef);
+      if (snapshot.exists()) {
+        const users = snapshot.val();
+        // Check if any user has the same username
+        const usernameExists = Object.values(users).some(user => user.username === username);
+        return usernameExists;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error checking username:", error);
+      return false;
+    }
+  };
+
+  const isPasswordStrong = (password) => {
+    // Password strength criteria
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    return strongPasswordRegex.test(password);
+  };
+
   const handleSubmit = async (values) => {
+    // Check if the username already exists
+    const usernameExists = await checkUsernameExists(values.username);
+
+    if (usernameExists) {
+      message.error("Tên người dùng đã tồn tại. Vui lòng chọn tên khác."); // Show error message
+      return; // Prevent registration
+    }
+
+    // Check if the password is strong enough
+    if (!isPasswordStrong(values.password)) {
+      message.error("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt."); // Show error message
+      return; // Prevent registration
+    }
+
     // Create a new user reference with an auto-generated ID
     const newUserRef = push(ref(database, 'users'));
 
@@ -22,9 +59,11 @@ function Register() {
         password: values.password,
       });
       console.log("User added with ID:", newUserRef.key);
+      message.success("Đăng ký thành công!"); // Success message
       navigate('/login'); // Redirect to login page
     } catch (error) {
       console.error("Error saving data:", error);
+      message.error("Đã xảy ra lỗi khi lưu dữ liệu."); // Error message
     }
   };
 
