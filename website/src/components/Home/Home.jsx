@@ -22,9 +22,9 @@ const Home = () => {
     const [deviceData, setDeviceData] = useState(null);
     const [latestData, setLatestData] = useState(null);
     const [relayState, setRelayState] = useState('OFF');
-    const [devices, setDevices] = useState([]); // Store devices for dropdown
-    const [selectedDeviceId, setSelectedDeviceId] = useState(''); // Store selected device ID
-    const [username, setUsername] = useState(''); // State for storing the username
+    const [devices, setDevices] = useState([]);
+    const [selectedDeviceId, setSelectedDeviceId] = useState('');
+    const [username, setUsername] = useState('');
     const { userId, logout } = useUser();
     const navigate = useNavigate();
 
@@ -37,12 +37,12 @@ const Home = () => {
                     if (snapshot.exists()) {
                         const userData = snapshot.val();
                         const userDevices = Object.keys(userData.devices || {});
-                        const username = userData.username; // Fetch the username
+                        const username = userData.username;
                         setDevices(userDevices);
-                        setUsername(username); // Store the username
+                        setUsername(username);
                         if (userDevices.length > 0) {
-                            setSelectedDeviceId(userDevices[0]); // Set first device as selected
-                            fetchDeviceData(userDevices[0]); // Fetch data for the first device
+                            setSelectedDeviceId(userDevices[0]);
+                            fetchDeviceData(userDevices[0]);
                         }
                     }
                 })
@@ -52,6 +52,7 @@ const Home = () => {
         }
     }, [userId]);
 
+    // Function to fetch device data
     const fetchDeviceData = async (deviceId) => {
         try {
             const response = await axios.get(
@@ -71,7 +72,7 @@ const Home = () => {
     const handleDeviceChange = (e) => {
         const newDeviceId = e.target.value;
         setSelectedDeviceId(newDeviceId);
-        fetchDeviceData(newDeviceId); // Fetch data for the selected device
+        fetchDeviceData(newDeviceId);
     };
 
     const toggleRelay = async () => {
@@ -87,6 +88,7 @@ const Home = () => {
         }
     };
 
+    // Prepare chart data
     const chartData = deviceData ? {
         labels: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].timestamp),
         datasets: [
@@ -107,6 +109,7 @@ const Home = () => {
         ]
     } : null;
 
+    // Handle device addition
     const handleAddDeviceClick = () => {
         setShowForm(true);
     };
@@ -121,8 +124,8 @@ const Home = () => {
         .then(() => {
             console.log("Device ID added");
             setShowForm(false);
-            setDeviceId(''); // Reset device ID
-            fetchDeviceData(deviceId); // Fetch the new device info
+            setDeviceId('');
+            fetchDeviceData(deviceId);
         })
         .catch((error) => {
             console.error("Error adding device:", error);
@@ -133,6 +136,17 @@ const Home = () => {
         logout();
         navigate('/login');
     };
+
+    useEffect(() => {
+        // Polling for real-time updates every 5 seconds
+        const intervalId = setInterval(() => {
+            if (selectedDeviceId) {
+                fetchDeviceData(selectedDeviceId);
+            }
+        }, 5000); // Fetch every 5 seconds
+
+        return () => clearInterval(intervalId); // Clear interval on unmount
+    }, [selectedDeviceId]);
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-100">
