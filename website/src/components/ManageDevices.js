@@ -1,8 +1,9 @@
-// src/components/ManageDevices.js
 import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, remove, update } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
+
+const validDevices = ["device1", "device2", "device3"]; // Example of valid devices
 
 const ManageDevices = () => {
     const [devices, setDevices] = useState([]);
@@ -38,20 +39,37 @@ const ManageDevices = () => {
     const handleAddDevice = async (e) => {
         e.preventDefault(); // Prevent form submission
         const db = getDatabase();
-        const userRef = ref(db, `users/${userId}/devices`);
 
         try {
-            // Check if the device already exists
-            const snapshot = await get(userRef);
-            const existingDevices = snapshot.exists() ? snapshot.val() : {};
+            // Fetch the list of available devices from the global "devices" path
+            const devicesRef = ref(db, 'devices');
+            const devicesSnapshot = await get(devicesRef);
 
-            if (existingDevices[newDeviceId]) {
-                setError("Device ID already exists."); // Set error message
+            if (!devicesSnapshot.exists()) {
+                setError("No devices available for registration."); // Handle case where no devices exist
+                return;
+            }
+
+            const availableDevices = devicesSnapshot.val();
+
+            // Check if the newDeviceId exists in the available devices
+            if (!availableDevices[newDeviceId]) {
+                setError("Device ID not found in the available devices list."); // Set error message
+                return;
+            }
+
+            // Check if the user already has the device
+            const userDevicesRef = ref(db, `users/${userId}/devices`);
+            const userDevicesSnapshot = await get(userDevicesRef);
+            const userDevices = userDevicesSnapshot.exists() ? userDevicesSnapshot.val() : {};
+
+            if (userDevices[newDeviceId]) {
+                setError("Device ID already exists in your devices."); // Set error message
                 return; // Exit function
             }
 
             // Add new device ID to user's devices
-            await update(ref(db, `users/${userId}/devices`), {
+            await update(userDevicesRef, {
                 [newDeviceId]: true
             });
             setDevices([...devices, newDeviceId]); // Update local devices state
@@ -62,6 +80,7 @@ const ManageDevices = () => {
             setError("Error adding device. Please try again."); // Set generic error message
         }
     };
+
 
     return (
         <div className="p-6 bg-white shadow-md rounded-lg flex flex-col justify-center items-center">

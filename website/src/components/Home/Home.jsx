@@ -53,7 +53,7 @@ const Home = () => {
     const fetchDeviceData = async (deviceId) => {
         try {
             const response = await axios.get(
-                `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/${deviceId}.json`
+                `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/devices/${deviceId}.json`
             );
             const data = response.data;
 
@@ -83,7 +83,7 @@ const Home = () => {
         const newRelayState = relayState === 'OFF' ? 'ON' : 'OFF';
         try {
             await axios.patch(
-                `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/${selectedDeviceId}/relay.json`,
+                `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/devices/${selectedDeviceId}/relay.json`,
                 { control: newRelayState }
             );
             setRelayState(newRelayState);
