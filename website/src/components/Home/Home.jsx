@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDatabase, ref, get, onValue } from "firebase/database"; // Import onValue
+import { getDatabase, ref, get, onValue } from "firebase/database"; 
 import { useUser } from '../../contexts/UserContext';
 import axios from 'axios'; 
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Title } from 'chart.js';
@@ -62,8 +62,7 @@ const Home = () => {
                 const sortedKeys = Object.keys(data.flow_sensor).sort();
                 const latestKey = sortedKeys[sortedKeys.length - 1];
                 setLatestData(data.flow_sensor[latestKey]);
-                // Update relay state based on fetched data
-                setRelayState(data.relay.control || 'OFF'); // Default to 'OFF' if not set
+                setRelayState(data.relay.control || 'OFF'); 
             } else {
                 alert('Không tìm thấy thiết bị.');
                 setDeviceData(null);
@@ -75,7 +74,6 @@ const Home = () => {
         }
     };
 
-    // Listen for relay state changes
     useEffect(() => {
         if (selectedDeviceId) {
             const db = getDatabase();
@@ -84,11 +82,11 @@ const Home = () => {
             const unsubscribe = onValue(relayRef, (snapshot) => {
                 const relayData = snapshot.val();
                 if (relayData) {
-                    setRelayState(relayData.control || 'OFF'); // Update state based on Firebase value
+                    setRelayState(relayData.control || 'OFF');
                 }
             });
 
-            return () => unsubscribe(); // Clean up listener
+            return () => unsubscribe(); 
         }
     }, [selectedDeviceId]);
 
@@ -111,19 +109,18 @@ const Home = () => {
         }
     };
 
-    // Prepare chart data
     const chartData = deviceData ? {
         labels: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].timestamp),
         datasets: [
             {
-                label: 'Cảm biến 1', // Đổi thành tên tiếng Việt
+                label: 'Cảm biến 1',
                 data: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].sensor1),
                 borderColor: 'rgba(75, 192, 192, 1)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 fill: true,
             },
             {
-                label: 'Cảm biến 2', // Đổi thành tên tiếng Việt
+                label: 'Cảm biến 2',
                 data: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].sensor2),
                 borderColor: 'rgba(153, 102, 255, 1)',
                 backgroundColor: 'rgba(153, 102, 255, 0.2)',
@@ -131,35 +128,36 @@ const Home = () => {
             }
         ]
     } : null;
+
     const chartOptions = {
-    plugins: {
-        legend: {
-            display: true, // Hiển thị legend
-            position: 'top', // Vị trí của legend
-        },
-        tooltip: {
-            callbacks: {
-                label: function(tooltipItem) {
-                    // Thay đổi cách hiển thị tooltip
-                    const label = tooltipItem.dataset.label || ''; // Nhãn của dữ liệu
-                    const value = tooltipItem.raw; // Giá trị dữ liệu
-                    return `${label}: ${value}`; // Trả về định dạng hiển thị
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(tooltipItem) {
+                        const label = tooltipItem.dataset.label || '';
+                        const value = tooltipItem.raw;
+                        return `${label}: ${value}`;
+                    }
                 }
-            }
+            },
+            title: {
+                display: true,
+                text: 'Dữ liệu cảm biến theo thời gian',
+            },
         },
-        title: {
-            display: true, // Hiển thị tiêu đề
-            text: 'Dữ liệu cảm biến theo thời gian', // Tiêu đề của biểu đồ
-        },
-    },
-};
+    };
+
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
 
     const handleManageDevice = () => {
-        navigate('/manage-devices'); // Thay đổi đường dẫn tới trang quản lý thiết bị
+        navigate('/manage-devices');
     };
 
     useEffect(() => {
@@ -167,7 +165,7 @@ const Home = () => {
             if (selectedDeviceId) {
                 fetchDeviceData(selectedDeviceId);
             }
-        }, 5000); // Fetch every 5 seconds
+        }, 5000);
 
         return () => clearInterval(intervalId);
     }, [selectedDeviceId]);
@@ -194,16 +192,16 @@ const Home = () => {
         <div className="flex flex-col min-h-screen bg-gray-100">
             <Navbar onLogout={handleLogout} />
 
-            <div className="flex flex-col items-center justify-center flex-1">
-                <p><strong>Welcome, {username || 'User'}!</strong></p>
+            <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8">
+                <h1 className='mb-3 text-xl md:text-2xl'><strong>Welcome, {username || 'User'}!</strong></h1>
 
-                <CurrentDeviceData latestData={latestData} />
+                <CurrentDeviceData latestData={latestData} className="w-full max-w-xs mx-auto" />
                 
-                <div className=" flex justify-between w-1/4 ">
+                <div className="flex flex-col md:flex-row justify-between items-center w-full md:w-1/2 mt-4">
                     <DeviceSelector 
-                    devices={devices} 
-                    selectedDeviceId={selectedDeviceId} 
-                    onDeviceChange={handleDeviceChange} 
+                        devices={devices} 
+                        selectedDeviceId={selectedDeviceId} 
+                        onDeviceChange={handleDeviceChange} 
                     />
 
                     <button 
@@ -214,8 +212,7 @@ const Home = () => {
                     </button>
                 </div>
                 
-
-                <Chart chartData={chartData} chartOptions={chartOptions} />
+                <Chart chartData={chartData} chartOptions={chartOptions} className="mt-4" />
 
                 {devices.length > 0 && (
                     <RelayControl 

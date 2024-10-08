@@ -3,7 +3,6 @@ import { getDatabase, ref, get, remove, update } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 
-
 const ManageDevices = () => {
     const [devices, setDevices] = useState([]);
     const [newDeviceId, setNewDeviceId] = useState(''); // State for new device ID
@@ -80,14 +79,13 @@ const ManageDevices = () => {
         }
     };
 
-
     return (
         <div className="p-6 bg-white shadow-md rounded-lg flex flex-col justify-center items-center">
             <h2 className="text-2xl font-semibold mb-6 text-gray-800 text-center">Manage Devices</h2>
             {error && <p className="text-red-500">{error}</p>} {/* Display error message */}
 
             {devices.length > 0 ? (
-                <ul className="space-y-4 w-2/3">
+                <ul className="space-y-4 w-full max-w-md"> {/* Adjusted for responsiveness */}
                     {devices.map((device) => (
                         <li key={device} className="flex justify-between items-center p-4 bg-gray-100 border border-gray-300 rounded-md">
                             <span className="text-lg font-medium text-gray-700">{device}</span>
@@ -105,27 +103,29 @@ const ManageDevices = () => {
             )}
 
             {/* Add Device Form */}
-            <form onSubmit={handleAddDevice} className="mt-6">
-                <input
-                    type="text"
-                    value={newDeviceId}
-                    onChange={(e) => setNewDeviceId(e.target.value)}
-                    placeholder="Enter Device ID"
-                    className="px-4 py-2 border border-gray-300 rounded-md mr-2"
-                    required
-                />
-                <button
-                    type="submit"
-                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-300 ease-in-out"
-                >
-                    Add Device
-                </button>
+            <form onSubmit={handleAddDevice} className="mt-6 w-full max-w-md"> {/* Form width adjusted */}
+                <div className="flex flex-col md:flex-row md:space-x-2">
+                    <input
+                        type="text"
+                        value={newDeviceId}
+                        onChange={(e) => setNewDeviceId(e.target.value)}
+                        placeholder="Enter Device ID"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-md"
+                        required
+                    />
+                    <button
+                        type="submit"
+                        className="mt-2 md:mt-0 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-300 ease-in-out"
+                    >
+                        Add Device
+                    </button>
+                </div>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center w-full max-w-md"> {/* Adjusted for responsiveness */}
                 <button
                     onClick={() => navigate('/home')} // Navigate back to home
-                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 ease-in-out"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 ease-in-out w-full"
                 >
                     Back to Home
                 </button>
