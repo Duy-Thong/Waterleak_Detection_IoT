@@ -3,7 +3,6 @@ import { getDatabase, ref, get, remove, update } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 
-const validDevices = ["device1", "device2", "device3"]; // Example of valid devices
 
 const ManageDevices = () => {
     const [devices, setDevices] = useState([]);
