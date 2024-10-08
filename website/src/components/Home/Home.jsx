@@ -11,14 +11,11 @@ import DeviceSelector from '../DeviceSelector';
 import CurrentDeviceData from '../CurrentDeviceData';
 import Chart from '../Chart';
 import RelayControl from '../RelayControl';
-import DeviceForm from '../DeviceForm';
 
 // Register ChartJS components
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Title);
 
 const Home = () => {
-    const [showForm, setShowForm] = useState(false);
-    const [deviceId, setDeviceId] = useState('');
     const [deviceData, setDeviceData] = useState(null);
     const [latestData, setLatestData] = useState(null);
     const [relayState, setRelayState] = useState('OFF');
@@ -59,13 +56,20 @@ const Home = () => {
                 `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/${deviceId}.json`
             );
             const data = response.data;
-            setDeviceData(data);
 
-            const sortedKeys = Object.keys(data.flow_sensor).sort();
-            const latestKey = sortedKeys[sortedKeys.length - 1];
-            setLatestData(data.flow_sensor[latestKey]);
+            if (data) {
+                setDeviceData(data);
+                const sortedKeys = Object.keys(data.flow_sensor).sort();
+                const latestKey = sortedKeys[sortedKeys.length - 1];
+                setLatestData(data.flow_sensor[latestKey]);
+            } else {
+                alert('Không tìm thấy thiết bị.');
+                setDeviceData(null);
+                setLatestData(null);
+            }
         } catch (error) {
             console.error("Error fetching device data:", error);
+            alert('Đã xảy ra lỗi khi lấy dữ liệu thiết bị.');
         }
     };
 
@@ -109,44 +113,38 @@ const Home = () => {
         ]
     } : null;
 
-    // Handle device addition
-    const handleAddDeviceClick = () => {
-        setShowForm(true);
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const db = getDatabase();
-
-        update(ref(db, 'users/' + userId + '/devices'), {
-            [deviceId]: true
-        })
-        .then(() => {
-            console.log("Device ID added");
-            setShowForm(false);
-            setDeviceId('');
-            fetchDeviceData(deviceId);
-        })
-        .catch((error) => {
-            console.error("Error adding device:", error);
-        });
-    };
-
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
 
     useEffect(() => {
-        // Polling for real-time updates every 5 seconds
         const intervalId = setInterval(() => {
             if (selectedDeviceId) {
                 fetchDeviceData(selectedDeviceId);
             }
         }, 5000); // Fetch every 5 seconds
 
-        return () => clearInterval(intervalId); // Clear interval on unmount
+        return () => clearInterval(intervalId);
     }, [selectedDeviceId]);
+
+    if (!userId) {
+        return (
+            <div className="flex flex-col min-h-screen bg-gray-100">
+                <Navbar onLogout={handleLogout} />
+
+                <div className="flex flex-col items-center justify-center flex-1">
+                    <p className="text-red-500"><strong>Bạn cần đăng nhập để sử dụng các chức năng này.</strong></p>
+                    <button 
+                        className="px-4 py-2 mt-4 bg-gray-500 text-white rounded-md shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400" 
+                        onClick={() => navigate('/login')}
+                    >
+                        Đăng Nhập
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-100">
@@ -172,21 +170,13 @@ const Home = () => {
                     />
                 )}
 
-                {showForm ? (
-                    <DeviceForm 
-                        deviceId={deviceId} 
-                        onChange={(e) => setDeviceId(e.target.value)} 
-                        onSubmit={handleSubmit} 
-                        onCancel={() => setShowForm(false)} 
-                    />
-                ) : (
-                    <button 
-                        className="px-4 py-2 mt-4 bg-gray-500 text-white rounded-md shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400" 
-                        onClick={handleAddDeviceClick}
-                    >
-                        Add Device
-                    </button>
-                )}
+                {/* Replace Add Device button with Manage Devices button */}
+                <button 
+                    className="px-4 py-2 mt-4 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400" 
+                    onClick={() => navigate('/manage-devices')}
+                >
+                    Manage Devices
+                </button>
             </div>
         </div>
     );
