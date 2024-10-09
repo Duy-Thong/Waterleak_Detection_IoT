@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Typography, Table, Button, DatePicker, Input, Row, Col, Select, message } from 'antd';
+import { Typography, Table, Button, DatePicker, Input, Row, Col, Select, message, Slider } from 'antd';
 import moment from 'moment';
 import { getDatabase, ref } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
-import './YourStyles.css'; // Ensure to import your CSS file
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -17,10 +16,8 @@ const DeviceHistory = () => {
     const [filteredData, setFilteredData] = useState([]);
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
-    const [sensor1MinValue, setSensor1MinValue] = useState(0);
-    const [sensor1MaxValue, setSensor1MaxValue] = useState(1000);
-    const [sensor2MinValue, setSensor2MinValue] = useState(0);
-    const [sensor2MaxValue, setSensor2MaxValue] = useState(1000);
+    const [sensor1Range, setSensor1Range] = useState([0, 1000]);
+    const [sensor2Range, setSensor2Range] = useState([0, 1000]);
     const [sensorDifference, setSensorDifference] = useState(null);
     const [relayState, setRelayState] = useState('');
     const { userId } = useUser();
@@ -55,6 +52,9 @@ const DeviceHistory = () => {
         };
 
         fetchHistory();
+        const interval = setInterval(fetchHistory, 10000); // Cập nhật mỗi 10 giây
+
+        return () => clearInterval(interval); // Xóa interval khi component unmount
     }, [deviceId]);
 
     const columns = [
@@ -79,19 +79,15 @@ const DeviceHistory = () => {
             );
         }
 
-        if (sensor1MinValue !== undefined) {
-            filtered = filtered.filter(item => item.sensor1 >= Number(sensor1MinValue));
-        }
-        if (sensor1MaxValue !== undefined) {
-            filtered = filtered.filter(item => item.sensor1 <= Number(sensor1MaxValue));
-        }
+        // Filter based on sensor 1 range
+        filtered = filtered.filter(item =>
+            item.sensor1 >= sensor1Range[0] && item.sensor1 <= sensor1Range[1]
+        );
 
-        if (sensor2MinValue !== undefined) {
-            filtered = filtered.filter(item => item.sensor2 >= Number(sensor2MinValue));
-        }
-        if (sensor2MaxValue !== undefined) {
-            filtered = filtered.filter(item => item.sensor2 <= Number(sensor2MaxValue));
-        }
+        // Filter based on sensor 2 range
+        filtered = filtered.filter(item =>
+            item.sensor2 >= sensor2Range[0] && item.sensor2 <= sensor2Range[1]
+        );
 
         if (sensorDifference !== null) {
             filtered = filtered.filter(item => Math.abs(item.sensor1 - item.sensor2) >= sensorDifference);
@@ -101,7 +97,9 @@ const DeviceHistory = () => {
             filtered = filtered.filter(item => item.relayState.toUpperCase() === relayState.toUpperCase());
         }
 
-        setFilteredData(filtered);
+        // Sort filtered data by timestamp in descending order
+        const sortedData = filtered.sort((a, b) => moment(b.timestamp) - moment(a.timestamp));
+        setFilteredData(sortedData);
     };
 
     const handleDeleteHistory = async () => {
@@ -180,39 +178,31 @@ const DeviceHistory = () => {
                     </Row>
                     <Row gutter={16} className="mt-2">
                         <Col span={12}>
-                            <Text>Giá Trị Tối Thiểu Cảm Biến 1</Text>
-                            <Input
-                                value={sensor1MinValue}
-                                onChange={(e) => setSensor1MinValue(Number(e.target.value))}
+                            <Text>Giá Trị Cảm Biến 1</Text>
+                            <Slider
+                                range
+                                min={0}
+                                max={1000}
+                                value={sensor1Range}
+                                onChange={setSensor1Range}
+                                valueLabelDisplay="auto"
                             />
                         </Col>
                         <Col span={12}>
-                            <Text>Giá Trị Tối Đa Cảm Biến 1</Text>
-                            <Input
-                                value={sensor1MaxValue}
-                                onChange={(e) => setSensor1MaxValue(Number(e.target.value))}
-                            />
-                        </Col>
-                    </Row>
-                    <Row gutter={16} className="mt-2">
-                        <Col span={12}>
-                            <Text>Giá Trị Tối Thiểu Cảm Biến 2</Text>
-                            <Input
-                                value={sensor2MinValue}
-                                onChange={(e) => setSensor2MinValue(Number(e.target.value))}
-                            />
-                        </Col>
-                        <Col span={12}>
-                            <Text>Giá Trị Tối Đa Cảm Biến 2</Text>
-                            <Input
-                                value={sensor2MaxValue}
-                                onChange={(e) => setSensor2MaxValue(Number(e.target.value))}
+                            <Text>Giá Trị Cảm Biến 2</Text>
+                            <Slider
+                                range
+                                min={0}
+                                max={1000}
+                                value={sensor2Range}
+                                onChange={setSensor2Range}
+                                valueLabelDisplay="auto"
                             />
                         </Col>
                     </Row>
                     <Row gutter={16} className="mt-2">
                         <Col span={12}>
-                            <Text>Chênh Lệch Giữa Hai Cảm Biến</Text>
+                            <Text>Chênh Lệch </Text>
                             <Input
                                 value={sensorDifference}
                                 onChange={(e) => setSensorDifference(Number(e.target.value))}
@@ -239,10 +229,8 @@ const DeviceHistory = () => {
                 dataSource={filteredData}
                 columns={columns}
                 rowKey="timestamp"
-                pagination={{
-                    pageSize: 5,
-                    className: 'center-pagination',
-                }}
+                className="mt-4"
+                pagination={{ pageSize: 5 }}
             />
         </div>
     );
