@@ -2,21 +2,18 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, get } from "firebase/database";
 import { database } from "../../firebase";
-import { useUser } from '../../contexts/UserContext'; // Import UserContext
-import { Form, Input, Button, Alert } from 'antd'; // Import Ant Design components
+import { useUser } from '../../contexts/UserContext';
+import { Form, Input, Button, Alert, Spin } from 'antd';
 
 function Login() {
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-  });
-
   const [error, setError] = useState(""); 
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setUserId } = useUser(); // Get setUserId from UserContext
+  const { setUserId } = useUser();
 
   const handleSubmit = async (values) => {
-    setError(""); // Clear error before submission
+    setError(""); 
+    setLoading(true);
 
     const usersRef = ref(database, 'users');
     try {
@@ -32,28 +29,30 @@ function Login() {
             userData.password === values.password
           ) {
             isValid = true;
-            currentUserId = childSnapshot.key; // Get the user ID from the database
+            currentUserId = childSnapshot.key;
           }
         });
 
         if (isValid) {
-          setUserId(currentUserId); // Update the userId in context
-          navigate("/home"); // Redirect to Home
+          setUserId(currentUserId);
+          localStorage.setItem('userId', currentUserId); // Lưu userId vào localStorage
+          navigate("/home");
         } else {
-          setError("Tên đăng nhập hoặc mật khẩu không đúng!"); // Invalid credentials
+          setError("Tên đăng nhập hoặc mật khẩu không đúng!");
         }
       } else {
-        setError("Không tìm thấy người dùng!"); // No users found
+        setError("Không tìm thấy người dùng!");
       }
     } catch (error) {
       console.error("Lỗi khi kiểm tra đăng nhập:", error);
       setError("Có lỗi xảy ra khi đăng nhập.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleForgotPassword = () => {
-    // Navigate to Forgot Password page or show a modal
-    navigate("/forgot-password"); // Adjust this route as necessary
+    navigate("/forgot-password");
   };
 
   return (
@@ -61,14 +60,11 @@ function Login() {
       <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-md rounded-lg">
         <h2 className="text-2xl font-bold text-center text-gray-700">Đăng nhập</h2>
 
-        {/* Error Alert */}
         {error && <Alert message={error} type="error" showIcon className="mb-4" />}
 
-        {/* Form with Ant Design */}
         <Form
           onFinish={handleSubmit}
           layout="vertical"
-          initialValues={{ username: formData.username, password: formData.password }}
         >
           <Form.Item
             label="Username"
@@ -87,7 +83,7 @@ function Login() {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" className="w-full">
+            <Button type="primary" htmlType="submit" className="w-full" loading={loading}>
               Đăng nhập
             </Button>
           </Form.Item>

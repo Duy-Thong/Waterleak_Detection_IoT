@@ -143,7 +143,6 @@ const Home = () => {
     };
 
     const handleViewHistory = () => {
-        // Navigate to the history page or implement a way to display logs directly on the same page.
         navigate(`/device/${selectedDeviceId}/history`);
     };
 
@@ -160,7 +159,6 @@ const Home = () => {
     if (!userId) {
         return (
             <div className="flex flex-col min-h-screen bg-gray-100">
-
                 <div className="flex flex-col items-center justify-center flex-1">
                     <p className="text-red-500"><strong>Bạn cần đăng nhập để sử dụng các chức năng này.</strong></p>
                     <Button 
@@ -178,10 +176,8 @@ const Home = () => {
     return (
         <div className="flex flex-col min-h-screen bg-gray-100">
             <Navbar onLogout={handleLogout} />
-
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8">
                 <AntTitle level={2}><strong>Xin chào, {username || 'User'}!</strong></AntTitle>
-                
                 <div className="flex flex-col md:flex-row justify-center items-center mt-4 mb-4 gap-4 ">
                     <AntTitle level={4} className="mt-4">Chọn thiết bị:</AntTitle>
                     <DeviceSelector 

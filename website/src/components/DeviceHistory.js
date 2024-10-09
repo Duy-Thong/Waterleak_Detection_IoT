@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Typography, Table, Button, DatePicker, Input, Row, Col, Select, message, Modal } from 'antd';
 import moment from 'moment';
-
+import { getDatabase, ref, get, remove, update } from 'firebase/database';
+import { useUser } from '../contexts/UserContext';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -20,7 +21,12 @@ const DeviceHistory = () => {
     const [sensor2MaxValue, setSensor2MaxValue] = useState(1000);
     const [sensorDifference, setSensorDifference] = useState(null);
     const [relayState, setRelayState] = useState('');
+    const { userId } = useUser();
 
+    useEffect(() => {
+        const db = getDatabase();
+        const userRef = ref(db, 'users/' + userId + '/devices');
+    }, [userId]);
     useEffect(() => {
         const fetchHistory = async () => {
             try {
@@ -123,6 +129,22 @@ const DeviceHistory = () => {
         }
     };
 
+    if (!userId) {
+        return (
+            <div className="flex flex-col min-h-screen bg-gray-100">
+                <div className="flex flex-col items-center justify-center flex-1">
+                    <p className="text-red-500"><strong>Bạn cần đăng nhập để sử dụng các chức năng này.</strong></p>
+                    <Button
+                        className="mt-4"
+                        type="primary"
+                        onClick={() => navigate('/login')}
+                    >
+                        Đăng Nhập
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 bg-gray-100 min-h-screen">

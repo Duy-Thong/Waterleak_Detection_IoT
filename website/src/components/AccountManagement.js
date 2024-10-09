@@ -134,8 +134,21 @@ const AccountManagement = () => {
         window.location.href = '/login'; // Redirect to login page after logout
     };
 
-    if (loading) {
-        return <Spin size="large" />;
+    if (!userId) {
+        return (
+            <div className="flex flex-col min-h-screen bg-gray-100">
+                <div className="flex flex-col items-center justify-center flex-1">
+                    <p className="text-red-500"><strong>Bạn cần đăng nhập để sử dụng các chức năng này.</strong></p>
+                    <Button
+                        className="mt-4"
+                        type="primary"
+                        onClick={() => navigate('/login')}
+                    >
+                        Đăng Nhập
+                    </Button>
+                </div>
+            </div>
+        );
     }
 
     return (

@@ -1,33 +1,37 @@
 // src/contexts/UserContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth"; // Import Firebase authentication
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-    const [userId, setUserId] = useState(null); // State for userId
+    const [userId, setUserId] = useState(null);
 
     useEffect(() => {
         const auth = getAuth();
 
-        // Listen to authentication state changes
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                setUserId(user.uid); // Set userId when the user is logged in
+                setUserId(user.uid);
             } else {
-                setUserId(null); // Clear userId if not logged in
+                const storedUserId = localStorage.getItem('userId');
+                if (storedUserId) {
+                    setUserId(storedUserId);
+                } else {
+                    setUserId(null);
+                }
             }
         });
 
-        return () => unsubscribe(); // Cleanup the listener on unmount
+        return () => unsubscribe();
     }, []);
 
-    // Function to handle user logout
     const logout = async () => {
         const auth = getAuth();
         try {
-            await signOut(auth); // Sign out the user
-            setUserId(null); // Clear userId after logout
+            await signOut(auth);
+            setUserId(null);
+            localStorage.removeItem('userId'); // Xóa userId khỏi localStorage khi đăng xuất
         } catch (error) {
             console.error("Error logging out: ", error);
         }

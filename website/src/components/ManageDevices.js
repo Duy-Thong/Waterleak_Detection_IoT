@@ -82,7 +82,22 @@ const ManageDevices = () => {
             message.error("Có lỗi khi thêm thiết bị. Vui lòng thử lại."); // Set generic error message
         }
     };
-
+    if (!userId) {
+        return (
+            <div className="flex flex-col min-h-screen bg-gray-100">
+                <div className="flex flex-col items-center justify-center flex-1">
+                    <p className="text-red-500"><strong>Bạn cần đăng nhập để sử dụng các chức năng này.</strong></p>
+                    <Button
+                        className="mt-4"
+                        type="primary"
+                        onClick={() => navigate('/login')}
+                    >
+                        Đăng Nhập
+                    </Button>
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100"> {/* Centering styles */}
             <div className="p-6 bg-white shadow-md rounded-lg flex flex-col justify-center items-center w-full max-w-md"> {/* Card container */}

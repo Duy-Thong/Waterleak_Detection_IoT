@@ -1,4 +1,3 @@
-// Navbar.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,7 +10,13 @@ const Navbar = ({ onLogout }) => {
     };
 
     const handleAccountManagement = () => {
-        navigate('/account-management'); // Change this route to your account management page
+        navigate('/account-management');
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('userId'); // Xóa userId khỏi localStorage
+        onLogout();
+        navigate('/login');
     };
 
     return (
@@ -20,7 +25,7 @@ const Navbar = ({ onLogout }) => {
             <div className="relative">
                 <button onClick={toggleDropdown} className="flex items-center">
                     <img
-                        src="https://static.vecteezy.com/system/resources/previews/019/896/008/original/male-user-avatar-icon-in-flat-design-style-person-signs-illustration-png.png" // Replace with your default avatar image path
+                        src="https://static.vecteezy.com/system/resources/previews/019/896/008/original/male-user-avatar-icon-in-flat-design-style-person-signs-illustration-png.png"
                         alt="Avatar"
                         className="w-8 h-8 rounded-full"
                     />
@@ -35,7 +40,7 @@ const Navbar = ({ onLogout }) => {
                         </button>
                         <button
                             className="block px-4 py-2 hover:bg-gray-200 w-full text-left"
-                            onClick={onLogout}
+                            onClick={handleLogout}
                         >
                             Đăng xuất
                         </button>
