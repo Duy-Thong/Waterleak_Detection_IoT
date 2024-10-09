@@ -20,7 +20,7 @@ const DeviceHistory = () => {
     const [sensor2Range, setSensor2Range] = useState([0, 1000]);
     const [sensorDifference, setSensorDifference] = useState(null);
     const [relayState, setRelayState] = useState('');
-    const { userId, logout } = useUser();
+    const { userId,logout } = useUser();
 
     useEffect(() => {
         const db = getDatabase();
@@ -52,7 +52,7 @@ const DeviceHistory = () => {
         };
 
         fetchHistory();
-        const interval = setInterval(fetchHistory, 10000); // Cập nhật mỗi 10 giây
+        const interval = setInterval(fetchHistory, 1000); // Cập nhật mỗi 10 giây
 
         return () => clearInterval(interval); // Xóa interval khi component unmount
     }, [deviceId]);
@@ -126,7 +126,7 @@ const DeviceHistory = () => {
             }
         }
     };
-
+    
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -151,95 +151,95 @@ const DeviceHistory = () => {
     return (
         <div >
             <Navbar onLogout={handleLogout} />
-
-            <div className="p-8 bg-gray-100 min-h-screen">
-
-                <div className="flex justify-between items-center mb-4">
-                    <Title level={2}>Lịch Sử Thiết Bị</Title>
-                    <Button
-                        onClick={() => navigate('/home')}
-                        className="bg-blue-600 text-white hover:bg-blue-500 transition duration-300"
-                    >
-                        Quay về trang chính
-                    </Button>
+        
+        <div className="p-8 bg-gray-100 min-h-screen">
+            
+            <div className="flex justify-between items-center mb-4">
+                <Title level={2}>Lịch Sử Thiết Bị</Title>
+                <Button
+                    onClick={() => navigate('/home')}
+                    className="bg-blue-600 text-white hover:bg-blue-500 transition duration-300"
+                >
+                    Quay về trang chính
+                </Button>
+            </div>
+            <hr className="my-4" />
+            <div className='w-full flex flex-col items-center'>
+                <div className="filter-section mb-4 bg-white p-4 rounded shadow-md w-full">
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Text>Ngày Bắt Đầu</Text>
+                            <DatePicker
+                                value={startDate ? moment(startDate) : null}
+                                onChange={(date) => setStartDate(date)}
+                                style={{ width: '100%' }}
+                            />
+                        </Col>
+                        <Col span={12}>
+                            <Text>Ngày Kết Thúc</Text>
+                            <DatePicker
+                                value={endDate ? moment(endDate) : null}
+                                onChange={(date) => setEndDate(date)}
+                                style={{ width: '100%' }}
+                            />
+                        </Col>
+                    </Row>
+                    <Row gutter={16} className="mt-2">
+                        <Col span={12}>
+                            <Text>Giá Trị Cảm Biến 1</Text>
+                            <Slider
+                                range
+                                min={0}
+                                max={1000}
+                                value={sensor1Range}
+                                onChange={setSensor1Range}
+                                valueLabelDisplay="auto"
+                            />
+                        </Col>
+                        <Col span={12}>
+                            <Text>Giá Trị Cảm Biến 2</Text>
+                            <Slider
+                                range
+                                min={0}
+                                max={1000}
+                                value={sensor2Range}
+                                onChange={setSensor2Range}
+                                valueLabelDisplay="auto"
+                            />
+                        </Col>
+                    </Row>
+                    <Row gutter={16} className="mt-2">
+                        <Col span={12}>
+                            <Text>Chênh Lệch </Text>
+                            <Input
+                                value={sensorDifference}
+                                onChange={(e) => setSensorDifference(Number(e.target.value))}
+                            />
+                        </Col>
+                        <Col span={12}>
+                            <Text>Trạng Thái Relay</Text>
+                            <Select
+                                value={relayState}
+                                onChange={(value) => setRelayState(value)}
+                                style={{ width: '100%' }}
+                            >
+                                <Option value="">Tất cả</Option>
+                                <Option value="ON">ON</Option>
+                                <Option value="OFF">OFF</Option>
+                            </Select>
+                        </Col>
+                    </Row>
+                    <Button onClick={handleFilter} type="primary" className="mt-4">Lọc Dữ Liệu</Button>
+                    <Button onClick={handleDeleteHistory} type="danger" className="ml-2 mt-4 bg-red-500 text-white">Xóa Lịch Sử</Button>
                 </div>
-                <hr className="my-4" />
-                <div className='w-full flex flex-col items-center'>
-                    <div className="filter-section mb-4 bg-white p-4 rounded shadow-md w-full">
-                        <Row gutter={16}>
-                            <Col span={12}>
-                                <Text>Ngày Bắt Đầu</Text>
-                                <DatePicker
-                                    value={startDate ? moment(startDate) : null}
-                                    onChange={(date) => setStartDate(date)}
-                                    style={{ width: '100%' }}
-                                />
-                            </Col>
-                            <Col span={12}>
-                                <Text>Ngày Kết Thúc</Text>
-                                <DatePicker
-                                    value={endDate ? moment(endDate) : null}
-                                    onChange={(date) => setEndDate(date)}
-                                    style={{ width: '100%' }}
-                                />
-                            </Col>
-                        </Row>
-                        <Row gutter={16} className="mt-2">
-                            <Col span={12}>
-                                <Text>Giá Trị Cảm Biến 1</Text>
-                                <Slider
-                                    range
-                                    min={0}
-                                    max={1000}
-                                    value={sensor1Range}
-                                    onChange={setSensor1Range}
-                                    valueLabelDisplay="auto"
-                                />
-                            </Col>
-                            <Col span={12}>
-                                <Text>Giá Trị Cảm Biến 2</Text>
-                                <Slider
-                                    range
-                                    min={0}
-                                    max={1000}
-                                    value={sensor2Range}
-                                    onChange={setSensor2Range}
-                                    valueLabelDisplay="auto"
-                                />
-                            </Col>
-                        </Row>
-                        <Row gutter={16} className="mt-2">
-                            <Col span={12}>
-                                <Text>Chênh Lệch </Text>
-                                <Input
-                                    value={sensorDifference}
-                                    onChange={(e) => setSensorDifference(Number(e.target.value))}
-                                />
-                            </Col>
-                            <Col span={12}>
-                                <Text>Trạng Thái Relay</Text>
-                                <Select
-                                    value={relayState}
-                                    onChange={(value) => setRelayState(value)}
-                                    style={{ width: '100%' }}
-                                >
-                                    <Option value="">Tất cả</Option>
-                                    <Option value="ON">ON</Option>
-                                    <Option value="OFF">OFF</Option>
-                                </Select>
-                            </Col>
-                        </Row>
-                        <Button onClick={handleFilter} type="primary" className="mt-4">Lọc Dữ Liệu</Button>
-                        <Button onClick={handleDeleteHistory} type="danger" className="ml-2 mt-4">Xóa Lịch Sử</Button>
-                    </div>
-                </div>
-                <Table
-                    dataSource={filteredData}
-                    columns={columns}
-                    rowKey="timestamp"
-                    className="mt-4"
-                    pagination={true}
-                />
+            </div>
+            <Table
+                dataSource={filteredData}
+                columns={columns}
+                rowKey="timestamp"
+                className="mt-4"
+                pagination={true}
+            />
             </div>
         </div>
     );

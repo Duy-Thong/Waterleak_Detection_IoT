@@ -40,8 +40,8 @@ function Register() {
   };
 
   const isPasswordStrong = (password) => {
-    const strength = calculateStrength(password);
-    return strength > 70; // Password is strong if it has more than 70 points
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+        return strongPasswordRegex.test(password);
   };
 
   const handlePasswordChange = (password) => {
