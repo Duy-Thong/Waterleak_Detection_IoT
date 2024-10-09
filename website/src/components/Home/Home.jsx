@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, onValue } from "firebase/database"; 
 import { useUser } from '../../contexts/UserContext';
 import axios from 'axios'; 
-import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Title } from 'chart.js';
+import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Button } from 'antd';
 
@@ -13,8 +13,9 @@ import CurrentDeviceData from '../CurrentDeviceData';
 import Chart from '../Chart';
 import RelayControl from '../RelayControl';
 
+import './styles.css'; // Make sure to import the CSS file
 // Register ChartJS components
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend);
 
 const { Title: AntTitle } = Typography;
 
@@ -132,28 +133,6 @@ const Home = () => {
         ]
     } : null;
 
-    const chartOptions = {
-        plugins: {
-            legend: {
-                display: true,
-                position: 'top',
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(tooltipItem) {
-                        const label = tooltipItem.dataset.label || '';
-                        const value = tooltipItem.raw;
-                        return `${label}: ${value}`;
-                    }
-                }
-            },
-            title: {
-                display: true,
-                text: 'Dữ liệu cảm biến theo thời gian',
-            },
-        },
-    };
-
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -220,7 +199,7 @@ const Home = () => {
                     </Button>
                 </div>
                 <CurrentDeviceData latestData={latestData} />
-                <Chart chartData={chartData} chartOptions={chartOptions} className="mt-4" />
+                <Chart chartData={chartData}  className="mt-4 hidden-mobile" />
             </div>
         </div>
     );

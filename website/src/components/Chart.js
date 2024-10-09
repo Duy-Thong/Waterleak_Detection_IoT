@@ -3,7 +3,7 @@ import { Line } from 'react-chartjs-2';
 
 const Chart = ({ chartData }) => (
     chartData && (
-        <div className="w-3/4 flex justify-center items-center">
+        <div className="w-3/4 flex justify-center items-center ">
             <Line
                 data={chartData}
                 options={{
@@ -11,20 +11,20 @@ const Chart = ({ chartData }) => (
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Dữ liệu cảm biến theo thời gian', // Cập nhật tiêu đề thành tiếng Việt
+                            text: 'Dữ liệu cảm biến theo thời gian',
                         },
                         legend: {
                             display: true,
-                            position: 'top', // Vị trí của chú thích
+                            position: 'top',
                             labels: {
-                                color: '#333', // Màu sắc chữ cho chú thích
-                                boxWidth: 20, // Kích thước hình vuông cho màu sắc
+                                color: '#333',
+                                boxWidth: 20,
                             },
                         },
                         tooltip: {
                             enabled: true,
-                            mode: 'index', // Chế độ hiển thị tooltip
-                            intersect: false, // Hiển thị tooltip khi hover gần điểm
+                            mode: 'index',
+                            intersect: false,
                             callbacks: {
                                 label: function (tooltipItem) {
                                     const label = tooltipItem.dataset.label || '';
