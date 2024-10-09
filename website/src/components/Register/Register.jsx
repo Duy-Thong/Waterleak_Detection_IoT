@@ -87,8 +87,8 @@ function Register() {
   };
 
   const getProgressColor = () => {
-    if (strengthPercent > 70) return "#3FCF3F"; // Green for strong
-    if (strengthPercent > 40) return "#FFC107"; // Yellow for medium
+    if (strengthPercent > 99) return "#3FCF3F"; // Green for strong
+    if (strengthPercent > 60) return "#FFC107"; // Yellow for medium
     return "#FF3D3D"; // Red for weak
   };
 
