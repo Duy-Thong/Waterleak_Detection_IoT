@@ -3,7 +3,7 @@ import { Line } from 'react-chartjs-2';
 
 const Chart = ({ chartData }) => (
     chartData && (
-        <div className="w-3/4 flex justify-center items-center ">
+        <div className="w-3/4 flex justify-center items-center hidden-mobile">
             <Line
                 data={chartData}
                 options={{

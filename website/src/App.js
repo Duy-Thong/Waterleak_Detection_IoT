@@ -8,7 +8,7 @@ import ManageDevices from './components/ManageDevices';
 import AccountManagement from './components/AccountManagement';
 import ForgotPassword from './components/ForgotPassword';
 import DeviceHistory from './components/DeviceHistory';
-
+import './App.css';
 function App() {
   const { setUserId } = useUser();
 
