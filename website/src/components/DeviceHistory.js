@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Typography, Table, Button, DatePicker, Input, Row, Col, Select, message, Modal } from 'antd';
+import { Typography, Table, Button, DatePicker, Input, Row, Col, Select, message } from 'antd';
 import moment from 'moment';
-import { getDatabase, ref, get, remove, update } from 'firebase/database';
+import { getDatabase, ref } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
+import './YourStyles.css'; // Ensure to import your CSS file
+
 const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -27,6 +29,7 @@ const DeviceHistory = () => {
         const db = getDatabase();
         const userRef = ref(db, 'users/' + userId + '/devices');
     }, [userId]);
+
     useEffect(() => {
         const fetchHistory = async () => {
             try {
@@ -47,7 +50,7 @@ const DeviceHistory = () => {
                     setEndDate(maxDate);
                 }
             } catch (error) {
-                console.error("Lỗi khi lấy dữ liệu lịch sử thiết bị:", error);
+                console.error("Error fetching device history:", error);
             }
         };
 
@@ -103,14 +106,12 @@ const DeviceHistory = () => {
 
     const handleDeleteHistory = async () => {
         const confirmDelete = window.confirm('Bạn có chắc chắn muốn xóa lịch sử thiết bị?');
-        const currentRelayState = relayState;
         if (confirmDelete) {
             try {
-                // Construct the payload
                 const payload = {
                     flow_sensor: null,
                     relay: {
-                        control: relayState ? String(relayState).toUpperCase() : 'OFF', // Cung cấp giá trị mặc định nếu relayState không hợp lệ
+                        control: relayState ? String(relayState).toUpperCase() : 'OFF',
                     }
                 };
                 await axios.put(
@@ -118,12 +119,11 @@ const DeviceHistory = () => {
                     payload
                 );
 
-                // Clear history data
                 setHistoryData([]);
                 setFilteredData([]);
                 message.success('Lịch sử thiết bị đã được xóa thành công.');
             } catch (error) {
-                console.error("Lỗi khi xóa lịch sử thiết bị:", error);
+                console.error("Error deleting device history:", error);
                 message.error('Xóa lịch sử thiết bị không thành công.');
             }
         }
@@ -211,54 +211,39 @@ const DeviceHistory = () => {
                         </Col>
                     </Row>
                     <Row gutter={16} className="mt-2">
-                        <Col span={8}>
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <Text>Ngưỡng Chênh Lệch Cảm Biến</Text>
-                                <Input
-                                    value={sensorDifference}
-                                    onChange={(e) => setSensorDifference(Number(e.target.value))}
-                                    style={{ marginTop: 8 }} // Optional: space between label and input
-                                />
-                            </div>
+                        <Col span={12}>
+                            <Text>Chênh Lệch Giữa Hai Cảm Biến</Text>
+                            <Input
+                                value={sensorDifference}
+                                onChange={(e) => setSensorDifference(Number(e.target.value))}
+                            />
                         </Col>
-                        <Col span={8}>
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <Text>Trạng Thái Relay</Text>
-                                <Select
-                                    value={relayState}
-                                    onChange={(value) => setRelayState(value)}
-                                    style={{ width: '100%', marginTop: 8 }} // Optional: space between label and select
-                                >
-                                    <Option value="">Tất cả</Option>
-                                    <Option value="ON">BẬT</Option>
-                                    <Option value="OFF">TẮT</Option>
-                                </Select>
-                            </div>
-                        </Col>
-                        <Col span={8}>
-                            <Button type="primary" onClick={handleFilter} style={{ width: '100%', marginTop: 30 }}>
-                                Tìm Kiếm
-                            </Button>
+                        <Col span={12}>
+                            <Text>Trạng Thái Relay</Text>
+                            <Select
+                                value={relayState}
+                                onChange={(value) => setRelayState(value)}
+                                style={{ width: '100%' }}
+                            >
+                                <Option value="">Tất cả</Option>
+                                <Option value="ON">ON</Option>
+                                <Option value="OFF">OFF</Option>
+                            </Select>
                         </Col>
                     </Row>
+                    <Button onClick={handleFilter} type="primary" className="mt-4">Lọc Dữ Liệu</Button>
+                    <Button onClick={handleDeleteHistory} type="danger" className="ml-2 mt-4">Xóa Lịch Sử</Button>
                 </div>
-                <div className="mt-4 w-full">
-                    <Table
-                        dataSource={filteredData}
-                        columns={columns}
-                        rowKey="timestamp"
-                        pagination={{ pageSize: 5 }}
-                    />
-                </div>
-                <Button
-                    type="danger"
-                    onClick={handleDeleteHistory}
-                    style={{ marginTop: 16 }}
-                    className='bg-red-700 text-white hover:bg-red-600 transition duration-300' 
-                >
-                    Xóa Lịch Sử
-                </Button>
             </div>
+            <Table
+                dataSource={filteredData}
+                columns={columns}
+                rowKey="timestamp"
+                pagination={{
+                    pageSize: 5,
+                    className: 'center-pagination',
+                }}
+            />
         </div>
     );
 };

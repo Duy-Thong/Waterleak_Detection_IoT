@@ -4,3 +4,9 @@
         display: none;
     }
 }
+
+/* Add this CSS to your styles */
+.center-pagination .ant-pagination {
+    display: flex;
+    justify-content: center;
+}
