@@ -2,7 +2,7 @@ import React from 'react';
 import { Switch } from 'antd';
 
 const RelayControl = ({ relayState, onToggleRelay }) => (
-    <div className="flex items-center space-x-4 mt-4 ">
+    <div className="flex items-center space-x-4 mt-4 mb-4 ">
         <Switch
             checked={relayState === 'ON'}
             onChange={onToggleRelay}

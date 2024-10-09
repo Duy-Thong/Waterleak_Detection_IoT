@@ -13,7 +13,7 @@ import CurrentDeviceData from '../CurrentDeviceData';
 import Chart from '../Chart';
 import RelayControl from '../RelayControl';
 
-import './styles.css'; // Make sure to import the CSS file
+import './styles.css'; 
 // Register ChartJS components
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend);
 
@@ -142,6 +142,11 @@ const Home = () => {
         navigate('/manage-devices');
     };
 
+    const handleViewHistory = () => {
+        // Navigate to the history page or implement a way to display logs directly on the same page.
+        navigate(`/device/${selectedDeviceId}/history`);
+    };
+
     useEffect(() => {
         const intervalId = setInterval(() => {
             if (selectedDeviceId) {
@@ -177,12 +182,6 @@ const Home = () => {
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8">
                 <AntTitle level={2}><strong>Xin chào, {username || 'User'}!</strong></AntTitle>
                 
-                {devices.length > 0 && (
-                    <RelayControl 
-                        relayState={relayState} 
-                        onToggleRelay={toggleRelay} 
-                    />
-                )}
                 <div className="flex flex-col md:flex-row justify-center items-center mt-4 mb-4 gap-4 ">
                     <AntTitle level={4} className="mt-4">Chọn thiết bị:</AntTitle>
                     <DeviceSelector 
@@ -197,7 +196,20 @@ const Home = () => {
                     >
                         Quản lý thiết bị
                     </Button>
+                    <Button 
+                        className="mt-4" 
+                        type="default" 
+                        onClick={handleViewHistory}
+                    >
+                        Xem Lịch Sử
+                    </Button>
                 </div>
+                {devices.length > 0 && (
+                    <RelayControl 
+                        relayState={relayState} 
+                        onToggleRelay={toggleRelay} 
+                    />
+                )}
                 <CurrentDeviceData latestData={latestData} />
                 <Chart chartData={chartData}  className="mt-4 hidden-mobile" />
             </div>
