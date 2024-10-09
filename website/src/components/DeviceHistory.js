@@ -230,7 +230,7 @@ const DeviceHistory = () => {
                 columns={columns}
                 rowKey="timestamp"
                 className="mt-4"
-                pagination={{ pageSize: 5 }}
+                pagination={true}
             />
         </div>
     );
