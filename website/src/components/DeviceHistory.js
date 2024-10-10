@@ -142,8 +142,7 @@ const DeviceHistory = () => {
     return (
         <div className="bg-gradient-to-r from-white to-blue-200 min-h-screen">
             <Navbar onLogout={handleLogout} />
-
-            <div className="p-8 flex flex-col items-center">
+            <div className="p-8 flex flex-col items-center mt-16">
                 <Title level={2} className="text-gray-800">Lịch Sử Thiết Bị</Title>
                 <Button
                     onClick={() => navigate('/home')}
