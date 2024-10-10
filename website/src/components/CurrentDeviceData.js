@@ -1,11 +1,11 @@
 import React from 'react';
 import { Card, Row, Col, Progress } from 'antd';
+import './style.css'; // Import the styles
 
 const CurrentDeviceData = ({ latestData }) => (
     latestData && (
-        <Card className="p-4 rounded-lg shadow-md bg-green-100 w-2/3">
+        <Card className="current-device-data-card w-3/4">
             <h2 className="text-xl font-semibold mb-4 text-center">Dữ Liệu Thiết Bị Hiện Tại</h2>
-
             <p className="mb-4 text-center"><strong>Thời gian:</strong> {latestData.timestamp}</p>
 
             <Row gutter={[16, 16]} justify="center">

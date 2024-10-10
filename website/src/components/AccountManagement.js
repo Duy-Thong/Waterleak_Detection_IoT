@@ -3,8 +3,8 @@ import { getDatabase, ref, get, update } from "firebase/database";
 import { useUser } from '../contexts/UserContext';
 import Navbar from './Navbar';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Typography, Alert, Spin } from 'antd';
-
+import { Form, Input, Button, Typography, Alert } from 'antd';
+import "./style.css";
 const { Title } = Typography;
 
 const AccountManagement = () => {
@@ -50,7 +50,6 @@ const AccountManagement = () => {
             const snapshot = await get(usersRef);
             if (snapshot.exists()) {
                 const users = snapshot.val();
-                // Check if the new username exists in the database
                 return Object.values(users).some(user => user.username === newUsername && user.id !== userId);
             }
             return false;
@@ -71,17 +70,14 @@ const AccountManagement = () => {
 
         if (usernameExists) {
             setError('Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.');
-            return; // Prevent update
+            return;
         }
 
         const db = getDatabase();
         const userRef = ref(db, 'users/' + userId);
 
         try {
-            const updates = {
-                username: newUsername,
-            };
-
+            const updates = { username: newUsername };
             await update(userRef, updates);
             alert('Thông tin tài khoản đã được cập nhật thành công.');
         } catch (error) {
@@ -110,13 +106,10 @@ const AccountManagement = () => {
 
             if (!isPasswordStrong(newPassword)) {
                 setError('Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
-                return; // Prevent update
+                return;
             }
 
-            const updates = {
-                password: newPassword,
-            };
-
+            const updates = { password: newPassword };
             await update(userRef, updates);
             alert('Mật khẩu đã được cập nhật thành công.');
             setShowChangePassword(false);
@@ -131,7 +124,7 @@ const AccountManagement = () => {
 
     const handleLogout = () => {
         logout();
-        window.location.href = '/login'; // Redirect to login page after logout
+        window.location.href = '/login';
     };
 
     if (!userId) {
@@ -152,17 +145,17 @@ const AccountManagement = () => {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100">
+        <div className="flex flex-col min-h-screen bg-gradient-to-r from-blue-100 to-blue-200">
             <Navbar onLogout={handleLogout} />
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8">
-                <Title level={2}>Quản lý tài khoản</Title>
+                <Title level={2} className='!text-white'>Quản lý tài khoản</Title>
 
                 {error && <Alert message={error} type="error" showIcon />}
 
                 <Form
                     onFinish={handleUpdate}
                     layout="vertical"
-                    className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 w-full max-w-lg"
+                    className="glassmorphism glassmorphism-filter-section w-full max-w-lg"
                 >
                     <Form.Item label="Tên đăng nhập" required>
                         <Input
@@ -201,7 +194,7 @@ const AccountManagement = () => {
                 {showChangePassword && (
                     <Form
                         layout="vertical"
-                        className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 w-full max-w-lg mt-4"
+                        className="glassmorphism glassmorphism-filter-section w-full max-w-lg mt-4"
                         onFinish={handleChangePassword}
                     >
                         <Form.Item label="Mật khẩu cũ" required>

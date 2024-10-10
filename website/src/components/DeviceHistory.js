@@ -140,7 +140,7 @@ const DeviceHistory = () => {
     }
 
     return (
-        <div className="bg-gradient-to-r from-blue-100 to-blue-200 min-h-screen">
+        <div className="bg-gradient-to-r from-white to-blue-200 min-h-screen">
             <Navbar onLogout={handleLogout} />
 
             <div className="p-8 flex flex-col items-center">

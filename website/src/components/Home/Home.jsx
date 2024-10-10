@@ -174,8 +174,8 @@ const Home = () => {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100">
-            <Navbar onLogout={handleLogout} />
+        <div className="flex flex-col min-h-screen bg-gradient-to-r from-white to-blue-200">
+            <Navbar onLogout={handleLogout}/>
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8">
                 <AntTitle level={2}><strong>Xin chào, {username || 'User'}!</strong></AntTitle>
                 <div className="flex flex-col md:flex-row justify-center items-center mt-4 mb-4 gap-4 ">

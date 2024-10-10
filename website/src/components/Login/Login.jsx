@@ -61,7 +61,7 @@ function Login() {
       <div className="bg-white shadow-xl rounded-lg flex w-3/4 max-w-4xl overflow-hidden backdrop-blur-sm bg-opacity-80  border-gray-200">
         
         {/* Left side with illustration */}
-        <div className="hidden md:block w-1/2 bg-purple-500 flex items-center justify-center">
+        <div className="hidden md:block w-1/2 bg-cyan-500 flex items-center justify-center">
           <img
             src={login} // Replace with your illustration URL
             alt="Illustration"
@@ -71,8 +71,6 @@ function Login() {
 
         {/* Right side with login form */}
         <div className="w-full md:w-1/2 p-8">
-          <h3 className="text-2xl font-bold text-center text-gray-700 mb-4">HỆ THỐNG PHÁT HIỆN VỠ ỐNG NƯỚC</h3>
-
           <h2 className="text-2xl font-bold text-center text-gray-700">Đăng nhập</h2>
 
           {error && <Alert message={error} type="error" showIcon className="mb-4" />}

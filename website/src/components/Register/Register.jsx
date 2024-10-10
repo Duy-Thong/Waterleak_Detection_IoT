@@ -109,7 +109,7 @@ function Register() {
       <div className="bg-white shadow-xl rounded-lg flex w-3/4 max-w-4xl overflow-hidden backdrop-blur-sm bg-opacity-80 border-gray-200">
         
         {/* Left side with illustration */}
-        <div className="hidden md:block w-1/2 bg-purple-500 flex items-center justify-center">
+        <div className="hidden md:block w-1/2 bg-blue-500 flex items-center justify-center">
           <img
             src={register} // Replace with your illustration URL
             alt="Illustration"

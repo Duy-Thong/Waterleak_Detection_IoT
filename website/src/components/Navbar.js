@@ -2,7 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, Dropdown, Avatar } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
-
+import './navbarstyle.css'; // Import the navbar styles
+import ptit from "../assets/ptit.jpg";
 const Navbar = ({ onLogout }) => {
     const navigate = useNavigate();
 
@@ -32,12 +33,12 @@ const Navbar = ({ onLogout }) => {
     );
 
     return (
-        <nav className="flex justify-between items-center p-4 bg-blue-400 text-white">
+        <nav className="navbar !pr-10 !pl-10">
             <div
-                className="text-lg font-bold cursor-pointer"
+                className="navbar-title"
                 onClick={handleTitleClick} // Add click handler for title
             >
-                Water Leak Detection
+                <img src={ptit} alt="logo" className='h-12'/>
             </div>
             <div>
                 <Dropdown overlay={menu} trigger={['click']}>
