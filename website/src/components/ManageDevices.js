@@ -107,7 +107,7 @@ const ManageDevices = () => {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300">
+        <div className="flex flex-col min-h-screen p-8 bg-gradient-to-t from-white to-blue-300">
             <Navbar onLogout={logout} />
             <div className="flex items-center justify-center flex-1">
                 <div className="glassmorphism p-6 shadow-md rounded-lg flex flex-col justify-center items-center w-full max-w-md"> {/* Card container */}
