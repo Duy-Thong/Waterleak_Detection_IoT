@@ -168,14 +168,6 @@ function Register() {
                 className="mb-4 w-2/3"
               />
             </div>
-
-            {/* ReCAPTCHA component */}
-            <ReCAPTCHA
-              sitekey="6Ld1Zl0qAAAAAOZ3Hpy97baIusjKVEanlaqKV6PS" // Replace with your ReCAPTCHA site key
-              onChange={handleCaptchaChange}
-              className="mb-4"
-            />
-
             <Form.Item>
               <Button type="primary" htmlType="submit" className="w-full" loading={loading}>
                 Đăng ký
