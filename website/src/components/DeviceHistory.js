@@ -6,6 +6,7 @@ import moment from 'moment';
 import { getDatabase, ref } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
 import Navbar from './Navbar';
+import "./style.css";
 const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -20,12 +21,7 @@ const DeviceHistory = () => {
     const [sensor2Range, setSensor2Range] = useState([0, 1000]);
     const [sensorDifference, setSensorDifference] = useState(null);
     const [relayState, setRelayState] = useState('');
-    const { userId,logout } = useUser();
-
-    useEffect(() => {
-        const db = getDatabase();
-        const userRef = ref(db, 'users/' + userId + '/devices');
-    }, [userId]);
+    const { userId, logout } = useUser();
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -76,12 +72,10 @@ const DeviceHistory = () => {
             );
         }
 
-        // Filter based on sensor 1 range
         filtered = filtered.filter(item =>
             item.sensor1 >= sensor1Range[0] && item.sensor1 <= sensor1Range[1]
         );
 
-        // Filter based on sensor 2 range
         filtered = filtered.filter(item =>
             item.sensor2 >= sensor2Range[0] && item.sensor2 <= sensor2Range[1]
         );
@@ -94,7 +88,6 @@ const DeviceHistory = () => {
             filtered = filtered.filter(item => item.relayState.toUpperCase() === relayState.toUpperCase());
         }
 
-        // Sort filtered data by timestamp in descending order
         const sortedData = filtered.sort((a, b) => moment(b.timestamp) - moment(a.timestamp));
         setFilteredData(sortedData);
     };
@@ -123,11 +116,12 @@ const DeviceHistory = () => {
             }
         }
     };
-    
+
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
+
     if (!userId) {
         return (
             <div className="flex flex-col min-h-screen bg-gray-100">
@@ -146,23 +140,19 @@ const DeviceHistory = () => {
     }
 
     return (
-        <div >
+        <div className="bg-gradient-to-r from-blue-100 to-blue-200 min-h-screen">
             <Navbar onLogout={handleLogout} />
-        
-        <div className="p-8 bg-gray-100 min-h-screen">
-            
-            <div className="flex justify-between items-center mb-4">
-                <Title level={2}>Lịch Sử Thiết Bị</Title>
+
+            <div className="p-8 flex flex-col items-center">
+                <Title level={2} className="text-gray-800">Lịch Sử Thiết Bị</Title>
                 <Button
                     onClick={() => navigate('/home')}
-                    className="bg-blue-600 text-white hover:bg-blue-500 transition duration-300"
+                    className="bg-blue-600 text-white hover:bg-blue-500 transition duration-300 mb-4"
                 >
                     Quay về trang chính
                 </Button>
-            </div>
-            <hr className="my-4" />
-            <div className='w-full flex flex-col items-center'>
-                <div className="filter-section mb-4 bg-white p-4 rounded shadow-md w-full">
+
+                <div className="glassmorphism-filter-section p-4 rounded shadow-lg w-full max-w-3xl">
                     <Row gutter={16}>
                         <Col span={12}>
                             <Text>Ngày Bắt Đầu</Text>
@@ -207,7 +197,7 @@ const DeviceHistory = () => {
                     </Row>
                     <Row gutter={16} className="mt-2">
                         <Col span={12}>
-                            <Text>Chênh Lệch </Text>
+                            <Text>Chênh Lệch</Text>
                             <Input
                                 value={sensorDifference}
                                 onChange={(e) => setSensorDifference(Number(e.target.value))}
@@ -226,17 +216,19 @@ const DeviceHistory = () => {
                             </Select>
                         </Col>
                     </Row>
-                    <Button onClick={handleFilter} type="primary" className="mt-4">Lọc Dữ Liệu</Button>
-                    <Button onClick={handleDeleteHistory} type="danger" className="ml-2 mt-4 bg-red-500 text-white">Xóa Lịch Sử</Button>
+                    <div className="flex justify-between mt-4">
+                        <Button onClick={handleFilter} type="primary">Lọc Dữ Liệu</Button>
+                        <Button onClick={handleDeleteHistory} type="danger" className='bg-red-500 text-white'>Xóa Lịch Sử</Button>
+                    </div>
                 </div>
-            </div>
-            <Table
-                dataSource={filteredData}
-                columns={columns}
-                rowKey="timestamp"
-                className="mt-4"
-                pagination={true}
-            />
+
+                <Table
+                    dataSource={filteredData}
+                    columns={columns}
+                    rowKey="timestamp"
+                    className="mt-4 w-full max-w-3xl"
+                    pagination={true}
+                />
             </div>
         </div>
     );

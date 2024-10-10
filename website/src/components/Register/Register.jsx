@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, push, set, get } from "firebase/database"; 
+import { ref, push, set, get } from "firebase/database";
 import { database } from "../../firebase";  
-import { Form, Input, Button, message, Progress } from 'antd'; 
-
+import { Form, Input, Button, Alert, Progress } from 'antd'; 
+import { useUser } from '../../contexts/UserContext';
+import register from '../../assets/register.jpg';
 function Register() {
   const [formData, setFormData] = useState({
     username: "",
@@ -11,7 +12,10 @@ function Register() {
   });
   const [passwordStrength, setPasswordStrength] = useState(""); 
   const [strengthPercent, setStrengthPercent] = useState(0); 
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { setUserId } = useUser();
 
   const checkUsernameExists = async (username) => {
     const usersRef = ref(database, 'users');
@@ -31,17 +35,17 @@ function Register() {
 
   const calculateStrength = (password) => {
     let strength = 0;
-    if (password.length >= 8) strength += 30; // 30 points for length
-    if (/[a-z]/.test(password)) strength += 20; // 20 points for lowercase letters
-    if (/[A-Z]/.test(password)) strength += 20; // 20 points for uppercase letters
-    if (/\d/.test(password)) strength += 15; // 15 points for numbers
-    if (/[!@#$%^&*]/.test(password)) strength += 15; // 15 points for special characters
+    if (password.length >= 8) strength += 30;
+    if (/[a-z]/.test(password)) strength += 20;
+    if (/[A-Z]/.test(password)) strength += 20;
+    if (/\d/.test(password)) strength += 15;
+    if (/[!@#$%^&*]/.test(password)) strength += 15;
     return strength;
   };
 
   const isPasswordStrong = (password) => {
-        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-        return strongPasswordRegex.test(password);
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    return strongPasswordRegex.test(password);
   };
 
   const handlePasswordChange = (password) => {
@@ -60,14 +64,19 @@ function Register() {
   };
 
   const handleSubmit = async (values) => {
+    setError(""); 
+    setLoading(true);
+
     const usernameExists = await checkUsernameExists(values.username);
     if (usernameExists) {
-      message.error("Tên người dùng đã tồn tại. Vui lòng chọn tên khác.");
+      setError("Tên người dùng đã tồn tại. Vui lòng chọn tên khác.");
+      setLoading(false);
       return;
     }
 
     if (!isPasswordStrong(values.password)) {
-      message.error("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
+      setError("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
+      setLoading(false);
       return;
     }
 
@@ -78,76 +87,88 @@ function Register() {
         password: values.password,
       });
       console.log("User added with ID:", newUserRef.key);
-      message.success("Đăng ký thành công!");
-      navigate('/login'); 
+      setUserId(newUserRef.key); // Set user ID in context
+      localStorage.setItem('userId', newUserRef.key); // Save userId to localStorage
+      navigate('/home'); 
     } catch (error) {
       console.error("Error saving data:", error);
-      message.error("Đã xảy ra lỗi khi lưu dữ liệu.");
+      setError("Đã xảy ra lỗi khi lưu dữ liệu.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const getProgressColor = () => {
-    if (strengthPercent > 99) return "#3FCF3F"; // Green for strong
-    if (strengthPercent > 60) return "#FFC107"; // Yellow for medium
-    return "#FF3D3D"; // Red for weak
+    if (strengthPercent > 99) return "#3FCF3F"; // Green for strong password
+    if (strengthPercent > 60) return "#FFC107"; // Yellow for medium password
+    return "#FF3D3D"; // Red for weak password
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-md rounded-lg">
-        <h2 className="text-2xl font-bold text-center text-gray-700">Đăng ký</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-200">
+      <div className="bg-white shadow-xl rounded-lg flex w-3/4 max-w-4xl overflow-hidden backdrop-blur-sm bg-opacity-80 border-gray-200">
+        
+        {/* Left side with illustration */}
+        <div className="hidden md:block w-1/2 bg-purple-500 flex items-center justify-center">
+          <img
+            src={register} // Replace with your illustration URL
+            alt="Illustration"
+            className="w-full h-full object-cover max-w-2xl"
+          />
+        </div>
 
-        <Form
-          onFinish={handleSubmit}
-          layout="vertical"
-          className="space-y-4"
-          initialValues={{ username: formData.username, password: formData.password }}
-        >
-          <Form.Item
-            label="Username"
-            name="username"
-            rules={[{ required: true, message: 'Please enter your username' }]}
+        {/* Right side with registration form */}
+        <div className="w-full md:w-1/2 p-8">
+          <h2 className="text-2xl font-bold text-center text-gray-700">Đăng ký</h2>
+
+          {error && <Alert message={error} type="error" showIcon className="mb-4" />}
+
+          <Form
+            onFinish={handleSubmit}
+            layout="vertical"
           >
-            <Input
-              placeholder="Enter your username"
-              className="focus:ring focus:ring-green-200 focus:border-green-500"
-            />
-          </Form.Item>
+            <Form.Item
+              label="Tên người dùng"
+              name="username"
+              rules={[{ required: true, message: 'Vui lòng nhập tên người dùng' }]}
+            >
+              <Input placeholder="Nhập tên người dùng" />
+            </Form.Item>
 
-          <Form.Item
-            label="Password"
-            name="password"
-            rules={[{ required: true, message: 'Please enter your password' }]}
-          >
-            <Input.Password
-              placeholder="Enter your password"
-              className="focus:ring focus:ring-green-200 focus:border-green-500"
-              onChange={(e) => handlePasswordChange(e.target.value)}
-            />
-          </Form.Item>
-          <div className="flex flex-col items-center">
-          {/* <div className="text-gray-600">{passwordStrength}</div> */}
+            <Form.Item
+              label="Mật khẩu"
+              name="password"
+              rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
+            >
+              <Input.Password
+                placeholder="Nhập mật khẩu"
+                onChange={(e) => handlePasswordChange(e.target.value)}
+              />
+            </Form.Item>
 
-          <Progress
-            percent={strengthPercent}
-            strokeColor={getProgressColor()}
-            showInfo={false}
-            className="mb-4 w-2/3"
-            />
-          </div>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" className="w-full bg-green-500 hover:bg-green-600">
-              Đăng ký
+            <div className="flex flex-col items-center">
+              <Progress
+                percent={strengthPercent}
+                strokeColor={getProgressColor()}
+                showInfo={false}
+                className="mb-4 w-2/3"
+              />
+            </div>
+
+            <Form.Item>
+              <Button type="primary" htmlType="submit" className="w-full" loading={loading}>
+                Đăng ký
+              </Button>
+            </Form.Item>
+          </Form>
+
+          <p className="mt-4 text-center text-sm text-gray-600">
+            Đã có tài khoản?{" "}
+            <Button type="link" onClick={() => navigate("/login")}>
+              Đăng nhập
             </Button>
-          </Form.Item>
-        </Form>
-
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Đã có tài khoản?{" "}
-          <Button type="link" onClick={() => navigate("/login")} className="text-green-500 hover:underline">
-            Quay lại đăng nhập
-          </Button>
-        </p>
+          </p>
+        </div>
       </div>
     </div>
   );

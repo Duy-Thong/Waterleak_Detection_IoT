@@ -1,0 +1,38 @@
+/* Add this CSS to your styles */
+.center-pagination .ant-pagination {
+    display: flex;
+    justify-content: center!important;
+}
+.glassmorphism-filter-section {
+    background: rgba(255, 255, 255, 0.3);
+    /* Background color with transparency */
+    backdrop-filter: blur(10px);
+    /* Apply blur effect */
+    border-radius: 15px;
+    /* Round corners */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    /* Shadow for depth */
+}
+
+/* styles.css hoặc file CSS tương ứng */
+.glassmorphism {
+    background: rgba(255, 255, 255, 0.2);
+    /* Màu nền trong suốt */
+    border-radius: 15px;
+    /* Bo góc */
+    backdrop-filter: blur(10px);
+    /* Hiệu ứng mờ */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    /* Đổ bóng */
+    padding: 20px;
+    /* Padding cho container */
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    /* Viền mờ */
+}
+
+.glassmorphism-modal {
+    backdrop-filter: blur(10px);
+    /* Hiệu ứng mờ cho modal */
+    border-radius: 15px;
+    /* Bo góc cho modal */
+}
