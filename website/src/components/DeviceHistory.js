@@ -52,9 +52,6 @@ const DeviceHistory = () => {
         };
 
         fetchHistory();
-        const interval = setInterval(fetchHistory, 1000); // Cập nhật mỗi 10 giây
-
-        return () => clearInterval(interval); // Xóa interval khi component unmount
     }, [deviceId]);
 
     const columns = [
