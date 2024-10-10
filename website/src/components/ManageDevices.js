@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, remove, update } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
-import { Input, Button, List, message, Form } from 'antd'; // Import Ant Design components
+import { Input, Button, List, message, Form, Modal } from 'antd'; // Import Ant Design components, including Modal
 
 const ManageDevices = () => {
     const [devices, setDevices] = useState([]);
     const [newDeviceId, setNewDeviceId] = useState(''); // State for new device ID
     const [error, setError] = useState(''); // State for error message
+    const [deviceToRemove, setDeviceToRemove] = useState(null); // State to track the device to remove
+    const [isModalVisible, setIsModalVisible] = useState(false); // State for modal visibility
     const { userId } = useUser();
     const navigate = useNavigate();
 
@@ -25,16 +27,22 @@ const ManageDevices = () => {
         });
     }, [userId]);
 
-    const handleRemoveDevice = async (deviceId) => {
+    const handleRemoveDevice = async () => {
         const db = getDatabase();
         try {
-            await remove(ref(db, `users/${userId}/devices/${deviceId}`));
-            setDevices(devices.filter(device => device !== deviceId));
-            message.success('Xóa thiết bị thành công!'); // Show success message
+            await remove(ref(db, `users/${userId}/devices/${deviceToRemove}`));
+            setDevices(devices.filter(device => device !== deviceToRemove));
+            message.success('Hủy liên kết với thiết bị thành công'); // Show success message
+            setIsModalVisible(false); // Hide modal after successful removal
         } catch (error) {
             console.error("Lỗi khi xóa thiết bị:", error);
             message.error('Có lỗi khi xóa thiết bị. Vui lòng thử lại.'); // Show error message
         }
+    };
+
+    const showRemoveConfirm = (deviceId) => {
+        setDeviceToRemove(deviceId); // Set the device to be removed
+        setIsModalVisible(true); // Show the modal
     };
 
     const handleAddDevice = async (values) => {
@@ -82,6 +90,7 @@ const ManageDevices = () => {
             message.error("Có lỗi khi thêm thiết bị. Vui lòng thử lại."); // Set generic error message
         }
     };
+
     if (!userId) {
         return (
             <div className="flex flex-col min-h-screen bg-gray-100">
@@ -98,6 +107,7 @@ const ManageDevices = () => {
             </div>
         );
     }
+
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100"> {/* Centering styles */}
             <div className="p-6 bg-white shadow-md rounded-lg flex flex-col justify-center items-center w-full max-w-md"> {/* Card container */}
@@ -114,10 +124,10 @@ const ManageDevices = () => {
                                 <div className="flex justify-between items-center w-full">
                                     <span className="text-lg font-medium text-gray-700">{device}</span>
                                     <Button
-                                        onClick={() => handleRemoveDevice(device)}
+                                        onClick={() => showRemoveConfirm(device)}
                                         danger
                                     >
-                                        Xóa
+                                        Hủy liên kết
                                     </Button>
                                 </div>
                             </List.Item>
@@ -159,6 +169,18 @@ const ManageDevices = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* Modal for confirmation */}
+            <Modal
+                title="Xác nhận hủy liên kết"
+                visible={isModalVisible}
+                onOk={handleRemoveDevice}
+                onCancel={() => setIsModalVisible(false)}
+                okText="Xác nhận"
+                cancelText="Hủy"
+            >
+                <p>Bạn có chắc chắn muốn hủy liên kết với thiết bị này?</p>
+            </Modal>
         </div>
     );
 };
