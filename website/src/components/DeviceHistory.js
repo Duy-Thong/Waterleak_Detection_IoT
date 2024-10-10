@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Typography, Table, Button, DatePicker, Input, Row, Col, Select, message, Slider } from 'antd';
 import moment from 'moment';
-import { getDatabase, ref } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
 import Navbar from './Navbar';
 import "./style.css";
+
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const DeviceHistory = () => {
@@ -15,8 +16,7 @@ const DeviceHistory = () => {
     const navigate = useNavigate();
     const [historyData, setHistoryData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
-    const [startDate, setStartDate] = useState(null);
-    const [endDate, setEndDate] = useState(null);
+    const [dateRange, setDateRange] = useState([moment().startOf('day'), moment().endOf('day')]); // Initialize to today
     const [sensor1Range, setSensor1Range] = useState([0, 1000]);
     const [sensor2Range, setSensor2Range] = useState([0, 1000]);
     const [sensorDifference, setSensorDifference] = useState(null);
@@ -39,8 +39,9 @@ const DeviceHistory = () => {
                     const minDate = moment.min(timestamps);
                     const maxDate = moment.max(timestamps).add(1, 'days');
 
-                    setStartDate(minDate);
-                    setEndDate(maxDate);
+                    if (minDate.isValid() && maxDate.isValid()) {
+                        setDateRange([minDate, maxDate]);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching device history:", error);
@@ -60,15 +61,12 @@ const DeviceHistory = () => {
     const handleFilter = () => {
         let filtered = historyData;
 
-        if (startDate) {
+        if (dateRange[0] && dateRange[1]) {
             filtered = filtered.filter(item =>
-                moment(item.timestamp, 'YYYY-MM-DD HH:mm:ss').isSameOrAfter(startDate.startOf('day'))
-            );
-        }
-
-        if (endDate) {
-            filtered = filtered.filter(item =>
-                moment(item.timestamp, 'YYYY-MM-DD HH:mm:ss').isSameOrBefore(endDate.endOf('day'))
+                moment(item.timestamp, 'YYYY-MM-DD HH:mm:ss').isBetween(
+                    dateRange[0].startOf('day'),
+                    dateRange[1].endOf('day')
+                )
             );
         }
 
@@ -153,19 +151,17 @@ const DeviceHistory = () => {
 
                 <div className="glassmorphism-filter-section p-4 rounded shadow-lg w-full max-w-3xl">
                     <Row gutter={16}>
-                        <Col span={12}>
-                            <Text>Ngày Bắt Đầu</Text>
-                            <DatePicker
-                                value={startDate ? moment(startDate) : null}
-                                onChange={(date) => setStartDate(date)}
-                                style={{ width: '100%' }}
-                            />
-                        </Col>
-                        <Col span={12}>
-                            <Text>Ngày Kết Thúc</Text>
-                            <DatePicker
-                                value={endDate ? moment(endDate) : null}
-                                onChange={(date) => setEndDate(date)}
+                        <Col span={24}>
+                            <Text>Chọn Khoảng Ngày</Text>
+                            <RangePicker
+                                value={dateRange}
+                                onChange={(dates) => {
+                                    if (dates) {
+                                        setDateRange(dates);
+                                    } else {
+                                        setDateRange([null, null]);
+                                    }
+                                }}
                                 style={{ width: '100%' }}
                             />
                         </Col>
