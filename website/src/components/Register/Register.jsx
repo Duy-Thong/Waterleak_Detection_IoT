@@ -5,7 +5,6 @@ import { database } from "../../firebase";
 import { Form, Input, Button, Alert, Progress } from 'antd'; 
 import { useUser } from '../../contexts/UserContext';
 import register from '../../assets/register.jpg';
-import ReCAPTCHA from "react-google-recaptcha"; // Import ReCAPTCHA
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -16,7 +15,6 @@ function Register() {
   const [strengthPercent, setStrengthPercent] = useState(0); 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [captchaValue, setCaptchaValue] = useState(null); // State to store CAPTCHA value
   const navigate = useNavigate();
   const { setUserId } = useUser();
 
@@ -70,13 +68,6 @@ function Register() {
     setError(""); 
     setLoading(true);
 
-    // Check if CAPTCHA is completed
-    if (!captchaValue) {
-      setError("Vui lòng xác minh rằng bạn không phải là robot.");
-      setLoading(false);
-      return;
-    }
-
     const usernameExists = await checkUsernameExists(values.username);
     if (usernameExists) {
       setError("Tên người dùng đã tồn tại. Vui lòng chọn tên khác.");
@@ -112,10 +103,6 @@ function Register() {
     if (strengthPercent > 99) return "#3FCF3F"; // Green for strong password
     if (strengthPercent > 60) return "#FFC107"; // Yellow for medium password
     return "#FF3D3D"; // Red for weak password
-  };
-
-  const handleCaptchaChange = (value) => {
-    setCaptchaValue(value); // Update CAPTCHA value on change
   };
 
   return (

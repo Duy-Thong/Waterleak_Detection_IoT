@@ -114,7 +114,10 @@ const DeviceHistory = () => {
             }
         }
     };
-
+    const disabledDate = (current) => {
+        // Return true for dates that should be disabled
+        return current && current > moment().endOf('day');
+    };
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -155,14 +158,10 @@ const DeviceHistory = () => {
                             <Text>Chọn Khoảng Ngày</Text>
                             <RangePicker
                                 value={dateRange}
-                                onChange={(dates) => {
-                                    if (dates) {
-                                        setDateRange(dates);
-                                    } else {
-                                        setDateRange([null, null]);
-                                    }
-                                }}
-                                style={{ width: '100%' }}
+                                onChange={(dates) => setDateRange(dates)}
+                                format="DD/MM/YYYY"
+                                className="w-full"
+                                disabledDate={disabledDate}
                             />
                         </Col>
                     </Row>
@@ -196,6 +195,7 @@ const DeviceHistory = () => {
                             <Input
                                 value={sensorDifference}
                                 onChange={(e) => setSensorDifference(Number(e.target.value))}
+                                placeholder="Nhập giá trị chênh lệch"
                             />
                         </Col>
                         <Col span={12}>
