@@ -147,7 +147,7 @@ const AccountManagement = () => {
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300">
             <Navbar onLogout={handleLogout} />
-            <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8">
+            <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8 mt-16">
                 <Title level={2} className='!text-white'>Quản lý tài khoản</Title>
 
                 {error && <Alert message={error} type="error" showIcon />}

@@ -11,31 +11,14 @@
     /* Round corners */
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     /* Shadow for depth */
-}
-
-.navbar-title {
-    font-size: 1.5rem;
-    /* Adjust font size */
-    font-weight: bold;
-    /* Bold text */
-    cursor: pointer;
-    /* Pointer cursor on hover */
-    color: #000;
-    /* Change text color */
-}
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    background: rgba(173, 216, 230, 0.3);
-    /* Light blue with transparency */
-    backdrop-filter: blur(10px);
-    /* Apply blur effect */
-    border-radius: 15px;
-    /* Round corners */
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    /* Shadow for depth */
+    position: fixed;
+    /* Fix the navbar at the top */
+    top: 0;
+    /* Align to the top */
+    width: 100%;
+    /* Full width */
+    z-index: 1000;
+    /* Ensure it is above other elements */
 }
 
 .navbar-title {

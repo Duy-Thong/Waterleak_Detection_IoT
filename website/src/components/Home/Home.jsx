@@ -176,8 +176,8 @@ const Home = () => {
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300">
             <Navbar onLogout={handleLogout}/>
-            <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8">
-                <AntTitle level={2}><strong>Xin chào, {username || 'User'}!</strong></AntTitle>
+            <div className="flex flex-col items-center justify-center flex-1 p-4 md:p- mt-5">
+                <AntTitle level={2} className='mt-16 !text-white'><strong>Xin chào, {username || 'User'}!</strong></AntTitle>
                 <div className="flex flex-col justify-center items-center mt-4 mb-4 gap-4 glassmorphism">
                     <div className="flex flex-col md:flex-row justify-center items-center mt-4 mb-4 gap-4 ">
                         <AntTitle level={4} className="mt-4">Chọn thiết bị:</AntTitle>

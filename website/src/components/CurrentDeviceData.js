@@ -7,7 +7,6 @@ const CurrentDeviceData = ({ latestData }) => (
         <Card className="current-device-data-card w-3/4 glassmorphism">
             <h1 className="text-xl mb-4 text-center">Dữ Liệu Thiết Bị Hiện Tại</h1>
             <h3 className="mb-4 text-center"><strong>Thời gian:</strong> {latestData.timestamp}</h3>
-
             <Row gutter={[16, 16]} justify="center">
                 {/* Sensor 1 Circular Progress */}
                 <Col xs={24} sm={12} className="flex flex-col items-center">
