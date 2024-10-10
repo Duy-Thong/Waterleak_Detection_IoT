@@ -17,6 +17,7 @@
         opacity: 1;
     }
 }
+
 /* styles.css */
 
 .glassmorphism {
@@ -26,12 +27,12 @@
     /* Rounded corners */
     backdrop-filter: blur(10px);
     /* Blur effect */
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
     /* Subtle shadow */
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
     /* Optional border */
     padding: 20px;
     /* Padding inside the container */
-    color: #fff;
+    /* color: #fff; */
     /* Text color (white) */
 }

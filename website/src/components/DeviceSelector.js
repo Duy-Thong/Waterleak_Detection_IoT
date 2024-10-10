@@ -5,7 +5,7 @@ const DeviceSelector = ({ devices, selectedDeviceId, onDeviceChange }) => (
         <select
             value={selectedDeviceId}
             onChange={onDeviceChange}
-            className="px-4 py-2 mt-4 border rounded-md shadow-md"
+            className="px-4 py-2 mt-4 border rounded-md shadow-md text-black"
         >
             {devices.map(device => (
                 <option key={device} value={device}>
