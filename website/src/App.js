@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { UserProvider, useUser } from './contexts/UserContext';
 import Home from './components/Home/Home';
-import Login from './components/Login/login';
+import Login from './components/Login/Login';
 import Register from './components/Register/Register';
 import ManageDevices from './components/ManageDevices';
 import AccountManagement from './components/AccountManagement';
