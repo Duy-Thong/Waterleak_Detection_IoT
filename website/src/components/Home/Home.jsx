@@ -53,7 +53,6 @@ const Home = () => {
         }
     }, [userId]);
 
-    // Function to fetch device data
     const fetchDeviceData = async (deviceId) => {
         try {
             const response = await axios.get(
@@ -74,7 +73,6 @@ const Home = () => {
             }
         } catch (error) {
             console.error("Error fetching device data:", error);
-            alert('Đã xảy ra lỗi khi lấy dữ liệu thiết bị.');
         }
     };
 
@@ -113,25 +111,26 @@ const Home = () => {
         }
     };
 
-    const chartData = deviceData ? {
-        labels: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].timestamp),
-        datasets: [
-            {
-                label: 'Cảm biến 1',
-                data: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].sensor1),
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                fill: true,
-            },
-            {
-                label: 'Cảm biến 2',
-                data: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].sensor2),
-                borderColor: 'rgba(153, 102, 255, 1)',
-                backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                fill: true,
-            }
-        ]
-    } : null;
+    const chartData = deviceData && deviceData.flow_sensor ? {
+    labels: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].timestamp),
+    datasets: [
+        {
+            label: 'Cảm biến 1',
+            data: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].sensor1),
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            fill: true,
+        },
+        {
+            label: 'Cảm biến 2',
+            data: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].sensor2),
+            borderColor: 'rgba(153, 102, 255, 1)',
+            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+            fill: true,
+        }
+    ]
+} : null;
+
 
     const handleLogout = () => {
         logout();
@@ -180,26 +179,27 @@ const Home = () => {
                 <AntTitle level={2} className='mt-16 !text-white'><strong>Xin chào, {username || 'User'}!</strong></AntTitle>
                 <div className="flex flex-col justify-center items-center mt-4 mb-4 gap-4 glassmorphism">
                     <div className="flex flex-col md:flex-row justify-center items-center mt-4 mb-4 gap-4 ">
-                        <AntTitle level={4} className="mt-4">Chọn thiết bị:</AntTitle>
+                        {devices.length === 0 && ( <p>Bạn chưa có thiết bị nào</p>)}
+                        {devices.length > 0 && (<AntTitle level={4} >Chọn thiết bị:</AntTitle>)}
                         <DeviceSelector 
                             devices={devices} 
                             selectedDeviceId={selectedDeviceId} 
                             onDeviceChange={handleDeviceChange} 
                         />
                         <Button 
-                            className="mt-4" 
                             type="primary" 
                             onClick={handleManageDevice}
                         >
                             Quản lý thiết bị
                         </Button>
-                        <Button 
-                            className="mt-4" 
-                            type="default" 
-                            onClick={handleViewHistory}
-                        >
-                            Xem Lịch Sử
-                        </Button>
+                        {devices.length > 0 && (
+                            <Button 
+                                type="default" 
+                                onClick={handleViewHistory}
+                            >
+                                Xem Lịch Sử
+                            </Button>
+                        )}
                     </div>
                     {devices.length > 0 && (
                         <RelayControl 
@@ -207,9 +207,18 @@ const Home = () => {
                             onToggleRelay={toggleRelay} 
                         />
                     )}
-            </div>      
-                <CurrentDeviceData latestData={latestData} />
-                <Chart chartData={chartData}  className="mt-4 hidden-mobile" />
+                </div>      
+
+                {/* Conditionally render chart and device data */}
+                {deviceData && latestData ? (
+    <>
+        <CurrentDeviceData latestData={latestData} />
+        {chartData && <Chart chartData={chartData} className="mt-4 hidden-mobile" />}
+    </>
+) : (
+    <p>Không có dữ liệu cho thiết bị này.</p>
+)}
+
             </div>
         </div>
     );
