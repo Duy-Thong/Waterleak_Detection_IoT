@@ -5,17 +5,17 @@
 }
 
 .glassmorphism {
+    /* From https://css.glass */
     background: rgba(255, 255, 255, 0.1);
-    /* Semi-transparent white background */
-    border-radius: 10px;
-    /* Rounded corners */
-    backdrop-filter: blur(10px);
-    /* Blur effect */
+    /* Giảm độ mờ của nền */
+    border-radius: 16px;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    /* Subtle shadow */
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    /* Optional border */
-    padding: 20px;
+    backdrop-filter: blur(5px);
+    /* Tăng độ mờ nền để tạo hiệu ứng glassmorphism rõ hơn */
+    -webkit-backdrop-filter: blur(5px);
+    /* Tăng độ mờ nền để tạo hiệu ứng glassmorphism rõ hơn */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    /* Giảm độ mờ của đường viền */
     /* Padding inside the container */
     /* color: #fff; */
     /* Text color (white) */
@@ -33,9 +33,7 @@
 }
 
 
-.current-device-data-card {
-    
-}
+.current-device-data-card {}
 
 .current-device-data-card h2 {
     color: #004279;
@@ -51,23 +49,4 @@
     margin-top: 16px;
     /* Add some space above the circles */
 }
-body {
-    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
-    height: 100vh;
-}
 
-@keyframes gradient {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-
-    100% {
-        background-position: 0% 50%;
-    }
-}

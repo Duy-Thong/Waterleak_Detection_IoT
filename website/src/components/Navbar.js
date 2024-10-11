@@ -33,7 +33,7 @@ const Navbar = ({ onLogout }) => {
     );
 
     return (
-        <nav className="navbar !pr-10 !pl-10">
+        <nav className="navbar">
             <div
                 className="navbar-title"
                 onClick={handleTitleClick} // Add click handler for title

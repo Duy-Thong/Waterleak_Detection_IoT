@@ -173,11 +173,12 @@ const Home = () => {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300">
+
+        <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300 ">
             <Navbar onLogout={handleLogout}/>
-            <div className="flex flex-col items-center justify-center flex-1 p-4 md:p- mt-5">
+            <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8 mt-5">
                 <AntTitle level={2} className='mt-16 !text-white'><strong>Xin chào, {username || 'User'}!</strong></AntTitle>
-                <div className="flex flex-col justify-center items-center mt-4 mb-4 gap-4 glassmorphism">
+                <div className="flex flex-col justify-center items-center mt-4 mb-4 gap-4 glassmorphism w-3/4">
                     <div className="flex flex-col md:flex-row justify-center items-center mt-4 mb-4 gap-4 ">
                         {devices.length === 0 && ( <p>Bạn chưa có thiết bị nào</p>)}
                         {devices.length > 0 && (<AntTitle level={4} >Chọn thiết bị:</AntTitle>)}
@@ -214,13 +215,14 @@ const Home = () => {
     <>
         <CurrentDeviceData latestData={latestData} />
         {chartData && <Chart chartData={chartData} className="mt-4 hidden-mobile" />}
-    </>
-) : (
-    <p>Không có dữ liệu cho thiết bị này.</p>
-)}
+        </>
+    ) : (
+        <p>Không có dữ liệu cho thiết bị này.</p>
+    )}
 
+                </div>
             </div>
-        </div>
+       
     );
 };
 

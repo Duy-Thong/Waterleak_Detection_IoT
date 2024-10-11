@@ -6,6 +6,7 @@ import { Input, Button, List, message, Form, Modal } from 'antd';
 import Navbar from './Navbar';
 import './style.css'; // Đảm bảo import file CSS
 
+
 const ManageDevices = () => {
     const [devices, setDevices] = useState([]);
     const [newDeviceId, setNewDeviceId] = useState('');
@@ -107,82 +108,83 @@ const ManageDevices = () => {
     }
 
     return (
-        <div className="flex flex-col min-h-screen p-8 bg-gradient-to-t from-white to-blue-300">
-            <Navbar onLogout={logout} />
-            <div className="flex items-center justify-center flex-1">
-                <div className="glassmorphism p-6 shadow-md rounded-lg flex flex-col justify-center items-center w-full max-w-md"> {/* Card container */}
-                    <h2 className="text-2xl font-semibold mb-6 text-gray-800 text-center">Quản lý thiết bị</h2>
-                    {error && <p className="text-red-500">{error}</p>}
+        
+            <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300">
+                <Navbar onLogout={logout} />
+                <div className="flex items-center justify-center flex-1">
+                    <div className="glassmorphism p-6 shadow-md rounded-lg flex flex-col justify-center items-center w-full max-w-md"> {/* Card container */}
+                        <h2 className="text-2xl font-semibold mb-6 text-white text-center">Quản lý thiết bị</h2>
+                        {error && <p className="text-red-500">{error}</p>}
 
-                    {devices.length > 0 ? (
-                        <List
-                            className="space-y-4 w-full"
-                            bordered
-                            dataSource={devices}
-                            renderItem={device => (
-                                <List.Item>
-                                    <div className="flex justify-between items-center w-full">
-                                        <span className="text-lg font-medium text-gray-700">{device}</span>
-                                        <Button
-                                            onClick={() => showRemoveConfirm(device)}
-                                            danger
-                                            size="small"
-                                        >
-                                            Hủy liên kết
-                                        </Button>
-                                    </div>
-                                </List.Item>
-                            )}
-                        />
-                    ) : (
-                        <p className="text-center text-gray-600">Không tìm thấy thiết bị nào.</p>
-                    )}
-
-                    <Form onFinish={handleAddDevice} className="mt-6 w-full">
-                        <Form.Item
-                            name="deviceId"
-                            rules={[{ required: true, message: 'Vui lòng nhập ID thiết bị' }]}
-                        >
-                            <Input
-                                value={newDeviceId}
-                                onChange={(e) => setNewDeviceId(e.target.value)}
-                                placeholder="Nhập ID thiết bị"
+                        {devices.length > 0 ? (
+                            <List
+                                className="space-y-4 w-full"
+                                bordered
+                                dataSource={devices}
+                                renderItem={device => (
+                                    <List.Item>
+                                        <div className="flex justify-between items-center w-full">
+                                            <span className="text-lg font-medium text-gray-700">{device}</span>
+                                            <Button
+                                                onClick={() => showRemoveConfirm(device)}
+                                                danger
+                                                size="small"
+                                            >
+                                                Hủy liên kết
+                                            </Button>
+                                        </div>
+                                    </List.Item>
+                                )}
                             />
-                        </Form.Item>
-                        <Form.Item>
+                        ) : (
+                            <p className="text-center text-gray-600">Không tìm thấy thiết bị nào.</p>
+                        )}
+
+                        <Form onFinish={handleAddDevice} className="mt-6 w-full">
+                            <Form.Item
+                                name="deviceId"
+                                rules={[{ required: true, message: 'Vui lòng nhập ID thiết bị' }]}
+                            >
+                                <Input
+                                    value={newDeviceId}
+                                    onChange={(e) => setNewDeviceId(e.target.value)}
+                                    placeholder="Nhập ID thiết bị"
+                                />
+                            </Form.Item>
+                            <Form.Item>
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    className="w-full"
+                                >
+                                    Thêm thiết bị
+                                </Button>
+                            </Form.Item>
+                        </Form>
+
+                        <div className="mt-6 text-center w-full">
                             <Button
-                                type="primary"
-                                htmlType="submit"
+                                onClick={() => navigate('/home')}
                                 className="w-full"
                             >
-                                Thêm thiết bị
+                                Quay về trang chính
                             </Button>
-                        </Form.Item>
-                    </Form>
-
-                    <div className="mt-6 text-center w-full">
-                        <Button
-                            onClick={() => navigate('/home')}
-                            className="w-full"
-                        >
-                            Quay về trang chính
-                        </Button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            
 
             <Modal
                 title="Xác nhận hủy liên kết"
-                visible={isModalVisible}
                 onOk={handleRemoveDevice}
                 onCancel={() => setIsModalVisible(false)}
                 okText="Xác nhận"
                 cancelText="Hủy"
-                className="glassmorphism-modal" // Add glassmorphism class to modal
             >
                 <p>Bạn có chắc chắn muốn hủy liên kết với thiết bị này?</p>
             </Modal>
         </div>
+
     );
 };
 
