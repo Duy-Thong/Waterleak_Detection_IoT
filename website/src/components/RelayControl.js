@@ -20,8 +20,8 @@ const RelayControl = ({ relayState, onToggleRelay }) => (
                 <span className="cloud two"></span>
             </div>
         </label>
-        <span className="text-xl font-semibold text-gray-700 hidden-mobile">
-            Rơ-le đang {relayState === 'OFF' ? 'TẮT' : 'BẬT'}
+        <span className="text-xl font-semibold text-blue-800 hidden-mobile">
+            Van đang {relayState === 'OFF' ? 'TẮT' : 'BẬT'}
         </span>
     </div>
 );
