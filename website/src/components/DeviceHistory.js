@@ -16,7 +16,7 @@ const DeviceHistory = () => {
     const navigate = useNavigate();
     const [historyData, setHistoryData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
-    const [dateRange, setDateRange] = useState([moment().startOf('day'), moment().endOf('day')]); // Initialize to today
+    const [dateRange, setDateRange] = useState(null);
     const [sensor1Range, setSensor1Range] = useState([0, 1000]);
     const [sensor2Range, setSensor2Range] = useState([0, 1000]);
     const [sensorDifference, setSensorDifference] = useState(null);
@@ -32,15 +32,19 @@ const DeviceHistory = () => {
                 const data = response.data;
                 if (data) {
                     const historyArray = Object.values(data);
+                    console.log("Fetched Data:", historyArray);
                     setHistoryData(historyArray);
                     setFilteredData(historyArray);
 
                     const timestamps = historyArray.map(item => moment(item.timestamp, 'YYYY-MM-DD HH:mm:ss'));
+                    console.log("Parsed Timestamps:", timestamps);
+
                     const minDate = moment.min(timestamps);
                     const maxDate = moment.max(timestamps).add(1, 'days');
-
                     if (minDate.isValid() && maxDate.isValid()) {
                         setDateRange([minDate, maxDate]);
+                    } else {
+                        setDateRange([moment().startOf('day'), moment().endOf('day')]);
                     }
                 }
             } catch (error) {
@@ -51,23 +55,16 @@ const DeviceHistory = () => {
         fetchHistory();
     }, [deviceId]);
 
-    const columns = [
-        { title: 'Thời gian', dataIndex: 'timestamp', key: 'timestamp' },
-        { title: 'Cảm biến 1', dataIndex: 'sensor1', key: 'sensor1' },
-        { title: 'Cảm biến 2', dataIndex: 'sensor2', key: 'sensor2' },
-        { title: 'Trạng thái Relay', dataIndex: 'relayState', key: 'relayState' },
-    ];
-
     const handleFilter = () => {
         let filtered = historyData;
 
-        if (dateRange[0] && dateRange[1]) {
-            filtered = filtered.filter(item =>
-                moment(item.timestamp, 'YYYY-MM-DD HH:mm:ss').isBetween(
-                    dateRange[0].startOf('day'),
-                    dateRange[1].endOf('day')
-                )
-            );
+        if (dateRange && dateRange[0] && dateRange[1] && dateRange[0].isValid() && dateRange[1].isValid()) {
+            console.log("Filtering by Date Range:", dateRange);
+
+            filtered = filtered.filter(item => {
+                const itemTime = moment(item.timestamp, 'YYYY-MM-DD HH:mm:ss');
+                return itemTime.isBetween(dateRange[0].startOf('day'), dateRange[1].endOf('day'));
+            });
         }
 
         filtered = filtered.filter(item =>
@@ -86,9 +83,15 @@ const DeviceHistory = () => {
             filtered = filtered.filter(item => item.relayState.toUpperCase() === relayState.toUpperCase());
         }
 
-        const sortedData = filtered.sort((a, b) => moment(b.timestamp) - moment(a.timestamp));
-        setFilteredData(sortedData);
+        setFilteredData(filtered);
     };
+
+    const columns = [
+        { title: 'Thời gian', dataIndex: 'timestamp', key: 'timestamp' },
+        { title: 'Cảm biến 1', dataIndex: 'sensor1', key: 'sensor1' },
+        { title: 'Cảm biến 2', dataIndex: 'sensor2', key: 'sensor2' },
+        { title: 'Trạng thái Relay', dataIndex: 'relayState', key: 'relayState' },
+    ];
 
     const handleDeleteHistory = async () => {
         const confirmDelete = window.confirm('Bạn có chắc chắn muốn xóa lịch sử thiết bị?');
@@ -114,10 +117,7 @@ const DeviceHistory = () => {
             }
         }
     };
-    const disabledDate = (current) => {
-        // Return true for dates that should be disabled
-        return current && current > moment().endOf('day');
-    };
+
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -157,11 +157,18 @@ const DeviceHistory = () => {
                         <Col span={24}>
                             <Text>Chọn Khoảng Ngày</Text>
                             <RangePicker
-                                value={dateRange}
-                                onChange={(dates) => setDateRange(dates)}
-                                format="DD/MM/YYYY"
+                                onChange={(dates) => {
+                                    if (dates && dates.length === 2) {
+                                        // Convert Day.js to moment
+                                        const startDate = moment(dates[0].toISOString());
+                                        const endDate = moment(dates[1].toISOString());
+                                        setDateRange([startDate, endDate]);
+                                    } else {
+                                        setDateRange(null);
+                                    }
+                                }}
                                 className="w-full"
-                                disabledDate={disabledDate}
+                                format="DD/MM/YYYY"
                             />
                         </Col>
                     </Row>
@@ -171,10 +178,9 @@ const DeviceHistory = () => {
                             <Slider
                                 range
                                 min={0}
-                                max={1000}
+                                max={500}
                                 value={sensor1Range}
                                 onChange={setSensor1Range}
-                                valueLabelDisplay="auto"
                             />
                         </Col>
                         <Col span={12}>
@@ -182,10 +188,9 @@ const DeviceHistory = () => {
                             <Slider
                                 range
                                 min={0}
-                                max={1000}
+                                max={500}
                                 value={sensor2Range}
                                 onChange={setSensor2Range}
-                                valueLabelDisplay="auto"
                             />
                         </Col>
                     </Row>
