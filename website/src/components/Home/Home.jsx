@@ -190,6 +190,7 @@ const Home = () => {
                         <Button 
                             type="primary" 
                             onClick={handleManageDevice}
+                            className='px-1 py-1 border rounded-md shadow-md'
                         >
                             Quản lý thiết bị
                         </Button>
@@ -197,6 +198,7 @@ const Home = () => {
                             <Button 
                                 type="default" 
                                 onClick={handleViewHistory}
+                                className='px-1 py-1 border rounded-md shadow-md'
                             >
                                 Xem Lịch Sử
                             </Button>
