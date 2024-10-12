@@ -33,7 +33,7 @@ const Navbar = ({ onLogout }) => {
     );
 
     return (
-        <nav className="navbar">
+        <nav className="navbar glassmorphism">
             <div
                 className="navbar-title"
                 onClick={handleTitleClick} // Add click handler for title

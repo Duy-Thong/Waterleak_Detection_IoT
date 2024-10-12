@@ -2,7 +2,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px;
+    padding-left: 26px;
+    padding-right: 26px;
+    padding-top: 10px;
+    padding-bottom: 10px;
     background: rgba(173, 216, 230, 0.3);
     /* Light blue with transparency */
     backdrop-filter: blur(10px);

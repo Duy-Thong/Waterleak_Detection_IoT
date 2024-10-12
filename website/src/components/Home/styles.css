@@ -21,17 +21,17 @@
 /* styles.css */
 
 .glassmorphism {
+    /* From https://css.glass */
     background: rgba(255, 255, 255, 0.1);
-    /* Semi-transparent white background */
-    border-radius: 10px;
-    /* Rounded corners */
-    backdrop-filter: blur(10px);
-    /* Blur effect */
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-    /* Subtle shadow */
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    /* Optional border */
-    padding: 20px;
+    /* Giảm độ mờ của nền */
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5px);
+    /* Tăng độ mờ nền để tạo hiệu ứng glassmorphism rõ hơn */
+    -webkit-backdrop-filter: blur(5px);
+    /* Tăng độ mờ nền để tạo hiệu ứng glassmorphism rõ hơn */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    /* Giảm độ mờ của đường viền */
     /* Padding inside the container */
     /* color: #fff; */
     /* Text color (white) */

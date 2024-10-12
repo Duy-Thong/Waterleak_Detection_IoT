@@ -2,7 +2,7 @@ import React from 'react';
 import './style.css'; // Import the CSS file
 
 const RelayControl = ({ relayState, onToggleRelay }) => (
-    <div className="flex items-center space-x-4 mt-4 mb-4 h-10">
+    <div className="flex items-center space-x-4  h-10">
         <label className="plane-switch">
             <input
                 type="checkbox"
