@@ -226,9 +226,10 @@ const DeviceHistory = () => {
                     dataSource={filteredData}
                     columns={columns}
                     rowKey="timestamp"
-                    className="mt-4 w-full max-w-3xl"
+                    className="mt-4 w-full max-w-3xl glassmorphism-table"
                     pagination={true}
                 />
+
             </div>
         </div>
     );

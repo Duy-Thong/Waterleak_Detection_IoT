@@ -156,7 +156,7 @@ const AccountManagement = () => {
                 <Form
                     onFinish={handleUpdate}
                     layout="vertical"
-                    className="glassmorphism glassmorphism-filter-section w-full max-w-lg"
+                    className="glassmorphism glassmorphism-filter-section w-full max-w-lg p-4"
                 >
                     <Form.Item label="Tên đăng nhập" required>
                         <Input
@@ -195,7 +195,7 @@ const AccountManagement = () => {
                 {showChangePassword && (
                     <Form
                         layout="vertical"
-                        className="glassmorphism glassmorphism-filter-section w-full max-w-lg mt-4"
+                        className="glassmorphism glassmorphism-filter-section w-full max-w-lg mt-4 p-4"
                         onFinish={handleChangePassword}
                     >
                         <Form.Item label="Mật khẩu cũ" required>
@@ -220,13 +220,14 @@ const AccountManagement = () => {
                         </Form.Item>
 
                         <Form.Item>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                className="mr-4"
-                            >
-                                Cập nhật mật khẩu
-                            </Button>
+                            <div className="flex justify-center">
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                >
+                                    Cập nhật mật khẩu
+                                </Button>
+                            </div>
                         </Form.Item>
                     </Form>
                 )}
