@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, push, set, get } from "firebase/database";
-import { database } from "../../firebase";  
+import { ref, set, get, child } from "firebase/database"; // Import get and child
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { database, auth } from "../../firebase"; // Import auth from firebase config
 import { Form, Input, Button, Alert, Progress } from 'antd'; 
 import { useUser } from '../../contexts/UserContext';
 import register from '../../assets/register.jpg';
@@ -10,6 +11,7 @@ function Register() {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
+    email: "", 
   });
   const [passwordStrength, setPasswordStrength] = useState(""); 
   const [strengthPercent, setStrengthPercent] = useState(0); 
@@ -17,22 +19,6 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { setUserId } = useUser();
-
-  const checkUsernameExists = async (username) => {
-    const usersRef = ref(database, 'users');
-    try {
-      const snapshot = await get(usersRef);
-      if (snapshot.exists()) {
-        const users = snapshot.val();
-        const usernameExists = Object.values(users).some(user => user.username === username);
-        return usernameExists;
-      }
-      return false;
-    } catch (error) {
-      console.error("Error checking username:", error);
-      return false;
-    }
-  };
 
   const calculateStrength = (password) => {
     let strength = 0;
@@ -45,9 +31,10 @@ function Register() {
   };
 
   const isPasswordStrong = (password) => {
-    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-    return strongPasswordRegex.test(password);
-  };
+        // Updated regex to include the period (.)
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*.])[A-Za-z\d!@#$%^&*.]{8,}$/;
+        return strongPasswordRegex.test(password.trim());
+    };
 
   const handlePasswordChange = (password) => {
     setFormData({ ...formData, password });
@@ -64,36 +51,60 @@ function Register() {
     }
   };
 
+  const checkDuplicate = async (username, email) => {
+    const dbRef = ref(database);
+    const snapshot = await get(child(dbRef, `users`));
+    if (snapshot.exists()) {
+      const users = snapshot.val();
+      for (let userId in users) {
+        if (users[userId].username === username) {
+          return "Tên người dùng đã tồn tại.";
+        }
+        if (users[userId].email === email) {
+          return "Email đã tồn tại.";
+        }
+      }
+    }
+    return null;
+  };
+
   const handleSubmit = async (values) => {
     setError(""); 
     setLoading(true);
-
-    const usernameExists = await checkUsernameExists(values.username);
-    if (usernameExists) {
-      setError("Tên người dùng đã tồn tại. Vui lòng chọn tên khác.");
-      setLoading(false);
-      return;
-    }
-
+    
     if (!isPasswordStrong(values.password)) {
       setError("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
       setLoading(false);
       return;
     }
 
-    const newUserRef = push(ref(database, 'users'));
+    const duplicateError = await checkDuplicate(values.username, values.email);
+    if (duplicateError) {
+      setError(duplicateError);
+      setLoading(false);
+      return;
+    }
+
     try {
+      // Step 1: Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+      const userId = user.uid;
+
+      // Step 2: Store user details in Realtime Database  
+      const newUserRef = ref(database, `users/${userId}`);
       await set(newUserRef, {
         username: values.username,
-        password: values.password,
+        email: values.email,
+        password: values.password // Thêm password vào database
       });
-      console.log("User added with ID:", newUserRef.key);
-      setUserId(newUserRef.key); // Set user ID in context
-      localStorage.setItem('userId', newUserRef.key); // Save userId to localStorage
-      navigate('/home'); 
+      setUserId(userId);
+      localStorage.setItem('userId', userId);
+      navigate('/home');
+
     } catch (error) {
-      console.error("Error saving data:", error);
-      setError("Đã xảy ra lỗi khi lưu dữ liệu.");
+      console.error("Registration error:", error);
+      setError("Đã xảy ra lỗi khi đăng ký: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -112,7 +123,7 @@ function Register() {
         {/* Left side with illustration */}
         <div className="hidden md:block w-1/2 bg-blue-500 flex items-center justify-center">
           <img
-            src={register} // Replace with your illustration URL
+            src={register} 
             alt="Illustration"
             className="w-full h-full object-cover max-w-2xl"
           />
@@ -134,6 +145,17 @@ function Register() {
               rules={[{ required: true, message: 'Vui lòng nhập tên người dùng' }]}
             >
               <Input placeholder="Nhập tên người dùng" />
+            </Form.Item>
+
+            <Form.Item
+              label="Email"
+              name="email"
+              rules={[
+                { required: true, message: 'Vui lòng nhập email' },
+                { type: 'email', message: 'Vui lòng nhập email hợp lệ' },
+              ]}
+            >
+              <Input placeholder="Nhập email" />
             </Form.Item>
 
             <Form.Item

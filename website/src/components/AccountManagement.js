@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, update } from "firebase/database";
+import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
 import { useUser } from '../contexts/UserContext';
 import Navbar from './Navbar';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Typography, Alert } from 'antd';
+import { Form, Input, Button, Typography, Alert, notification } from 'antd';
 import "./style.css";
+
 const { Title } = Typography;
+
+const openNotificationWithIcon = (type, message) => {
+    notification[type]({
+        message: message,
+    });
+};
 
 const AccountManagement = () => {
     const { userId, logout } = useUser();
+    const [currentUsername, setCurrentUsername] = useState('');
     const [username, setUsername] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -22,11 +31,15 @@ const AccountManagement = () => {
         const fetchUserData = async () => {
             const db = getDatabase();
             const userRef = ref(db, 'users/' + userId);
+            const auth = getAuth();
+            const currentUser = auth.currentUser;
+
             try {
                 const snapshot = await get(userRef);
                 if (snapshot.exists()) {
                     const userData = snapshot.val();
                     setUsername(userData.username || '');
+                    setCurrentUsername(userData.username || '');
                 } else {
                     setError('User data not found');
                 }
@@ -43,29 +56,34 @@ const AccountManagement = () => {
         }
     }, [userId]);
 
-    const checkUsernameExists = async (newUsername) => {
-        const db = getDatabase();
-        const usersRef = ref(db, 'users');
-        try {
-            const snapshot = await get(usersRef);
-            if (snapshot.exists()) {
-                const users = snapshot.val();
-                return Object.values(users).some(user => user.username === newUsername && user.id !== userId);
-            }
-            return false;
-        } catch (error) {
-            console.error("Error checking username:", error);
+    const checkUsernameExists = async (username) => {
+        if (username === currentUsername) {
             return false;
         }
+        const db = getDatabase();
+        const usersRef = ref(db, 'users');
+        const snapshot = await get(usersRef);
+        let exists = false;
+        snapshot.forEach((childSnapshot) => {
+            const userData = childSnapshot.val();
+            if (userData.username === username && childSnapshot.key !== userId) {
+                exists = true;
+            }
+        });
+        return exists;
     };
 
     const isPasswordStrong = (password) => {
-        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-        return strongPasswordRegex.test(password);
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*.])[A-Za-z\d!@#$%^&*.]{8,}$/;
+        return strongPasswordRegex.test(password.trim());
     };
 
     const handleUpdate = async (values) => {
         const newUsername = username;
+        const auth = getAuth();
+
+        setError(''); // Clear error at the start of an update attempt
+
         const usernameExists = await checkUsernameExists(newUsername);
 
         if (usernameExists) {
@@ -77,48 +95,65 @@ const AccountManagement = () => {
         const userRef = ref(db, 'users/' + userId);
 
         try {
-            const updates = { username: newUsername };
+            const updates = {
+                username: newUsername
+            };
             await update(userRef, updates);
-            alert('Thông tin tài khoản đã được cập nhật thành công.');
+            openNotificationWithIcon('success', 'Thông tin tài khoản đã được cập nhật thành công.');
+            setError(''); // Clear error after success
         } catch (error) {
             console.error("Error updating user data:", error);
-            alert('Lỗi khi cập nhật thông tin tài khoản.');
+            openNotificationWithIcon('error', `Lỗi khi cập nhật thông tin tài khoản: ${error.message}`);
         }
     };
 
     const handleChangePassword = async () => {
         const db = getDatabase();
         const userRef = ref(db, 'users/' + userId);
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
 
         try {
             const snapshot = await get(userRef);
             const userData = snapshot.val();
 
+            // Check if current password is correct
             if (userData.password !== currentPassword) {
                 setError('Mật khẩu cũ không chính xác');
                 return;
             }
 
+            // Check if new passwords match
             if (newPassword !== confirmPassword) {
                 setError('Mật khẩu mới không khớp');
                 return;
             }
 
+            // Check password strength
             if (!isPasswordStrong(newPassword)) {
                 setError('Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
                 return;
             }
 
+            // Reauthenticate the user
+            const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
+            await reauthenticateWithCredential(currentUser, credential);
+
+            // Update password in Firebase Authentication
+            await updatePassword(currentUser, newPassword);
+
+            // Update password in Realtime Database
             const updates = { password: newPassword };
             await update(userRef, updates);
-            alert('Mật khẩu đã được cập nhật thành công.');
+
+            openNotificationWithIcon('success', 'Mật khẩu đã được cập nhật thành công.');
             setShowChangePassword(false);
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
         } catch (error) {
             console.error("Error updating password:", error);
-            alert('Lỗi khi cập nhật mật khẩu.');
+            openNotificationWithIcon('error', 'Lỗi khi cập nhật mật khẩu: ' + error.message);
         }
     };
 
@@ -145,7 +180,6 @@ const AccountManagement = () => {
     }
 
     return (
-
         <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300">
             <Navbar onLogout={handleLogout} />
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8 mt-16">
@@ -233,7 +267,6 @@ const AccountManagement = () => {
                 )}
             </div>
         </div>
-
     );
 };
 

@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, get } from "firebase/database";
-import { database } from "../../firebase";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { useUser } from '../../contexts/UserContext';
 import { Form, Input, Button, Alert } from 'antd';
-import PTIT from '../../assets/ptit.jpg';
 import login from '../../assets/login.jpg';
+
 function Login() {
   const [error, setError] = useState(""); 
   const [loading, setLoading] = useState(false);
@@ -16,37 +15,16 @@ function Login() {
     setError(""); 
     setLoading(true);
 
-    const usersRef = ref(database, 'users');
+    const auth = getAuth();
     try {
-      const snapshot = await get(usersRef);
-      if (snapshot.exists()) {
-        let isValid = false;
-        let currentUserId = null;
-
-        snapshot.forEach((childSnapshot) => {
-          const userData = childSnapshot.val();
-          if (
-            userData.username === values.username &&
-            userData.password === values.password
-          ) {
-            isValid = true;
-            currentUserId = childSnapshot.key;
-          }
-        });
-
-        if (isValid) {
-          setUserId(currentUserId);
-          localStorage.setItem('userId', currentUserId); // Lưu userId vào localStorage
-          navigate("/home");
-        } else {
-          setError("Tên đăng nhập hoặc mật khẩu không đúng!");
-        }
-      } else {
-        setError("Không tìm thấy người dùng!");
-      }
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+      setUserId(user.uid);
+      localStorage.setItem('userId', user.uid); // Lưu userId vào localStorage
+      navigate("/home");
     } catch (error) {
       console.error("Lỗi khi kiểm tra đăng nhập:", error);
-      setError("Có lỗi xảy ra khi đăng nhập.");
+      setError("Email hoặc mật khẩu không đúng!");
     } finally {
       setLoading(false);
     }
@@ -58,7 +36,7 @@ function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-200">
-      <div className="bg-white shadow-xl rounded-lg flex w-3/4 max-w-4xl overflow-hidden backdrop-blur-sm bg-opacity-80  border-gray-200">
+      <div className="bg-white shadow-xl rounded-lg flex w-3/4 max-w-4xl overflow-hidden backdrop-blur-sm bg-opacity-80 border-gray-200">
         
         {/* Left side with illustration */}
         <div className="hidden md:block w-1/2 bg-cyan-500 flex items-center justify-center">
@@ -80,11 +58,11 @@ function Login() {
             layout="vertical"
           >
             <Form.Item
-              label="Tên đăng nhập"
-              name="username"
-              rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập' }]}
+              label="Email"
+              name="email"
+              rules={[{ required: true, message: 'Vui lòng nhập email' }]}
             >
-              <Input placeholder="Nhập tên đăng nhập" />
+              <Input placeholder="Nhập email" />
             </Form.Item>
 
             <Form.Item
