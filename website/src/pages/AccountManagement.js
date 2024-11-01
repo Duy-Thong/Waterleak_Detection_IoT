@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, update } from "firebase/database";
 import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
 import { useUser } from '../contexts/UserContext';
-import Navbar from './Navbar';
+import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Typography, Alert, notification } from 'antd';
+import RequireLogin from './RequireLogin';
 import "./style.css";
-
 const { Title } = Typography;
 
 const openNotificationWithIcon = (type, message) => {
@@ -163,20 +163,7 @@ const AccountManagement = () => {
     };
 
     if (!userId) {
-        return (
-            <div className="flex flex-col min-h-screen bg-gray-100">
-                <div className="flex flex-col items-center justify-center flex-1">
-                    <p className="text-red-500"><strong>Bạn cần đăng nhập để sử dụng các chức năng này.</strong></p>
-                    <Button
-                        className="mt-4"
-                        type="primary"
-                        onClick={() => navigate('/login')}
-                    >
-                        Đăng Nhập
-                    </Button>
-                </div>
-            </div>
-        );
+        return <RequireLogin />;
     }
 
     return (

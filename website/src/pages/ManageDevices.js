@@ -3,9 +3,9 @@ import { getDatabase, ref, get, remove, update } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { Input, Button, List, message, Form, Modal } from 'antd';
-import Navbar from './Navbar';
+import Navbar from '../components/Navbar';
 import './style.css'; // Đảm bảo import file CSS
-
+import RequireLogin from './RequireLogin';
 
 const ManageDevices = () => {
     const [devices, setDevices] = useState([]);
@@ -91,20 +91,7 @@ const ManageDevices = () => {
     };
 
     if (!userId) {
-        return (
-            <div className="flex flex-col min-h-screen bg-gray-100">
-                <div className="flex flex-col items-center justify-center flex-1">
-                    <p className="text-red-500"><strong>Bạn cần đăng nhập để sử dụng các chức năng này.</strong></p>
-                    <Button
-                        className="mt-4"
-                        type="primary"
-                        onClick={() => navigate('/login')}
-                    >
-                        Đăng Nhập
-                    </Button>
-                </div>
-            </div>
-        );
+        return <RequireLogin />;
     }
 
     return (
