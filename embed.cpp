@@ -27,7 +27,7 @@ FirebaseConfig config;
 
 #define DEVICE_ID "emyeuptit2025"
 unsigned long sendDataPrevMillis = 0;
-const long sendDataIntervalMillis = 10000; // 10 seconds
+const long sendDataIntervalMillis = 5000; // 10 seconds
 bool signupOK = false;
 
 // Sensor and relay variables
@@ -43,29 +43,126 @@ float calibrationFactor2 = 4.5;
 int entryID = 0;
 
 // WiFi settings
-String ssid = "Phong402";
-String password = "Phong402";
+String ssid = "IOT2024";
+String password = "IOT2024";
 #define AP_SSID "WaterLeak_AP"
 #define AP_PASS "12345678"
 
 // HTML page for WiFi configuration
-const char *html_page = R"(
+const char *html_page = R"rawliteral(
 <!DOCTYPE html>
 <html>
 <head>
-  <title>WiFi Setup</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Cài Đặt WiFi</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input[type='text'],
+        input[type='password'] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type='text']:focus,
+        input[type='password']:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+        
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #1557b0;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-  <h1>WiFi Setup</h1>
-  <form action="/save" method="POST">
-    SSID: <input type="text" name="ssid"><br>
-    Password: <input type="password" name="pass"><br>
-    <input type="submit" value="Save">
-  </form>
+    <div class='container'>
+        <h1>Cài Đặt WiFi</h1>
+        <form action='/save' method='POST'>
+            <div class='form-group'>
+                <label for='ssid'>Tên WiFi:</label>
+                <input type='text' id='ssid' name='ssid' required>
+            </div>
+            <div class='form-group'>
+                <label for='pass'>Mật khẩu:</label>
+                <input type='password' id='pass' name='pass' required>
+            </div>
+            <button type='submit'>Lưu cài đặt</button>
+        </form>
+        <div class='footer'>
+            Thiết bị sẽ tự động kết nối lại sau khi lưu thông tin
+        </div>
+    </div>
 </body>
 </html>
-)";
+)rawliteral";
 
 // Function prototypes
 void IRAM_ATTR flowSensor1ISR();
@@ -154,6 +251,7 @@ void setupAP()
 
 void handleRoot()
 {
+  server.sendHeader("Content-Type", "text/html");
   server.send(200, "text/html", html_page);
 }
 
@@ -226,6 +324,7 @@ void loop()
   if (Firebase.RTDB.getString(&fbdo, relayPath))
   {
     relayState = fbdo.stringData();
+    Serial.printf("Current relay state from Firebase: %s\n", relayState.c_str());
     if (relayState == "OFF")
     {
       digitalWrite(RELAY_PIN, HIGH);
@@ -250,6 +349,8 @@ void loop()
     flowRate2 = getFlowRate(flowCount2, calibrationFactor2);
     flowCount1 = 0;
     flowCount2 = 0;
+
+    Serial.printf("Flow rates - Sensor 1: %.2f, Sensor 2: %.2f\n", flowRate1, flowRate2);
 
     FirebaseJson flowSensorData;
     flowSensorData.set("sensor1", flowRate1);
@@ -313,14 +414,25 @@ void checkFlowRateDifference()
   float flowDifference1 = abs(flowRate1 - lastFlowRate1);
   float flowDifference2 = abs(flowRate2 - lastFlowRate2);
 
+  Serial.printf("Flow rate differences - Sensor 1: %.2f, Sensor 2: %.2f\n", flowDifference1, flowDifference2);
+
   if (flowDifference1 > 10 || flowDifference2 > 10)
   {
     flowExceedsThreshold = true;
     exceedCount++;
-    if (exceedCount >= 3)
+    Serial.printf("Flow rate exceeded threshold. Exceed count: %d\n", exceedCount);
+    if (exceedCount >= 1)
     {
-      digitalWrite(RELAY_PIN, LOW);
-      Serial.println("Relay triggered due to large flow rate difference.");
+      digitalWrite(RELAY_PIN, HIGH);
+      String relayPath = "/devices/" + String(DEVICE_ID) + "/relay/control";
+      if (Firebase.RTDB.setString(&fbdo, relayPath, "OFF"))
+      {
+        Serial.println("Emergency: Relay turned OFF due to leak detection");
+      }
+      else
+      {
+        Serial.printf("Failed to update relay state in Firebase: %s\n", fbdo.errorReason().c_str());
+      }
     }
   }
   else
@@ -333,16 +445,23 @@ void checkFlowRateDifference()
   lastFlowRate2 = flowRate2;
 }
 
-void checkAndCreateNamePath() {
-    String namePath = "/devices/" + String(DEVICE_ID) + "/name";
-    if (!Firebase.RTDB.getString(&fbdo, namePath)) {
-        Serial.println("Name path not found, creating with default device name.");
-        if (Firebase.RTDB.setString(&fbdo, namePath, "Water Leak Detector")) {
-            Serial.println("Name path created successfully.");
-        } else {
-            Serial.printf("Failed to create name path: %s\n", fbdo.errorReason().c_str());
-        }
-    } else {
-        Serial.println("Name path exists.");
+void checkAndCreateNamePath()
+{
+  String namePath = "/devices/" + String(DEVICE_ID) + "/name";
+  if (!Firebase.RTDB.getString(&fbdo, namePath))
+  {
+    Serial.println("Name path not found, creating with default device name.");
+    if (Firebase.RTDB.setString(&fbdo, namePath, "Water Leak Detector"))
+    {
+      Serial.println("Name path created successfully.");
     }
+    else
+    {
+      Serial.printf("Failed to create name path: %s\n", fbdo.errorReason().c_str());
+    }
+  }
+  else
+  {
+    Serial.println("Name path exists.");
+  }
 }
