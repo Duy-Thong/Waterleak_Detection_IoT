@@ -145,7 +145,8 @@ const DeviceHistory = () => {
                     flow_sensor: null,
                     relay: {
                         control: relayState ? String(relayState).toUpperCase() : 'OFF',
-                    }
+                    },
+                    name : deviceName
                 };
                 await axios.put(
                     `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/devices/${deviceId}.json`,

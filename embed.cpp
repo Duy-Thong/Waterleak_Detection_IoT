@@ -1,15 +1,16 @@
 #if defined(ESP32)
 #include <WiFi.h>
+#include <WebServer.h>
+WebServer server(80);
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+ESP8266WebServer server(80);
 #endif
+
 #include <Firebase_ESP_Client.h>
 #include <time.h>
 #include <ArduinoJson.h>
-
-// Wi-Fi credentials
-#define WIFI_SSID "Phong402"
-#define WIFI_PASSWORD "Phong402"
 
 // Firebase configuration and helper libraries
 #include "addons/TokenHelper.h"
@@ -24,27 +25,47 @@ FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 
-#define DEVICE_ID "emyeuptit2024" // Device ID
+#define DEVICE_ID "emyeuptit2025"
 unsigned long sendDataPrevMillis = 0;
 const long sendDataIntervalMillis = 10000; // 10 seconds
 bool signupOK = false;
 
-// Sensor data storage
+// Sensor and relay variables
 float flowRate1 = 0.0;
 float flowRate2 = 0.0;
-
-// Flow sensor pins
 #define FLOW_SENSOR_1_PIN 5
 #define FLOW_SENSOR_2_PIN 4
-
 volatile int flowCount1 = 0;
 volatile int flowCount2 = 0;
 float calibrationFactor1 = 4.5;
 float calibrationFactor2 = 4.5;
-
-// Relay control pin
 #define RELAY_PIN 0
 int entryID = 0;
+
+// WiFi settings
+String ssid = "Phong402";
+String password = "Phong402";
+#define AP_SSID "WaterLeak_AP"
+#define AP_PASS "12345678"
+
+// HTML page for WiFi configuration
+const char *html_page = R"(
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WiFi Setup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <h1>WiFi Setup</h1>
+  <form action="/save" method="POST">
+    SSID: <input type="text" name="ssid"><br>
+    Password: <input type="password" name="pass"><br>
+    <input type="submit" value="Save">
+  </form>
+</body>
+</html>
+)";
 
 // Function prototypes
 void IRAM_ATTR flowSensor1ISR();
@@ -53,11 +74,16 @@ float getFlowRate(int flowCount, float calibrationFactor);
 String formatTimestamp();
 void checkAndCreateRelayPath();
 void checkFlowRateDifference();
-bool authenticateUser();
+void setupAP();
+void handleRoot();
+void handleSave();
+bool connectWiFi();
+void initializeFirebase();
+void checkAndCreateNamePath();
 
-unsigned long flowCheckStartMillis = 0; // Start time for flow check
-bool flowExceedsThreshold = false;      // Flow rate difference state
-int exceedCount = 0;                    // Count of exceedances
+unsigned long flowCheckStartMillis = 0;
+bool flowExceedsThreshold = false;
+int exceedCount = 0;
 
 void setup()
 {
@@ -66,107 +92,157 @@ void setup()
   pinMode(On_Board_LED, OUTPUT);
   pinMode(RELAY_PIN, OUTPUT);
 
-  // Connect to Wi-Fi
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  Serial.print("Connecting to WiFi");
-  while (WiFi.status() != WL_CONNECTED)
+  // Attempt WiFi connection
+  if (!connectWiFi())
   {
-    Serial.print(".");
-    digitalWrite(On_Board_LED, HIGH);
-    delay(250);
-    digitalWrite(On_Board_LED, LOW);
-    delay(250);
-  }
-  digitalWrite(On_Board_LED, LOW);
-  Serial.println("\nSuccessfully connected to WiFi");
-
-  // Set up Firebase
-  config.api_key = API_KEY;
-  config.database_url = DATABASE_URL;
-
-  // Authenticate user
-  if (authenticateUser())
-  {
-    Serial.println("User authenticated successfully.");
+    setupAP(); // Start AP mode if WiFi connection fails
   }
   else
   {
-    Serial.println("User authentication failed.");
-    while (true)
-      ; // Stop the program if authentication fails
+    initializeFirebase(); // Initialize Firebase on successful WiFi connection
+  }
+
+  // Initialize sensors and hardware
+  pinMode(FLOW_SENSOR_1_PIN, INPUT);
+  pinMode(FLOW_SENSOR_2_PIN, INPUT);
+  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_1_PIN), flowSensor1ISR, RISING);
+  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_2_PIN), flowSensor2ISR, RISING);
+
+  // Configure NTP
+  configTime(7 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+}
+
+bool connectWiFi()
+{
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid.c_str(), password.c_str());
+  Serial.print("Connecting to WiFi");
+
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20)
+  {
+    delay(500);
+    Serial.print(".");
+    digitalWrite(On_Board_LED, !digitalRead(On_Board_LED));
+    attempts++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    digitalWrite(On_Board_LED, LOW);
+    Serial.println("\nSuccessfully connected to WiFi");
+    return true;
+  }
+
+  Serial.println("\nWiFi connection failed. Switching to AP mode...");
+  return false;
+}
+
+void setupAP()
+{
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(AP_SSID, AP_PASS);
+  Serial.println("AP Mode Started");
+  Serial.print("AP IP address: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/", handleRoot);
+  server.on("/save", HTTP_POST, handleSave);
+  server.begin();
+  Serial.println("HTTP server started");
+}
+
+void handleRoot()
+{
+  server.send(200, "text/html", html_page);
+}
+
+void handleSave()
+{
+  if (server.hasArg("ssid") && server.hasArg("pass"))
+  {
+    ssid = server.arg("ssid");
+    password = server.arg("pass");
+
+    server.send(200, "text/plain", "Settings saved. Re-attempting WiFi connection...");
+    delay(1000);
+
+    if (connectWiFi())
+    {
+      initializeFirebase();
+    }
+    else
+    {
+      setupAP();
+    }
+  }
+  else
+  {
+    server.send(400, "text/plain", "SSID and password are required.");
+  }
+}
+
+void initializeFirebase()
+{
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+
+  Serial.print("Signing up new user...");
+  if (Firebase.signUp(&config, &auth, "", ""))
+  {
+    Serial.println("ok");
+    signupOK = true;
+  }
+  else
+  {
+    Serial.printf("Error: %s\n", config.signer.signupError.message.c_str());
   }
 
   config.token_status_callback = tokenStatusCallback;
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
-  // Create relay path if it does not exist
   checkAndCreateRelayPath();
-
-  // Set up flow sensor pins
-  pinMode(FLOW_SENSOR_1_PIN, INPUT);
-  pinMode(FLOW_SENSOR_2_PIN, INPUT);
-  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_1_PIN), flowSensor1ISR, RISING);
-  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_2_PIN), flowSensor2ISR, RISING);
-
-  // Configure NTP for real-time clock
-  configTime(7 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+  checkAndCreateNamePath();
 }
 
 void loop()
 {
-  // Check Wi-Fi connection
   if (WiFi.status() != WL_CONNECTED)
   {
-    Serial.println("WiFi not connected, trying to reconnect...");
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    server.handleClient(); // Handle server requests in AP mode
     return;
   }
 
-  // Relay state variable
-  String relayState = "OFF"; // Default value
+  if (!signupOK)
+  {
+    Serial.println("Firebase not initialized. Attempting to initialize...");
+    initializeFirebase();
+    return;
+  }
 
-  // Relay state path in Firebase under devices
+  String relayState = "OFF";
   String relayPath = "/devices/" + String(DEVICE_ID) + "/relay/control";
   if (Firebase.RTDB.getString(&fbdo, relayPath))
   {
-    relayState = fbdo.stringData(); // Get relay state from Firebase
-    Serial.printf("Relay state from Firebase: %s\n", relayState.c_str());
-
-    // Control relay based on received state
+    relayState = fbdo.stringData();
     if (relayState == "OFF")
     {
       digitalWrite(RELAY_PIN, HIGH);
-      Serial.println("Relay turned OFF");
     }
     else if (relayState == "ON")
     {
       digitalWrite(RELAY_PIN, LOW);
-      Serial.println("Relay turned ON");
     }
   }
-  else
+  else if (fbdo.errorReason() == "path not exist")
   {
-    if (fbdo.errorReason() == "path not exist")
+    if (Firebase.RTDB.setString(&fbdo, relayPath, "OFF"))
     {
-      Serial.println("Relay path does not exist. Creating it with default value 'OFF'.");
-      if (Firebase.RTDB.setString(&fbdo, relayPath, "OFF"))
-      {
-        Serial.println("Relay path created successfully.");
-      }
-      else
-      {
-        Serial.printf("Failed to create relay path: %s\n", fbdo.errorReason().c_str());
-      }
-    }
-    else
-    {
-      Serial.printf("Failed to read relay state: %s\n", fbdo.errorReason().c_str());
+      Serial.println("Relay path created successfully.");
     }
   }
 
-  // Check and send data if it's time to send
   if (millis() - sendDataPrevMillis > sendDataIntervalMillis)
   {
     sendDataPrevMillis = millis();
@@ -175,51 +251,37 @@ void loop()
     flowCount1 = 0;
     flowCount2 = 0;
 
-    // Create JSON containing sensor data and relay state
     FirebaseJson flowSensorData;
-    String timestamp = formatTimestamp();
-    entryID++;
     flowSensorData.set("sensor1", flowRate1);
     flowSensorData.set("sensor2", flowRate2);
-    flowSensorData.set("timestamp", timestamp);
-    flowSensorData.set("relayState", relayState); // Add relay state
+    flowSensorData.set("timestamp", formatTimestamp());
+    flowSensorData.set("relayState", relayState);
 
-    // Path to save flow sensor data under devices
     String path = "/devices/" + String(DEVICE_ID) + "/flow_sensor";
-
-    if (Firebase.RTDB.pushJSON(&fbdo, path.c_str(), &flowSensorData))
-    {
-      Serial.println("Flow sensor data pushed successfully.");
-    }
-    else
+    if (!Firebase.RTDB.pushJSON(&fbdo, path.c_str(), &flowSensorData))
     {
       Serial.printf("Failed to push flow sensor data: %s\n", fbdo.errorReason().c_str());
     }
 
-    // Check for flow rate differences
     checkFlowRateDifference();
   }
 }
 
-// ISR for flow sensor 1
 void IRAM_ATTR flowSensor1ISR()
 {
   flowCount1++;
 }
 
-// ISR for flow sensor 2
 void IRAM_ATTR flowSensor2ISR()
 {
   flowCount2++;
 }
 
-// Function to calculate flow rate
 float getFlowRate(int flowCount, float calibrationFactor)
 {
   return (flowCount / calibrationFactor);
 }
 
-// Function to format current time
 String formatTimestamp()
 {
   time_t now;
@@ -231,78 +293,56 @@ String formatTimestamp()
   return String(timeString);
 }
 
-// Function to check and create relay path if it does not exist
 void checkAndCreateRelayPath()
 {
   String relayPath = "/devices/" + String(DEVICE_ID) + "/relay/control";
   if (!Firebase.RTDB.getString(&fbdo, relayPath))
   {
-    Serial.println("Relay path not found, creating the path with default value 'OFF'.");
     if (Firebase.RTDB.setString(&fbdo, relayPath, "OFF"))
     {
       Serial.println("Relay path created successfully.");
     }
-    else
-    {
-      Serial.printf("Failed to create relay path: %s\n", fbdo.errorReason().c_str());
-    }
-  }
-  else
-  {
-    Serial.println("Relay path exists.");
   }
 }
 
-// Function to check flow rate differences
 void checkFlowRateDifference()
 {
   static float lastFlowRate1 = 0.0;
   static float lastFlowRate2 = 0.0;
 
-  // Calculate flow rate differences
   float flowDifference1 = abs(flowRate1 - lastFlowRate1);
   float flowDifference2 = abs(flowRate2 - lastFlowRate2);
 
-  // Check if difference exceeds 20 liters/minute
-  if (flowDifference1 > 20 || flowDifference2 > 20)
+  if (flowDifference1 > 10 || flowDifference2 > 10)
   {
-    if (!flowExceedsThreshold)
+    flowExceedsThreshold = true;
+    exceedCount++;
+    if (exceedCount >= 3)
     {
-      flowCheckStartMillis = millis();
-      flowExceedsThreshold = true; // Set flow difference flag
-      exceedCount = 1;             // Count number of exceedances
-    }
-    else if (millis() - flowCheckStartMillis >= 10000)
-    { // Continuous check for 10 seconds
-      // Turn off relay if difference persists for 10 seconds
-      String relayPath = "/devices/" + String(DEVICE_ID) + "/relay/control";
-      Firebase.RTDB.setString(&fbdo, relayPath, "OFF");
-      Serial.println("Relay turned OFF due to flow rate exceedance.");
+      digitalWrite(RELAY_PIN, LOW);
+      Serial.println("Relay triggered due to large flow rate difference.");
     }
   }
   else
   {
-    flowExceedsThreshold = false; // Reset threshold flag
-    exceedCount = 0;              // Reset exceed count
+    flowExceedsThreshold = false;
+    exceedCount = 0;
   }
 
-  // Update last flow rates
   lastFlowRate1 = flowRate1;
   lastFlowRate2 = flowRate2;
 }
 
-// Function to authenticate user
-bool authenticateUser()
-{
-  auth.user.email = "device@gmail.com"; // Replace with your email
-  auth.user.password = "device";       // Replace with your password
-  if (Firebase.signIn(&auth, &fbdo))
-  {
-    return true; // User authenticated
-  }
-  else
-  {
-    Serial.printf("Authentication failed: %s\n", fbdo.errorReason().c_str());
-    return false; // User not authenticated
-  }
+void checkAndCreateNamePath() {
+    String namePath = "/devices/" + String(DEVICE_ID) + "/name";
+    if (!Firebase.RTDB.getString(&fbdo, namePath)) {
+        Serial.println("Name path not found, creating with default device name.");
+        if (Firebase.RTDB.setString(&fbdo, namePath, "Water Leak Detector")) {
+            Serial.println("Name path created successfully.");
+        } else {
+            Serial.printf("Failed to create name path: %s\n", fbdo.errorReason().c_str());
+        }
+    } else {
+        Serial.println("Name path exists.");
+    }
 }
