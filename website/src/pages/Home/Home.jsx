@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getDatabase, ref, get, onValue } from "firebase/database"; 
+import { getDatabase, ref, get, onValue, set } from "firebase/database";
 import { useUser } from '../../contexts/UserContext';
-import axios from 'axios'; 
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Button } from 'antd';
@@ -56,17 +55,18 @@ const Home = () => {
 
     const fetchDeviceData = async (deviceId) => {
         try {
-            const response = await axios.get(
-                `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/devices/${deviceId}.json`
-            );
-            const data = response.data;
-
-            if (data) {
+            const db = getDatabase();
+            const deviceRef = ref(db, `devices/${deviceId}`);
+            const snapshot = await get(deviceRef);
+            
+            if (snapshot.exists()) {
+                const data = snapshot.val();
                 setDeviceData(data);
-                const sortedKeys = Object.keys(data.flow_sensor).sort();
+                const flowSensorData = data.flow_sensor || {};
+                const sortedKeys = Object.keys(flowSensorData).sort();
                 const latestKey = sortedKeys[sortedKeys.length - 1];
-                setLatestData(data.flow_sensor[latestKey]);
-                setRelayState(data.relay.control || 'OFF'); 
+                setLatestData(flowSensorData[latestKey]);
+                setRelayState(data.relay?.control || 'OFF');
             } else {
                 alert('Không tìm thấy thiết bị.');
                 setDeviceData(null);
@@ -102,10 +102,9 @@ const Home = () => {
     const toggleRelay = async () => {
         const newRelayState = relayState === 'OFF' ? 'ON' : 'OFF';
         try {
-            await axios.patch(
-                `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/devices/${selectedDeviceId}/relay.json`,
-                { control: newRelayState }
-            );
+            const db = getDatabase();
+            const relayRef = ref(db, `devices/${selectedDeviceId}/relay`);
+            await set(relayRef, { control: newRelayState });
             setRelayState(newRelayState);
         } catch (error) {
             console.error("Error toggling relay:", error);
