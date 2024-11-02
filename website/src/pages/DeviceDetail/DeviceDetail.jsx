@@ -108,14 +108,22 @@ const DeviceDetail = () => {
     };
 
     const handleUpdateDeviceName = async () => {
+        if (!tempDeviceName.trim()) {
+            message.error('Tên thiết bị không được để trống');
+            return;
+        }
+        if (tempDeviceName.length > 30) {
+            message.error('Tên thiết bị không được vượt quá 30 ký tự');
+            return;
+        }
         try {
             const db = getDatabase();
             const deviceRef = ref(db, `devices/${deviceId}`);
             await set(deviceRef, {
                 ...deviceData,
-                name: tempDeviceName
+                name: tempDeviceName.trim()
             });
-            setDeviceName(tempDeviceName);
+            setDeviceName(tempDeviceName.trim());
             setIsEditing(false);
             message.success('Cập nhật tên thiết bị thành công');
         } catch (error) {
@@ -165,6 +173,8 @@ const DeviceDetail = () => {
                                 onChange={(e) => setTempDeviceName(e.target.value)}
                                 onPressEnter={handleUpdateDeviceName}
                                 style={{ width: '200px' }}
+                                maxLength={30} // Add maxLength prop
+                                showCount // Show character count
                             />
                         ) : deviceName}</strong>
                     </AntTitle>

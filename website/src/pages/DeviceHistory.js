@@ -16,6 +16,7 @@ const { Option } = Select;
 const DeviceHistory = () => {
     const { deviceId } = useParams();
     const navigate = useNavigate();
+    const [deviceName, setDeviceName] = useState('');
     const [historyData, setHistoryData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [dateRange, setDateRange] = useState(null);
@@ -26,7 +27,7 @@ const DeviceHistory = () => {
     const { userId, logout } = useUser();
 
     useEffect(() => {
-        const fetchHistory = async () => {
+        const fetchDeviceDetails = async () => {
             try {
                 const auth = getAuth();
                 const token = await auth.currentUser?.getIdToken();
@@ -35,6 +36,21 @@ const DeviceHistory = () => {
                     throw new Error('No authentication token found');
                 }
 
+                // Fetch device name
+                const deviceResponse = await axios.get(
+                    `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/devices/${deviceId}.json`,
+                    {
+                        params: {
+                            auth: token
+                        }
+                    }
+                );
+                
+                if (deviceResponse.data && deviceResponse.data.name) {
+                    setDeviceName(deviceResponse.data.name);
+                }
+
+                // Fetch history data
                 const response = await axios.get(
                     `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/devices/${deviceId}/flow_sensor.json`,
                     {
@@ -73,7 +89,7 @@ const DeviceHistory = () => {
             }
         };
 
-        fetchHistory();
+        fetchDeviceDetails();
     }, [deviceId, logout, navigate]);
 
     const handleFilter = () => {
@@ -170,7 +186,7 @@ const DeviceHistory = () => {
         <div className="bg-gradient-to-r from-white to-blue-200 min-h-screen">
             <Navbar onLogout={handleLogout} />
             <div className="p-8 flex flex-col items-center pt-20">
-                <Title level={2} className="text-gray-800">Lịch Sử Thiết Bị</Title>
+                <Title level={2} className="text-gray-800">Lịch Sử Thiết Bị: {deviceName}</Title>
                 <Button
                     onClick={() => navigate('/home')}
                     className="bg-blue-600 text-white hover:bg-blue-500 transition duration-300 mb-4"
