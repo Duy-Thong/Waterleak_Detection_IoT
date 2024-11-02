@@ -43,8 +43,8 @@ float calibrationFactor2 = 4.5;
 int entryID = 0;
 
 // WiFi settings
-String ssid = "IOT2024";
-String password = "IOT2024";
+String ssid = "Phong402";
+String password = "Phong402";
 #define AP_SSID "WaterLeak_AP"
 #define AP_PASS "12345678"
 
@@ -356,6 +356,7 @@ void loop()
     flowSensorData.set("sensor1", flowRate1);
     flowSensorData.set("sensor2", flowRate2);
     flowSensorData.set("timestamp", formatTimestamp());
+    flowSensorData.set("resolved", false);
     flowSensorData.set("relayState", relayState);
 
     String path = "/devices/" + String(DEVICE_ID) + "/flow_sensor";
@@ -434,6 +435,8 @@ void checkFlowRateDifference()
         warningData.set("timestamp", formatTimestamp());
         warningData.set("flowDifference1", flowDifference1);
         warningData.set("flowDifference2", flowDifference2);
+        warningData.set("resovled", false);
+
         
         // Send warning to Firebase
         String warningPath = "/devices/" + String(DEVICE_ID) + "/warning";

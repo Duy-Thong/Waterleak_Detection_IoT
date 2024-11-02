@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Typography, Card, Statistic, Badge, Checkbox, message, Radio, Space, DatePicker, Button } from 'antd';
+import { Typography, Card, Statistic, Badge, message, Radio, Space, DatePicker, Button } from 'antd';
+import '../styles/Checkbox.css';
 import { WarningOutlined, DashboardOutlined, ClockCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -79,6 +80,22 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
     };
 
     const stats = getWarningStats();
+
+    const CustomCheckbox = ({ checked, onChange, id }) => (
+        <div className="checkbox-wrapper-31">
+            <input 
+                type="checkbox" 
+                checked={checked}
+                onChange={(e) => onChange(e)}
+                id={`cbx-${id}`}
+            />
+            <svg viewBox="0 0 35.6 35.6">
+                <circle className="background" cx="17.8" cy="17.8" r="17.8"></circle>
+                <circle className="stroke" cx="17.8" cy="17.8" r="14.37"></circle>
+                <polyline className="check" points="11.78 18.12 15.55 22.23 25.17 12.87"></polyline>
+            </svg>
+        </div>
+    );
 
     return (
         <div className="mt-5 mb-5 w-3/4 mx-auto">
@@ -206,16 +223,16 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
                                         </div>
 
                                         {/* Footer */}
-                                        <div className="pt-3 border-t border-white/20 flex justify-end">
-                                            <Checkbox
+                                        <div className="pt-3 border-t border-white/20 flex justify-end items-center gap-2">
+                                            <span className="text-blue-900/90 whitespace-nowrap font-medium">
+                                                Đã xử lý
+                                            </span>
+                                            <CustomCheckbox
                                                 checked={warning.resolved || false}
                                                 onChange={(e) => handleResolveChange(warning, e.target.checked)}
-                                                className="glassmorphism-checkbox"
-                                            >
-                                                <span className="text-blue-900/90 whitespace-nowrap font-medium">
-                                                    Đã xử lý
-                                                </span>
-                                            </Checkbox>
+                                                id={warning.id} // Add ID prop here
+                                            />
+                                            
                                         </div>
                                     </div>
                                 </Card>

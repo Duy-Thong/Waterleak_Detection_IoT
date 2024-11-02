@@ -1,0 +1,29 @@
+.glassmorphism-modal .ant-modal-content {
+    backdrop-filter: blur(16px);
+    background: rgba(255, 255, 255, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glassmorphism-modal .ant-modal-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glassmorphism-modal .ant-modal-title {
+    color: white !important;
+}
+
+.glassmorphism-modal .ant-form-item-label>label {
+    color: white;
+}
+
+.glassmorphism-modal .ant-input {
+    backdrop-filter: blur(4px);
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.glassmorphism-modal .ant-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}

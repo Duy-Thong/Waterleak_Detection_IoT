@@ -59,10 +59,21 @@ const Home = () => {
         const warnings = Object.values(deviceData.warning);
         const today = new Date().setHours(0, 0, 0, 0);
 
-        return warnings.filter(warning => {
+        // Add logging to check warnings data
+        console.log('All warnings:', warnings);
+        
+        const filteredWarnings = warnings.filter(warning => {
             const warningDate = new Date(warning.timestamp).setHours(0, 0, 0, 0);
-            return warningDate === today;
-        }).length;
+            // Log each warning's resolved status
+            console.log('Warning:', warning);
+            console.log('Warning resolved status:', warning.resolved);
+            return warningDate === today && warning.resolved === false;
+        });
+
+        // Log filtered results
+        console.log('Filtered warnings:', filteredWarnings);
+        
+        return filteredWarnings.length;
     };
 
     const getWarningsCount = (deviceId) => {
@@ -235,21 +246,21 @@ const Home = () => {
 
                 {/* Statistics Section */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl mx-auto mb-12 px-4">
-                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px]">
+                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px] glassmorphism">
                         <Statistic 
                             title={<span className="text-lg font-medium">Tổng số thiết bị</span>}
                             value={stats.totalDevices}
                             prefix={<HomeOutlined className="text-blue-500 text-xl" />}
                         />
                     </Card>
-                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px]">
+                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px] glassmorphism">
                         <Statistic 
                             title={<span className="text-lg font-medium">Thiết bị đang hoạt động</span>}
                             value={stats.activeDevices}
                             prefix={<AppstoreOutlined className="text-green-500 text-xl" />}
                         />
                     </Card>
-                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px]">
+                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px] glassmorphism">
                         <Statistic 
                             title={<span className="text-lg font-medium">Cảnh báo hôm nay</span>}
                             value={stats.alertsToday}
