@@ -1,24 +1,41 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ref, set, get, child } from "firebase/database";
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"; // Add GoogleAuthProvider
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getFirestore, doc, setDoc } from 'firebase/firestore'; // Add Firestore imports
 import { database, auth } from "../../firebase";
-import { Form, Input, Button, Alert, Progress, Divider } from 'antd'; // Add Divider
+import { Form, Input, Button, Alert, Progress, Divider } from 'antd';
 import { useUser } from '../../contexts/UserContext';
 import register from '../../assets/register.jpg';
 
 function Register() {
+  const [form] = Form.useForm(); // Add Form hook
   const [formData, setFormData] = useState({
     username: "",
     password: "",
-    email: "", 
+    confirmPassword: "",
+    email: "",
   });
-  const [passwordStrength, setPasswordStrength] = useState(""); 
-  const [strengthPercent, setStrengthPercent] = useState(0); 
+  const [passwordStrength, setPasswordStrength] = useState("");
+  const [strengthPercent, setStrengthPercent] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { setUserId } = useUser();
+  const { state } = useLocation();
+  const googleUser = state?.googleUser;
+  const db = getFirestore(); // Initialize Firestore
+
+  useEffect(() => {
+    // Pre-fill form if coming from Google sign-in
+    if (googleUser) {
+      form.setFieldsValue({
+        email: googleUser.email,
+        name: googleUser.displayName,
+        // Don't set password - user should still create one
+      });
+    }
+  }, [googleUser, form]);
 
   const calculateStrength = (password) => {
     let strength = 0;
@@ -31,10 +48,9 @@ function Register() {
   };
 
   const isPasswordStrong = (password) => {
-        // Updated regex to include the period (.)
-        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*.])[A-Za-z\d!@#$%^&*.]{8,}$/;
-        return strongPasswordRegex.test(password.trim());
-    };
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*.])[A-Za-z\d!@#$%^&*.]{8,}$/;
+    return strongPasswordRegex.test(password);
+  };
 
   const handlePasswordChange = (password) => {
     setFormData({ ...formData, password });
@@ -51,73 +67,80 @@ function Register() {
     }
   };
 
-  const checkDuplicate = async (username, email) => {
-    const dbRef = ref(database);
-    const snapshot = await get(child(dbRef, `users`));
-    if (snapshot.exists()) {
-      const users = snapshot.val();
-      for (let userId in users) {
-        if (users[userId].username === username) {
-          return "Tên người dùng đã tồn tại.";
-        }
-        if (users[userId].email === email) {
-          return "Email đã tồn tại.";
-        }
-      }
-    }
-    return null;
-  };
+  
+  
 
   const handleSubmit = async (values) => {
-    setError(""); 
+    setError("");
     setLoading(true);
     
-    if (!isPasswordStrong(values.password)) {
-      setError("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
-      setLoading(false);
-      return;
-    }
-
-    const duplicateError = await checkDuplicate(values.username, values.email);
-    if (duplicateError) {
-      setError(duplicateError);
-      setLoading(false);
-      return;
-    }
-
     try {
-      // Step 1: Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-      const userId = user.uid;
+      // Validate password
+      if (!isPasswordStrong(values.password)) {
+        throw new Error("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
+      }
 
-      // Step 2: Store user details in Realtime Database  
-      const newUserRef = ref(database, `users/${userId}`);
-      await set(newUserRef, {
-        username: values.username,
-        email: values.email,
-        password: values.password // Thêm password vào database
-      });
-      setUserId(userId);
-      localStorage.setItem('userId', userId);
-      navigate('/home');
+      if (values.password !== values.confirmPassword) {
+        throw new Error("Mật khẩu xác nhận không khớp.");
+      }
 
+      if (googleUser) {
+        // For Google users, create user document with their Google UID
+        await setDoc(doc(db, 'users', googleUser.uid), {
+          email: values.email,
+          displayName: values.name,
+          photoURL: googleUser.photoURL,
+          createdAt: new Date(),
+          // Add any additional registration fields
+        });
+        
+        setUserId(googleUser.uid);
+        localStorage.setItem('userId', googleUser.uid);
+      } else {
+        // Normal email registration flow
+        // First create the authentication user
+        const userCredential = await createUserWithEmailAndPassword(
+          auth, 
+          values.email, 
+          values.password
+        );
+
+        // Wait for auth state to be ready
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Now that user is authenticated, write to database
+        try {
+          const newUserRef = ref(database, `users/${userCredential.user.uid}`);
+          await set(newUserRef, {
+            username: values.username,
+            email: values.email,
+            registeredWith: 'email',
+            password : values.password
+          });
+
+          // Set user ID and navigate
+          setUserId(userCredential.user.uid);
+          localStorage.setItem('userId', userCredential.user.uid);
+          navigate('/home');
+        } catch (dbError) {
+          console.error("Database Error:", dbError);
+          // If database write fails, delete the auth user
+          await userCredential.user.delete();
+          throw new Error("Không thể tạo hồ sơ người dùng. Vui lòng thử lại sau.");
+        }
+      }
+
+      navigate("/home");
     } catch (error) {
-      console.error("Registration error:", error);
-      setError("Đã xảy ra lỗi khi đăng ký: " + error.message);
+      console.error("Registration Error:", error);
+      if (error.code === 'auth/email-already-in-use') {
+        setError("Email này đã được sử dụng.");
+      } else {
+        setError(error.message);
+      }
     } finally {
       setLoading(false);
     }
-  };
-
-  const checkExistingGoogleUser = async (email) => {
-    const dbRef = ref(database);
-    const snapshot = await get(child(dbRef, 'users'));
-    if (snapshot.exists()) {
-      const users = snapshot.val();
-      return Object.values(users).some(user => user.email === email);
-    }
-    return false;
   };
 
   const handleGoogleSignIn = async () => {
@@ -127,33 +150,33 @@ function Register() {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      const user = result.user;
       
-      // Check if email already exists
-      const emailExists = await checkExistingGoogleUser(user.email);
-      if (emailExists) {
-        setError("Tài khoản Google này đã tồn tại. Vui lòng đăng nhập.");
-        setTimeout(() => {
-          navigate('/login');
-        }, 3000);
-        return;
+      // Check if user exists
+      const userRef = ref(database, `users/${result.user.uid}`);
+      const userSnapshot = await get(userRef);
+      
+      if (userSnapshot.exists()) {
+        throw new Error("Tài khoản Google này đã tồn tại. Vui lòng đăng nhập.");
       }
-      
-      // If email doesn't exist, proceed with registration
-      const userRef = ref(database, `users/${user.uid}`);
+
+      // Create new user record
       await set(userRef, {
-        username: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
+        username: result.user.displayName,
+        email: result.user.email,
+        photoURL: result.user.photoURL,
         registeredWith: 'google'
       });
       
-      setUserId(user.uid);
-      localStorage.setItem('userId', user.uid);
+      // Set user ID in context and local storage
+      setUserId(result.user.uid);
+      localStorage.setItem('userId', result.user.uid);
       navigate('/home');
+
     } catch (error) {
-      console.error("Google sign-in error:", error);
-      setError("Đã xảy ra lỗi khi đăng nhập bằng Google: " + error.message);
+      setError(error.message);
+      if (error.message.includes("đã tồn tại")) {
+        setTimeout(() => navigate('/login'), 3000);
+      }
     } finally {
       setLoading(false);
     }
@@ -210,12 +233,30 @@ function Register() {
             <Form.Item
               label="Mật khẩu"
               name="password"
-              rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
+              rules={[{ required: true, message: 'Vui lòng nhập mật kh��u' }]}
             >
               <Input.Password
                 placeholder="Nhập mật khẩu"
                 onChange={(e) => handlePasswordChange(e.target.value)}
               />
+            </Form.Item>
+
+            <Form.Item
+              label="Xác nhận mật khẩu"
+              name="confirmPassword"
+              rules={[
+                { required: true, message: 'Vui lòng xác nhận mật khẩu' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue('password') === value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('Mật khẩu xác nhận không khớp'));
+                  },
+                }),
+              ]}
+            >
+              <Input.Password placeholder="Xác nhận mật khẩu" />
             </Form.Item>
 
             <div className="flex flex-col items-center">

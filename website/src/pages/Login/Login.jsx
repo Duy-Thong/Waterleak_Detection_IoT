@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useUser } from '../../contexts/UserContext';
 import { Form, Input, Button, Alert, Divider } from 'antd';
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import login from '../../assets/login.jpg';
 
 function Login() {
@@ -35,13 +36,36 @@ function Login() {
     setLoading(true);
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
+    const db = getFirestore();
 
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+      
+      // Check if user exists in Firestore
+      const userRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        // User doesn't exist - redirect to registration
+        navigate("/register", { 
+          state: { 
+            googleUser: {
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName,
+              photoURL: user.photoURL
+            }
+          }
+        });
+        return;
+      }
+
+      // User exists - proceed with login
       setUserId(user.uid);
       localStorage.setItem('userId', user.uid);
       navigate("/home");
+
     } catch (error) {
       console.error("Google sign-in error:", error);
       setError("Đăng nhập bằng Google thất bại!");
