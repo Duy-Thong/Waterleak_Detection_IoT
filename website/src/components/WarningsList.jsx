@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Typography, Card, Statistic, Badge, message, Radio, Space, DatePicker, Button } from 'antd';
 import '../styles/Checkbox.css';
-import { WarningOutlined, DashboardOutlined, ClockCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { WarningOutlined, DashboardOutlined, ClockCircleOutlined, ArrowLeftOutlined, ExclamationCircleOutlined, AlertOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { ref, update } from 'firebase/database';
@@ -14,6 +14,7 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
     const navigate = useNavigate();
     const [filterStatus, setFilterStatus] = useState('all'); // Add this state
     const [dateFilter, setDateFilter] = useState(null);
+    const [severityFilter, setSeverityFilter] = useState('all');
 
     // Add filter function
     const getFilteredWarnings = () => {
@@ -24,6 +25,17 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
             filtered = filtered.filter(w => w.resolved);
         } else if (filterStatus === 'unresolved') {
             filtered = filtered.filter(w => !w.resolved);
+        }
+
+        // Filter by severity
+        if (severityFilter !== 'all') {
+            filtered = filtered.filter(w => {
+                const difference = calculateAbsDifference(w.flowDifference1, w.flowDifference2);
+                if (severityFilter === 'critical') return difference >= 20;
+                if (severityFilter === 'warning') return difference >= 10 && difference < 20;
+                if (severityFilter === 'notice') return difference < 10;
+                return true;
+            });
         }
 
         // Filter by date if selected
@@ -81,6 +93,43 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
 
     const stats = getWarningStats();
 
+    // Add function to calculate absolute difference
+    const calculateAbsDifference = (flow1, flow2) => {
+        return Math.abs(Number(flow1) - Number(flow2));
+    };
+
+    // Add function to determine severity
+    const getSeverityInfo = (difference) => {
+        if (difference >= 20) {
+            return {
+                level: 'critical',
+                color: '#dc2626',
+                bgGradient: 'from-red-50 to-red-100',
+                borderColor: 'border-red-500',
+                icon: <AlertOutlined style={{ fontSize: '24px', color: '#dc2626' }} />,
+                text: 'Nguy hiểm'
+            };
+        } else if (difference >= 10) {
+            return {
+                level: 'warning',
+                color: '#d97706',
+                bgGradient: 'from-amber-50 to-amber-100',
+                borderColor: 'border-amber-500',
+                icon: <ExclamationCircleOutlined style={{ fontSize: '24px', color: '#d97706' }} />,
+                text: 'Cảnh báo'
+            };
+        } else {
+            return {
+                level: 'notice',
+                color: '#2563eb',
+                bgGradient: 'from-blue-50 to-blue-100',
+                borderColor: 'border-blue-500',
+                icon: <WarningOutlined style={{ fontSize: '24px', color: '#2563eb' }} />,
+                text: 'Chú ý'
+            };
+        }
+    };
+
     const CustomCheckbox = ({ checked, onChange, id }) => (
         <div className="checkbox-wrapper-31">
             <input 
@@ -100,145 +149,189 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
     return (
         <div className="mt-5 mb-5 w-3/4 mx-auto">
             <div className="p-6 rounded-xl glassmorphism">
-                <div className="flex flex-col gap-4 mb-6">
-                    <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-                        <div className="flex items-center gap-4">
-                            <Button 
-                                icon={<ArrowLeftOutlined />}
-                                onClick={() => navigate(-1)}
-                                className="flex items-center border border-blue-600 text-blue-600 bg-white/50 hover:bg-blue-50"
-                            >
-                                Trở về
-                            </Button>
-                            <Title level={4} className="!text-blue-900/90 !mb-0 flex items-center gap-2">
-                                <WarningOutlined className="text-yellow-600" />
-                                <span>Cảnh báo vỡ ống nước</span>
-                            </Title>
-                        </div>
-                        <div className="flex flex-wrap gap-4 items-center">
-                            <DatePicker 
-                                locale={locale}
-                                onChange={(date) => setDateFilter(date)}
-                                placeholder="Chọn ngày"
-                                className="border border-blue-600 text-blue-600 bg-white/50"
-                                format="DD/MM/YYYY"
-                                allowClear
-                            />
-                            <Radio.Group 
-                                value={filterStatus} 
-                                onChange={e => setFilterStatus(e.target.value)}
-                                className="bg-white/50 p-1 rounded-lg"
-                            >
-                                <Space size={8}>
-                                    <Radio.Button 
-                                        value="all" 
-                                        className="border border-blue-600 text-blue-600 hover:text-blue-700 hover:border-blue-700 bg-white/50"
-                                    >
-                                        Tất cả
-                                    </Radio.Button>
-                                    <Radio.Button 
-                                        value="unresolved" 
-                                        className="border border-red-600 text-red-600 hover:text-red-700 hover:border-red-700 bg-white/50"
-                                    >
-                                        Chưa xử lý
-                                    </Radio.Button>
-                                    <Radio.Button 
-                                        value="resolved" 
-                                        className="border border-green-600 text-green-600 hover:text-green-700 hover:border-green-700 bg-white/50"
-                                    >
-                                        Đã xử lý
-                                    </Radio.Button>
-                                </Space>
-                            </Radio.Group>
-                        </div>
+                <div className="flex flex-col gap-6">
+                    {/* Header with Title and Back button */}
+                    <div className="flex items-center justify-between gap-4 pb-4 border-b border-blue-100">
+                        <Button 
+                            icon={<ArrowLeftOutlined />}
+                            onClick={() => navigate(-1)}
+                            className="flex items-center border border-blue-600 text-blue-600 bg-white/50 hover:bg-blue-50"
+                        >
+                            Trở về
+                        </Button>
+                        <Title level={4} className="!text-blue-900/90 !mb-0 flex items-center gap-2">
+                            <WarningOutlined className="text-yellow-600" />
+                            <span>Cảnh báo vỡ ống nước</span>
+                        </Title>
                     </div>
-                    
-                    {/* Thêm phần thống kê */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 glassmorphism rounded-xl">
-                        <Statistic
-                            title={<span className="text-blue-800">Tổng số sự cố</span>}
-                            value={warnings.length}
-                            valueStyle={{ color: '#1e40af' }}
-                        />
-                        <Statistic
-                            title={<span className="text-green-800">Đã xử lý</span>}
-                            value={stats.resolved}
-                            valueStyle={{ color: '#15803d' }}
-                        />
-                        <Statistic
-                            title={<span className="text-red-800">Chưa xử lý</span>}
-                            value={stats.unresolved}
-                            valueStyle={{ color: '#dc2626' }}
-                        />
-                        <Statistic
-                            title={<span className="text-blue-800">Tỷ lệ xử lý</span>}
-                            value={warnings.length ? (stats.resolved / warnings.length * 100).toFixed(1) : 0}
-                            suffix="%"
-                            valueStyle={{ color: '#1e40af' }}
-                        />
+
+                    {/* Filters Section */}
+                    <div className="flex flex-col gap-4 p-4 bg-white/10 rounded-xl border border-blue-100 mt-3 mb-3">
+                        <div className="text-blue-900 font-medium mb-1">Bộ lọc</div>
+                        <div className="flex flex-wrap gap-4">
+                            {/* Date Filter */}
+                            <div className="flex flex-col gap-2">
+                                <span className="text-sm text-gray-600">Thời gian</span>
+                                <DatePicker 
+                                    locale={locale}
+                                    onChange={(date) => setDateFilter(date)}
+                                    placeholder="Chọn ngày"
+                                    className="border border-blue-600 text-blue-600 bg-white/50 min-w-[200px]"
+                                    format="DD/MM/YYYY"
+                                    allowClear
+                                />
+                            </div>
+
+                            {/* Status Filter */}
+                            <div className="flex flex-col gap-2">
+                                <span className="text-sm text-gray-600">Trạng thái</span>
+                                <Radio.Group 
+                                    value={filterStatus} 
+                                    onChange={e => setFilterStatus(e.target.value)}
+                                    className="bg-white/50 p-1 rounded-lg"
+                                >
+                                    <Space size={8}>
+                                        <Radio.Button 
+                                            value="all" 
+                                            className="border border-blue-600 text-blue-600 hover:text-blue-700 hover:border-blue-700 bg-white/50"
+                                        >
+                                            Tất cả
+                                        </Radio.Button>
+                                        <Radio.Button 
+                                            value="unresolved" 
+                                            className="border border-red-600 text-red-600 hover:text-red-700 hover:border-red-700 bg-white/50"
+                                        >
+                                            Chưa xử lý
+                                        </Radio.Button>
+                                        <Radio.Button 
+                                            value="resolved" 
+                                            className="border border-green-600 text-green-600 hover:text-green-700 hover:border-green-700 bg-white/50"
+                                        >
+                                            Đã xử lý
+                                        </Radio.Button>
+                                    </Space>
+                                </Radio.Group>
+                            </div>
+
+                            {/* Severity Filter */}
+                            <div className="flex flex-col gap-2">
+                                <span className="text-sm text-gray-600">Mức độ nghiêm trọng</span>
+                                <Radio.Group 
+                                    value={severityFilter}
+                                    onChange={e => setSeverityFilter(e.target.value)}
+                                    className="bg-white/50 p-1 rounded-lg"
+                                >
+                                    <Space size={8}>
+                                        <Radio.Button 
+                                            value="all" 
+                                            className="border border-gray-600 text-gray-600 hover:text-gray-700 hover:border-gray-700 bg-white/50"
+                                        >
+                                            Tất cả
+                                        </Radio.Button>
+                                        <Radio.Button 
+                                            value="critical" 
+                                            className="border border-red-600 text-red-600 hover:text-red-700 hover:border-red-700 bg-white/50"
+                                        >
+                                            Nguy hiểm
+                                        </Radio.Button>
+                                        <Radio.Button 
+                                            value="warning" 
+                                            className="border border-amber-600 text-amber-600 hover:text-amber-700 hover:border-amber-700 bg-white/50"
+                                        >
+                                            Cảnh báo
+                                        </Radio.Button>
+                                        <Radio.Button 
+                                            value="notice" 
+                                            className="border border-blue-600 text-blue-600 hover:text-blue-700 hover:border-blue-700 bg-white/50"
+                                        >
+                                            Chú ý
+                                        </Radio.Button>
+                                    </Space>
+                                </Radio.Group>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
                 <div className="flex flex-wrap gap-4">
-                    {getFilteredWarnings().map((warning) => (
-                        <div key={warning.id} className="w-full md:w-[calc(50%-0.5rem)] transform transition-all duration-300 hover:-translate-y-1">
-                            <Badge.Ribbon 
-                                text={warning.resolved ? "Đã xử lý" : "Chưa xử lý"}
-                                color={warning.resolved ? "green" : "red"}
-                                className="font-medium"
-                            >
+                    {getFilteredWarnings().map((warning) => {
+                        const absDifference = calculateAbsDifference(warning.flowDifference1, warning.flowDifference2);
+                        const severity = getSeverityInfo(absDifference);
+                        
+                        return (
+                            <div key={warning.id} className="w-full md:w-[calc(50%-0.5rem)] transform transition-all duration-300 hover:-translate-y-1">
                                 <Card 
-                                    className={`w-full glassmorphism transition-all duration-300 
+                                    className={`w-full transition-all duration-300 
                                         ${warning.resolved 
-                                            ? 'bg-green-50/70 hover:bg-green-50/90' 
-                                            : 'bg-white/70 hover:bg-white/90'
+                                            ? 'bg-transparent border-green-500' 
+                                            : `bg-transparent ${severity.borderColor}`
                                         } 
-                                        border-t-4 ${warning.resolved ? 'border-t-green-500' : 'border-t-red-500'}
-                                        shadow-lg hover:shadow-xl rounded-xl`}
+                                        border-2 shadow-lg hover:shadow-xl rounded-xl`}
                                     bodyStyle={{ padding: '1.25rem' }}
                                 >
                                     <div className="flex flex-col gap-4">
-                                        {/* Header */}
-                                        <div className="pb-3 border-b border-white/20">
-                                            <div className="flex items-center gap-2 text-blue-900/80">
-                                                <ClockCircleOutlined className="text-blue-600" />
-                                                <span>{dayjs(warning.timestamp).format('DD/MM/YYYY HH:mm:ss')}</span>
+                                        {/* Header - Severity and Time */}
+                                        <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+                                            <div className="flex items-center gap-3">
+                                                {severity.icon}
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold" style={{ color: severity.color }}>
+                                                        {severity.text}
+                                                    </span>
+                                                    <span className="text-sm text-gray-600">
+                                                        {dayjs(warning.timestamp).format('DD/MM/YYYY HH:mm:ss')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <Badge 
+                                                status={warning.resolved ? "success" : "error"}
+                                                text={warning.resolved ? "Đã xử lý" : "Chưa xử lý"}
+                                                className="font-medium"
+                                            />
+                                        </div>
+
+                                        {/* Flow Rates */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <div className={`p-3 rounded-lg bg-white/30 border ${warning.resolved ? 'border-green-200' : severity.borderColor}`}>
+                                                <div className="text-sm text-gray-600 mb-1">Cảm biến 1</div>
+                                                <div className="text-xl font-bold" style={{ color: severity.color }}>
+                                                    {formatFlow(warning?.flowDifference1)} L/min
+                                                </div>
+                                            </div>
+                                            <div className={`p-3 rounded-lg bg-white/30 border ${warning.resolved ? 'border-green-200' : severity.borderColor}`}>
+                                                <div className="text-sm text-gray-600 mb-1">Cảm biến 2</div>
+                                                <div className="text-xl font-bold" style={{ color: severity.color }}>
+                                                    {formatFlow(warning?.flowDifference2)} L/min
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* Content */}
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-2 text-blue-900/90 font-medium p-2 rounded-lg glassmorphism-light">
-                                                <DashboardOutlined className="text-blue-600" />
-                                                <span>Lưu lượng cảm biến 1: <span className="text-blue-600 font-bold">{formatFlow(warning?.flowDifference1)} L/min</span></span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-blue-900/90 font-medium p-2 rounded-lg glassmorphism-light">
-                                                <DashboardOutlined className="text-blue-600" />
-                                                <span>Lưu lượng cảm biến 2: <span className="text-blue-600 font-bold">{formatFlow(warning?.flowDifference2)} L/min</span></span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-blue-900/90 font-medium p-2 rounded-lg glassmorphism-light">
-                                                <DashboardOutlined className="text-blue-600" />
-                                                <span>Chênh lệch: <span className="text-blue-600 font-bold">{formatFlow(warning?.flowDifference1 -warning?.flowDifference2)} L/min</span></span>
+                                        {/* Difference */}
+                                        <div className={`p-3 rounded-lg bg-white/30 border ${warning.resolved ? 'border-green-200' : severity.borderColor}`}>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-600">Chênh lệch</span>
+                                                <div className="text-xl font-bold" style={{ color: severity.color }}>
+                                                    {formatFlow(absDifference)} L/min
+                                                </div>
                                             </div>
                                         </div>
 
                                         {/* Footer */}
-                                        <div className="pt-3 border-t border-white/20 flex justify-end items-center gap-2">
-                                            <span className="text-blue-900/90 whitespace-nowrap font-medium">
-                                                Đã xử lý
+                                        <div className="pt-3 border-t border-gray-200 flex justify-end items-center gap-2">
+                                            <span className="text-gray-600 font-medium">
+                                                Đánh dấu đã xử lý
                                             </span>
                                             <CustomCheckbox
                                                 checked={warning.resolved || false}
                                                 onChange={(e) => handleResolveChange(warning, e.target.checked)}
-                                                id={warning.id} // Add ID prop here
+                                                id={warning.id}
                                             />
-                                            
                                         </div>
                                     </div>
                                 </Card>
-                            </Badge.Ribbon>
-                        </div>
-                    ))}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>
