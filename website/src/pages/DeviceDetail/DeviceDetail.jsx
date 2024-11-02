@@ -189,6 +189,8 @@ const DeviceDetail = () => {
                             }
                         }}
                         type="primary"
+                        ghost
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }}
                     >
                         {isEditing ? 'Lưu' : 'Sửa'}
                     </Button>
@@ -198,10 +200,10 @@ const DeviceDetail = () => {
                     <div className="text-red-500 mt-4">{error}</div>
                 ) : (
                     <>
-                        <div className="flex flex-col md:flex-row items-center gap-4 w-3/4 justify-evenly glassmorphism mb-5 p-5">
+                        <div className="flex flex-col md:flex-row items-center gap-4 w-3/4 justify-evenly glassmorphism mb-5 p-4">
                             <Button 
                                 onClick={() => navigate('/home')}
-                                size="large"
+                                size="middle"
                                 type="primary"
                                 ghost
                                 danger
@@ -212,7 +214,7 @@ const DeviceDetail = () => {
                             <RelayControl relayState={relayState} onToggleRelay={toggleRelay} />
                             <Button 
                                 onClick={() => navigate(`/device/${deviceId}/history`)}
-                                size="large"
+                                size="middle"
                                 style={{ 
                                     borderColor: '#52c41a', 
                                     color: '#52c41a',

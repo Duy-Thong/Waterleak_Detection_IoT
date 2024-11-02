@@ -188,12 +188,7 @@ const DeviceHistory = () => {
             <Navbar onLogout={handleLogout} />
             <div className="p-8 flex flex-col items-center pt-20">
                 <Title level={2} className="text-gray-800">Lịch Sử Thiết Bị: {deviceName}</Title>
-                <Button
-                    onClick={() => navigate('/home')}
-                    className="bg-blue-600 text-white hover:bg-blue-500 transition duration-300 mb-4"
-                >
-                    Quay về trang chính
-                </Button>
+                
 
                 <div className="glassmorphism-filter-section p-4 rounded shadow-lg w-full max-w-3xl">
                     <Row gutter={16}>
@@ -260,8 +255,26 @@ const DeviceHistory = () => {
                         </Col>
                     </Row>
                     <div className="flex justify-between mt-4">
-                        <Button onClick={handleFilter} type="primary">Lọc Dữ Liệu</Button>
-                        <Button onClick={handleDeleteHistory} type="danger" className='bg-red-500 text-white'>Xóa Lịch Sử</Button>
+                        <Button
+                            onClick={() => navigate(`/device/${deviceId}`)}
+                            className="border-blue-600 text-blue-600 hover:text-blue-500 hover:border-blue-500 transition duration-300 mb-4 bg-white"
+                        >
+                            Quay về 
+                        </Button>
+                        <Button 
+                            onClick={handleFilter} 
+                            className="border-blue-600 text-blue-600 hover:text-blue-500 hover:border-blue-500 bg-white"
+                        >
+                            Lọc Dữ Liệu
+                        </Button>
+                        
+                        <Button 
+                            onClick={handleDeleteHistory} 
+                            className="border-red-500 text-red-500 hover:text-red-400 hover:border-red-400 bg-white"
+                            type="danger"
+                        >
+                            Xóa Lịch Sử
+                        </Button>
                     </div>
                 </div>
 

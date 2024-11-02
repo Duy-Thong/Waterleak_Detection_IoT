@@ -201,11 +201,12 @@ const AccountManagement = () => {
                             <Button
                                 type="primary"
                                 htmlType="submit"
-                                className="mr-4"
+                                className="mr-4 !bg-white !text-blue-500 !border-blue-500 hover:!text-blue-600 hover:!border-blue-600"
                             >
                                 Cập nhật thông tin
                             </Button>
                             <Button
+                                className="!bg-white !text-gray-500 !border-gray-500 hover:!text-gray-600 hover:!border-gray-600"
                                 onClick={() => navigate('/home')}
                             >
                                 Quay lại trang chủ
@@ -220,7 +221,7 @@ const AccountManagement = () => {
                         <Button
                             type="default"
                             onClick={() => setShowChangePassword(!showChangePassword)}
-                            className="mt-4"
+                            className="mt-4 !bg-white !text-blue-500 !border-blue-500 hover:!text-blue-600 hover:!border-blue-600"
                         >
                             {showChangePassword ? 'Hủy đổi mật khẩu' : 'Đổi mật khẩu'}
                         </Button>
@@ -257,6 +258,7 @@ const AccountManagement = () => {
                                         <Button
                                             type="primary"
                                             htmlType="submit"
+                                            className="!bg-white !text-blue-500 !border-blue-500 hover:!text-blue-600 hover:!border-blue-600"
                                         >
                                             Cập nhật mật khẩu
                                         </Button>
