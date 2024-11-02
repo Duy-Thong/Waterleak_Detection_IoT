@@ -12,7 +12,7 @@ import DeviceSelector from '../../components/DeviceSelector';
 import CurrentDeviceData from '../../components/CurrentDeviceData';
 import Chart from '../../components/Chart';
 import RelayControl from '../../components/RelayControl';
-import RequireLogin from '../RequireLogin';
+import RequireLogin from '../../components/RequireLogin';
 
 import './styles.css'; 
 // Register ChartJS components

@@ -5,7 +5,7 @@ import { useUser } from '../contexts/UserContext';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Typography, Alert, notification } from 'antd';
-import RequireLogin from './RequireLogin';
+import RequireLogin from '../components/RequireLogin';
 import "./style.css";
 const { Title } = Typography;
 

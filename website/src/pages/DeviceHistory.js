@@ -6,7 +6,7 @@ import moment from 'moment';
 import { useUser } from '../contexts/UserContext';
 import Navbar from '../components/Navbar';
 import "./style.css";
-import RequireLogin from './RequireLogin';
+import RequireLogin from '../components/RequireLogin';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;

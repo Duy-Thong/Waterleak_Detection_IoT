@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useUser } from '../../contexts/UserContext';
-import { Form, Input, Button, Alert } from 'antd';
+import { Form, Input, Button, Alert, Divider } from 'antd';
 import login from '../../assets/login.jpg';
 
 function Login() {
@@ -25,6 +25,26 @@ function Login() {
     } catch (error) {
       console.error("Lỗi khi kiểm tra đăng nhập:", error);
       setError("Email hoặc mật khẩu không đúng!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    setLoading(true);
+    const auth = getAuth();
+    const provider = new GoogleAuthProvider();
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      setUserId(user.uid);
+      localStorage.setItem('userId', user.uid);
+      navigate("/home");
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      setError("Đăng nhập bằng Google thất bại!");
     } finally {
       setLoading(false);
     }
@@ -79,6 +99,22 @@ function Login() {
               </Button>
             </Form.Item>
           </Form>
+
+          <Divider>Hoặc</Divider>
+
+          <Button 
+            onClick={handleGoogleLogin} 
+            className="w-full flex items-center justify-center gap-2"
+              icon={
+              <img 
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                alt="Google" 
+                className="w-4 h-4"
+              />
+            }
+          >
+            Đăng nhập với Google
+          </Button>
 
           <div className="mt-4 text-center">
             <Button type="link" onClick={handleForgotPassword}>

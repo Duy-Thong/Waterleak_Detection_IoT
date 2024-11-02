@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, set, get, child } from "firebase/database"; // Import get and child
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { database, auth } from "../../firebase"; // Import auth from firebase config
-import { Form, Input, Button, Alert, Progress } from 'antd'; 
+import { ref, set, get, child } from "firebase/database";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"; // Add GoogleAuthProvider
+import { database, auth } from "../../firebase";
+import { Form, Input, Button, Alert, Progress, Divider } from 'antd'; // Add Divider
 import { useUser } from '../../contexts/UserContext';
 import register from '../../assets/register.jpg';
 
@@ -110,6 +110,55 @@ function Register() {
     }
   };
 
+  const checkExistingGoogleUser = async (email) => {
+    const dbRef = ref(database);
+    const snapshot = await get(child(dbRef, 'users'));
+    if (snapshot.exists()) {
+      const users = snapshot.val();
+      return Object.values(users).some(user => user.email === email);
+    }
+    return false;
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setLoading(true);
+    
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      // Check if email already exists
+      const emailExists = await checkExistingGoogleUser(user.email);
+      if (emailExists) {
+        setError("Tài khoản Google này đã tồn tại. Vui lòng đăng nhập.");
+        setTimeout(() => {
+          navigate('/login');
+        }, 3000);
+        return;
+      }
+      
+      // If email doesn't exist, proceed with registration
+      const userRef = ref(database, `users/${user.uid}`);
+      await set(userRef, {
+        username: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        registeredWith: 'google'
+      });
+      
+      setUserId(user.uid);
+      localStorage.setItem('userId', user.uid);
+      navigate('/home');
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      setError("Đã xảy ra lỗi khi đăng nhập bằng Google: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getProgressColor = () => {
     if (strengthPercent > 99) return "#3FCF3F"; // Green for strong password
     if (strengthPercent > 60) return "#FFC107"; // Yellow for medium password
@@ -183,6 +232,22 @@ function Register() {
               </Button>
             </Form.Item>
           </Form>
+
+          <Divider>Hoặc</Divider>
+
+          <Button 
+            onClick={handleGoogleSignIn}
+            className="w-full flex items-center justify-center gap-2"
+            icon={
+              <img 
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                alt="Google" 
+                className="w-4 h-4"
+              />
+            }
+          >
+            Đăng ký bằng Google
+          </Button>
 
           <p className="mt-4 text-center text-sm text-gray-600">
             Đã có tài khoản?{" "}

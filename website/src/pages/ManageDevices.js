@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Input, Button, List, message, Form, Modal } from 'antd';
 import Navbar from '../components/Navbar';
 import './style.css'; // Đảm bảo import file CSS
-import RequireLogin from './RequireLogin';
+import RequireLogin from '../components/RequireLogin';
 
 const ManageDevices = () => {
     const [devices, setDevices] = useState([]);

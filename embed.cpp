@@ -24,16 +24,16 @@ FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 
-#define DEVICE_ID "emyeuptit2024" // ID thiết bị
+#define DEVICE_ID "emyeuptit2024" // Device ID
 unsigned long sendDataPrevMillis = 0;
-const long sendDataIntervalMillis = 10000; // 10 giây
+const long sendDataIntervalMillis = 10000; // 10 seconds
 bool signupOK = false;
 
-// Biến lưu dữ liệu cảm biến dòng chảy
+// Sensor data storage
 float flowRate1 = 0.0;
 float flowRate2 = 0.0;
 
-// Chân cảm biến dòng chảy
+// Flow sensor pins
 #define FLOW_SENSOR_1_PIN 5
 #define FLOW_SENSOR_2_PIN 4
 
@@ -42,21 +42,22 @@ volatile int flowCount2 = 0;
 float calibrationFactor1 = 4.5;
 float calibrationFactor2 = 4.5;
 
-// Chân điều khiển rơ le
+// Relay control pin
 #define RELAY_PIN 0
 int entryID = 0;
 
-// Prototype hàm
+// Function prototypes
 void IRAM_ATTR flowSensor1ISR();
 void IRAM_ATTR flowSensor2ISR();
 float getFlowRate(int flowCount, float calibrationFactor);
 String formatTimestamp();
 void checkAndCreateRelayPath();
 void checkFlowRateDifference();
+bool authenticateUser();
 
-unsigned long flowCheckStartMillis = 0; // Thời gian bắt đầu kiểm tra lưu lượng
-bool flowExceedsThreshold = false;      // Trạng thái chênh lệch lưu lượng
-int exceedCount = 0;                    // Đếm số lần chênh lệch
+unsigned long flowCheckStartMillis = 0; // Start time for flow check
+bool flowExceedsThreshold = false;      // Flow rate difference state
+int exceedCount = 0;                    // Count of exceedances
 
 void setup()
 {
@@ -65,7 +66,7 @@ void setup()
   pinMode(On_Board_LED, OUTPUT);
   pinMode(RELAY_PIN, OUTPUT);
 
-  // Kết nối Wi-Fi
+  // Connect to Wi-Fi
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to WiFi");
@@ -80,41 +81,42 @@ void setup()
   digitalWrite(On_Board_LED, LOW);
   Serial.println("\nSuccessfully connected to WiFi");
 
-  // Thiết lập Firebase
+  // Set up Firebase
   config.api_key = API_KEY;
   config.database_url = DATABASE_URL;
 
-  Serial.print("Signing up new user...");
-  if (Firebase.signUp(&config, &auth, "", ""))
+  // Authenticate user
+  if (authenticateUser())
   {
-    Serial.println("ok");
-    signupOK = true;
+    Serial.println("User authenticated successfully.");
   }
   else
   {
-    Serial.printf("Error: %s\n", config.signer.signupError.message.c_str());
+    Serial.println("User authentication failed.");
+    while (true)
+      ; // Stop the program if authentication fails
   }
 
   config.token_status_callback = tokenStatusCallback;
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
-  // Tạo đường dẫn rơ le nếu chưa tồn tại
+  // Create relay path if it does not exist
   checkAndCreateRelayPath();
 
-  // Thiết lập chân cảm biến dòng chảy
+  // Set up flow sensor pins
   pinMode(FLOW_SENSOR_1_PIN, INPUT);
   pinMode(FLOW_SENSOR_2_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_1_PIN), flowSensor1ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_2_PIN), flowSensor2ISR, RISING);
 
-  // Cấu hình NTP để lấy thời gian thực
+  // Configure NTP for real-time clock
   configTime(7 * 3600, 0, "pool.ntp.org", "time.nist.gov");
 }
 
 void loop()
 {
-  // Kiểm tra kết nối Wi-Fi
+  // Check Wi-Fi connection
   if (WiFi.status() != WL_CONNECTED)
   {
     Serial.println("WiFi not connected, trying to reconnect...");
@@ -122,17 +124,17 @@ void loop()
     return;
   }
 
-  // Biến lưu trạng thái rơ le
-  String relayState = "OFF"; // Giá trị mặc định
+  // Relay state variable
+  String relayState = "OFF"; // Default value
 
-  // Đường dẫn trạng thái rơ le trong Firebase dưới nhánh devices
+  // Relay state path in Firebase under devices
   String relayPath = "/devices/" + String(DEVICE_ID) + "/relay/control";
   if (Firebase.RTDB.getString(&fbdo, relayPath))
   {
-    relayState = fbdo.stringData(); // Lấy trạng thái rơ le từ Firebase
+    relayState = fbdo.stringData(); // Get relay state from Firebase
     Serial.printf("Relay state from Firebase: %s\n", relayState.c_str());
 
-    // Điều khiển rơ le dựa trên trạng thái nhận được
+    // Control relay based on received state
     if (relayState == "OFF")
     {
       digitalWrite(RELAY_PIN, HIGH);
@@ -164,7 +166,7 @@ void loop()
     }
   }
 
-  // Kiểm tra và gửi dữ liệu nếu đã đến thời gian gửi
+  // Check and send data if it's time to send
   if (millis() - sendDataPrevMillis > sendDataIntervalMillis)
   {
     sendDataPrevMillis = millis();
@@ -173,17 +175,18 @@ void loop()
     flowCount1 = 0;
     flowCount2 = 0;
 
-    // Tạo JSON chứa dữ liệu cảm biến và trạng thái rơ le
+    // Create JSON containing sensor data and relay state
     FirebaseJson flowSensorData;
     String timestamp = formatTimestamp();
     entryID++;
     flowSensorData.set("sensor1", flowRate1);
     flowSensorData.set("sensor2", flowRate2);
     flowSensorData.set("timestamp", timestamp);
-    flowSensorData.set("relayState", relayState); // Thêm trạng thái rơ le
+    flowSensorData.set("relayState", relayState); // Add relay state
 
-    // Đường dẫn để lưu dữ liệu cảm biến dòng chảy dưới nhánh devices
+    // Path to save flow sensor data under devices
     String path = "/devices/" + String(DEVICE_ID) + "/flow_sensor";
+
     if (Firebase.RTDB.pushJSON(&fbdo, path.c_str(), &flowSensorData))
     {
       Serial.println("Flow sensor data pushed successfully.");
@@ -193,30 +196,30 @@ void loop()
       Serial.printf("Failed to push flow sensor data: %s\n", fbdo.errorReason().c_str());
     }
 
-    // Kiểm tra chênh lệch lưu lượng nước
+    // Check for flow rate differences
     checkFlowRateDifference();
   }
 }
 
-// ISR cho cảm biến dòng chảy 1
+// ISR for flow sensor 1
 void IRAM_ATTR flowSensor1ISR()
 {
   flowCount1++;
 }
 
-// ISR cho cảm biến dòng chảy 2
+// ISR for flow sensor 2
 void IRAM_ATTR flowSensor2ISR()
 {
   flowCount2++;
 }
 
-// Hàm tính toán lưu lượng nước
+// Function to calculate flow rate
 float getFlowRate(int flowCount, float calibrationFactor)
 {
   return (flowCount / calibrationFactor);
 }
 
-// Hàm định dạng thời gian hiện tại
+// Function to format current time
 String formatTimestamp()
 {
   time_t now;
@@ -228,7 +231,7 @@ String formatTimestamp()
   return String(timeString);
 }
 
-// Kiểm tra và tạo đường dẫn cho rơ le nếu chưa tồn tại
+// Function to check and create relay path if it does not exist
 void checkAndCreateRelayPath()
 {
   String relayPath = "/devices/" + String(DEVICE_ID) + "/relay/control";
@@ -250,40 +253,56 @@ void checkAndCreateRelayPath()
   }
 }
 
-// Hàm kiểm tra chênh lệch lưu lượng nước
+// Function to check flow rate differences
 void checkFlowRateDifference()
 {
   static float lastFlowRate1 = 0.0;
   static float lastFlowRate2 = 0.0;
 
-  // Tính chênh lệch lưu lượng nước
+  // Calculate flow rate differences
   float flowDifference1 = abs(flowRate1 - lastFlowRate1);
   float flowDifference2 = abs(flowRate2 - lastFlowRate2);
 
-  // Kiểm tra xem chênh lệch có lớn hơn 20 lít/phút không
+  // Check if difference exceeds 20 liters/minute
   if (flowDifference1 > 20 || flowDifference2 > 20)
   {
     if (!flowExceedsThreshold)
     {
       flowCheckStartMillis = millis();
-      flowExceedsThreshold = true; // Đặt cờ chênh lệch lưu lượng
-      exceedCount = 1;             // Đếm số lần chênh lệch
+      flowExceedsThreshold = true; // Set flow difference flag
+      exceedCount = 1;             // Count number of exceedances
     }
     else if (millis() - flowCheckStartMillis >= 10000)
-    { // Kiểm tra liên tục trong 10 giây
-      // Ngắt rơ le nếu chênh lệch liên tục trong 10 giây
+    { // Continuous check for 10 seconds
+      // Turn off relay if difference persists for 10 seconds
       String relayPath = "/devices/" + String(DEVICE_ID) + "/relay/control";
       Firebase.RTDB.setString(&fbdo, relayPath, "OFF");
-      Serial.println("Relay turned OFF due to flow rate difference exceeding threshold.");
-      flowExceedsThreshold = false; // Reset cờ
+      Serial.println("Relay turned OFF due to flow rate exceedance.");
     }
   }
   else
   {
-    flowExceedsThreshold = false; // Reset cờ nếu chênh lệch không lớn hơn
+    flowExceedsThreshold = false; // Reset threshold flag
+    exceedCount = 0;              // Reset exceed count
   }
 
-  // Cập nhật giá trị lưu lượng cuối cùng
+  // Update last flow rates
   lastFlowRate1 = flowRate1;
   lastFlowRate2 = flowRate2;
+}
+
+// Function to authenticate user
+bool authenticateUser()
+{
+  auth.user.email = "device@gmail.com"; // Replace with your email
+  auth.user.password = "device";       // Replace with your password
+  if (Firebase.signIn(&auth, &fbdo))
+  {
+    return true; // User authenticated
+  }
+  else
+  {
+    Serial.printf("Authentication failed: %s\n", fbdo.errorReason().c_str());
+    return false; // User not authenticated
+  }
 }
