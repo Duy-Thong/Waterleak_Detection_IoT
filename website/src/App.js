@@ -8,6 +8,7 @@ import AccountManagement from './pages/AccountManagement';
 import ForgotPassword from './pages/ForgotPassword';
 import DeviceHistory from './pages/DeviceHistory';
 import Login from './pages/Login/Login';
+import DeviceDetail from './pages/DeviceDetail/DeviceDetail';
 import './App.css';
 function App() {
   const { setUserId } = useUser();
@@ -31,6 +32,7 @@ function App() {
         <Route path="/device/:deviceId/history" element={<DeviceHistory />} />
         <Route path="/account-management" element={<AccountManagement />} />
         <Route path="/manage-devices" element={<ManageDevices />} />
+        <Route path="/device/:deviceId" element={<DeviceDetail />} />
       </Routes>
     </Router>
   );

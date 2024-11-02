@@ -11,7 +11,7 @@ const Chart = ({ chartData }) => (
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Dữ liệu cảm biến theo thời gian',
+                            text: 'Dữ liệu cảm biến trong 24 giờ qua',
                         },
                         legend: {
                             display: true,
@@ -34,6 +34,21 @@ const Chart = ({ chartData }) => (
                             }
                         }
                     },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        },
+                        x: {
+                            type: 'category',
+                            ticks: {
+                                maxTicksLimit: 12,
+                                callback: function(value, index) {
+                                    const date = new Date(this.getLabelForValue(value));
+                                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                }
+                            }
+                        }
+                    }
                 }}
             />
         </div>

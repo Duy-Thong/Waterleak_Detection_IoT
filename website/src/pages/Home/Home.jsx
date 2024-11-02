@@ -1,30 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { getDatabase, ref, get, onValue, set } from "firebase/database";
+import { getDatabase, ref, get } from "firebase/database";
 import { useUser } from '../../contexts/UserContext';
-import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Button } from 'antd';
-
-// Import components
+import { Typography } from 'antd';
 import Navbar from '../../components/Navbar';
-import DeviceSelector from '../../components/DeviceSelector';
-import CurrentDeviceData from '../../components/CurrentDeviceData';
-import Chart from '../../components/Chart';
-import RelayControl from '../../components/RelayControl';
+import DeviceCard from '../../components/DeviceCard';
 import RequireLogin from '../../components/RequireLogin';
-
-import './styles.css'; 
-// Register ChartJS components
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend);
 
 const { Title: AntTitle } = Typography;
 
 const Home = () => {
-    const [deviceData, setDeviceData] = useState(null);
-    const [latestData, setLatestData] = useState(null);
-    const [relayState, setRelayState] = useState('OFF');
     const [devices, setDevices] = useState([]);
-    const [selectedDeviceId, setSelectedDeviceId] = useState('');
+    const [deviceNames, setDeviceNames] = useState({});
     const [username, setUsername] = useState('');
     const { userId, logout } = useUser();
     const navigate = useNavigate();
@@ -38,13 +25,22 @@ const Home = () => {
                     if (snapshot.exists()) {
                         const userData = snapshot.val();
                         const userDevices = Object.keys(userData.devices || {});
-                        const username = userData.username;
                         setDevices(userDevices);
-                        setUsername(username);
-                        if (userDevices.length > 0) {
-                            setSelectedDeviceId(userDevices[0]);
-                            fetchDeviceData(userDevices[0]);
-                        }
+                        setUsername(userData.username);
+
+                        // Fetch device names
+                        userDevices.forEach(deviceId => {
+                            const deviceRef = ref(db, `devices/${deviceId}`);
+                            get(deviceRef).then((deviceSnapshot) => {
+                                if (deviceSnapshot.exists()) {
+                                    const deviceData = deviceSnapshot.val();
+                                    setDeviceNames(prev => ({
+                                        ...prev,
+                                        [deviceId]: deviceData.name || deviceId
+                                    }));
+                                }
+                            });
+                        });
                     }
                 })
                 .catch((error) => {
@@ -53,165 +49,47 @@ const Home = () => {
         }
     }, [userId]);
 
-    const fetchDeviceData = async (deviceId) => {
-        try {
-            const db = getDatabase();
-            const deviceRef = ref(db, `devices/${deviceId}`);
-            const snapshot = await get(deviceRef);
-            
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                setDeviceData(data);
-                const flowSensorData = data.flow_sensor || {};
-                const sortedKeys = Object.keys(flowSensorData).sort();
-                const latestKey = sortedKeys[sortedKeys.length - 1];
-                setLatestData(flowSensorData[latestKey]);
-                setRelayState(data.relay?.control || 'OFF');
-            } else {
-                alert('Không tìm thấy thiết bị.');
-                setDeviceData(null);
-                setLatestData(null);
-            }
-        } catch (error) {
-            console.error("Error fetching device data:", error);
-        }
+    const handleDeviceClick = (deviceId) => {
+        navigate(`/device/${deviceId}`);
     };
 
-    useEffect(() => {
-        if (selectedDeviceId) {
-            const db = getDatabase();
-            const relayRef = ref(db, `devices/${selectedDeviceId}/relay`);
-
-            const unsubscribe = onValue(relayRef, (snapshot) => {
-                const relayData = snapshot.val();
-                if (relayData) {
-                    setRelayState(relayData.control || 'OFF');
-                }
-            });
-
-            return () => unsubscribe(); 
-        }
-    }, [selectedDeviceId]);
-
-    const handleDeviceChange = (e) => {
-        const newDeviceId = e.target.value;
-        setSelectedDeviceId(newDeviceId);
-        fetchDeviceData(newDeviceId);
+    const handleAddDevice = () => {
+        navigate('/manage-devices');
     };
-
-    const toggleRelay = async () => {
-        const newRelayState = relayState === 'OFF' ? 'ON' : 'OFF';
-        try {
-            const db = getDatabase();
-            const relayRef = ref(db, `devices/${selectedDeviceId}/relay`);
-            await set(relayRef, { control: newRelayState });
-            setRelayState(newRelayState);
-        } catch (error) {
-            console.error("Error toggling relay:", error);
-        }
-    };
-
-    const chartData = deviceData && deviceData.flow_sensor ? {
-    labels: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].timestamp),
-    datasets: [
-        {
-            label: 'Cảm biến 1',
-            data: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].sensor1),
-            borderColor: 'rgba(75, 192, 192, 1)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            fill: true,
-        },
-        {
-            label: 'Cảm biến 2',
-            data: Object.keys(deviceData.flow_sensor).map(key => deviceData.flow_sensor[key].sensor2),
-            borderColor: 'rgba(153, 102, 255, 1)',
-            backgroundColor: 'rgba(153, 102, 255, 0.2)',
-            fill: true,
-        }
-    ]
-} : null;
-
 
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
 
-    const handleManageDevice = () => {
-        navigate('/manage-devices');
-    };
-
-    const handleViewHistory = () => {
-        navigate(`/device/${selectedDeviceId}/history`);
-    };
-
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            if (selectedDeviceId) {
-                fetchDeviceData(selectedDeviceId);
-            }
-        }, 5000);
-
-        return () => clearInterval(intervalId);
-    }, [selectedDeviceId]);
-
     if (!userId) {
         return <RequireLogin />;
     }
 
     return (
-
-        <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300 ">
+        <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300">
             <Navbar onLogout={handleLogout}/>
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8 mt-5">
-                <AntTitle level={2} className='mt-16 !text-white'><strong>Xin chào, {username || 'User'}!</strong></AntTitle>
-                <div className="flex flex-col justify-center items-center mt-4 mb-4 gap-4 glassmorphism w-3/4">
-                    <div className="flex flex-col md:flex-row justify-center items-center mt-4 mb-4 gap-4 ">
-                        {devices.length === 0 && ( <p>Bạn chưa có thiết bị nào</p>)}
-                        {devices.length > 0 && (<AntTitle level={4} >Chọn thiết bị:</AntTitle>)}
-                        <DeviceSelector 
-                            devices={devices} 
-                            selectedDeviceId={selectedDeviceId} 
-                            onDeviceChange={handleDeviceChange} 
+                <AntTitle level={2} className='mt-16 !text-white'>
+                    <strong>Xin chào, {username || 'User'}!</strong>
+                </AntTitle>
+                
+                <div className="flex flex-wrap justify-center gap-4 mt-8">
+                    {devices.map(deviceId => (
+                        <DeviceCard
+                            key={deviceId}
+                            deviceId={deviceId}
+                            deviceName={deviceNames[deviceId]}
+                            onClick={() => handleDeviceClick(deviceId)}
                         />
-                        <Button 
-                            type="primary" 
-                            onClick={handleManageDevice}
-                            className='px-1 py-1 border rounded-md shadow-md'
-                        >
-                            Quản lý thiết bị
-                        </Button>
-                        {devices.length > 0 && (
-                            <Button 
-                                type="default" 
-                                onClick={handleViewHistory}
-                                className='px-1 py-1 border rounded-md shadow-md'
-                            >
-                                Xem Lịch Sử
-                            </Button>
-                        )}
-                    </div>
-                    {devices.length > 0 && (
-                        <RelayControl 
-                            relayState={relayState} 
-                            onToggleRelay={toggleRelay} 
-                        />
-                    )}
-                </div>      
-
-                {/* Conditionally render chart and device data */}
-                {deviceData && latestData ? (
-    <>
-        <CurrentDeviceData latestData={latestData} />
-        {chartData && <Chart chartData={chartData} className="mt-4 hidden-mobile" />}
-        </>
-    ) : (
-        <p>Không có dữ liệu cho thiết bị này.</p>
-    )}
-
+                    ))}
+                    <DeviceCard
+                        isAddCard
+                        onClick={handleAddDevice}
+                    />
                 </div>
             </div>
-       
+        </div>
     );
 };
 
