@@ -8,7 +8,7 @@ import './style.css'; // Đảm bảo import file CSS
 import RequireLogin from '../components/RequireLogin';
 
 const ManageDevices = () => {
-    const [devices, setDevices] = useState([]);
+    const [devices, setDevices] = useState([]); // Will now store array of {id, name} objects
     const [newDeviceId, setNewDeviceId] = useState('');
     const [error, setError] = useState('');
     const [deviceToRemove, setDeviceToRemove] = useState(null);
@@ -17,24 +17,44 @@ const ManageDevices = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const db = getDatabase();
-        const userRef = ref(db, 'users/' + userId + '/devices');
+        const fetchDevices = async () => {
+            const db = getDatabase();
+            const userDevicesRef = ref(db, 'users/' + userId + '/devices');
+            const devicesRef = ref(db, 'devices');
 
-        get(userRef).then((snapshot) => {
-            if (snapshot.exists()) {
-                const userDevices = Object.keys(snapshot.val());
-                setDevices(userDevices);
-            } else {
-                setDevices([]);
+            try {
+                const [userSnapshot, devicesSnapshot] = await Promise.all([
+                    get(userDevicesRef),
+                    get(devicesRef)
+                ]);
+
+                if (userSnapshot.exists() && devicesSnapshot.exists()) {
+                    const userDevices = userSnapshot.val();
+                    const allDevices = devicesSnapshot.val();
+                    
+                    const deviceList = Object.keys(userDevices).map(deviceId => ({
+                        id: deviceId,
+                        name: allDevices[deviceId]?.name || 'Unnamed Device'
+                    }));
+                    
+                    setDevices(deviceList);
+                } else {
+                    setDevices([]);
+                }
+            } catch (error) {
+                console.error("Error fetching devices:", error);
+                message.error('Có lỗi khi tải danh sách thiết bị');
             }
-        });
+        };
+
+        fetchDevices();
     }, [userId]);
 
     const handleRemoveDevice = async () => {
         const db = getDatabase();
         try {
             await remove(ref(db, `users/${userId}/devices/${deviceToRemove}`));
-            setDevices(devices.filter(device => device !== deviceToRemove));
+            setDevices(devices.filter(device => device.id !== deviceToRemove));
             message.success('Hủy liên kết với thiết bị thành công');
             setIsModalVisible(false);
         } catch (error) {
@@ -80,7 +100,7 @@ const ManageDevices = () => {
             await update(userDevicesRef, {
                 [deviceId]: true
             });
-            setDevices([...devices, deviceId]);
+            setDevices([...devices, { id: deviceId, name: availableDevices[deviceId].name || 'Unnamed Device' }]);
             setNewDeviceId('');
             setError('');
             message.success('Thêm thiết bị thành công!');
@@ -111,9 +131,12 @@ const ManageDevices = () => {
                             renderItem={device => (
                                 <List.Item>
                                     <div className="flex justify-between items-center w-full">
-                                        <span className="text-lg font-medium text-gray-700">{device}</span>
+                                        <div className="flex flex-col">
+                                            <span className="text-lg font-medium text-gray-700">{device.name}</span>
+                                            <span className="text-sm text-gray-500">ID: {device.id}</span>
+                                        </div>
                                         <Button
-                                            onClick={() => showRemoveConfirm(device)}
+                                            onClick={() => showRemoveConfirm(device.id)}
                                             danger
                                             size="small"
                                         >

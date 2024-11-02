@@ -7,7 +7,7 @@ const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
     background: 'rgba(255, 255, 255, 0.2)',
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
+    border: '2px solid rgba(255, 255, 255, 0.5)',
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
     borderRadius: '10px',
     transition: 'all 0.3s ease-in-out',

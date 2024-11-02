@@ -7,6 +7,7 @@ import { useUser } from '../contexts/UserContext';
 import Navbar from '../components/Navbar';
 import "./style.css";
 import RequireLogin from '../components/RequireLogin';
+import { getAuth } from 'firebase/auth';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -27,8 +28,20 @@ const DeviceHistory = () => {
     useEffect(() => {
         const fetchHistory = async () => {
             try {
+                const auth = getAuth();
+                const token = await auth.currentUser?.getIdToken();
+                
+                if (!token) {
+                    throw new Error('No authentication token found');
+                }
+
                 const response = await axios.get(
-                    `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/devices/${deviceId}/flow_sensor.json`
+                    `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/devices/${deviceId}/flow_sensor.json`,
+                    {
+                        params: {
+                            auth: token
+                        }
+                    }
                 );
                 const data = response.data;
                 if (data) {
@@ -50,11 +63,18 @@ const DeviceHistory = () => {
                 }
             } catch (error) {
                 console.error("Error fetching device history:", error);
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    message.error('Unauthorized access. Please login again.');
+                    logout();
+                    navigate('/login');
+                } else {
+                    message.error('Error loading device history');
+                }
             }
         };
 
         fetchHistory();
-    }, [deviceId]);
+    }, [deviceId, logout, navigate]);
 
     const handleFilter = () => {
         let filtered = historyData;
@@ -98,6 +118,13 @@ const DeviceHistory = () => {
         const confirmDelete = window.confirm('Bạn có chắc chắn muốn xóa lịch sử thiết bị?');
         if (confirmDelete) {
             try {
+                const auth = getAuth();
+                const token = await auth.currentUser?.getIdToken();
+                
+                if (!token) {
+                    throw new Error('No authentication token found');
+                }
+
                 const payload = {
                     flow_sensor: null,
                     relay: {
@@ -106,7 +133,12 @@ const DeviceHistory = () => {
                 };
                 await axios.put(
                     `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/devices/${deviceId}.json`,
-                    payload
+                    payload,
+                    {
+                        params: {
+                            auth: token
+                        }
+                    }
                 );
 
                 setHistoryData([]);
@@ -114,7 +146,13 @@ const DeviceHistory = () => {
                 message.success('Lịch sử thiết bị đã được xóa thành công.');
             } catch (error) {
                 console.error("Error deleting device history:", error);
-                message.error('Xóa lịch sử thiết bị không thành công.');
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    message.error('Unauthorized access. Please login again.');
+                    logout();
+                    navigate('/login');
+                } else {
+                    message.error('Xóa lịch sử thiết bị không thành công.');
+                }
             }
         }
     };

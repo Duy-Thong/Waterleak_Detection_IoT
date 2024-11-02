@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, get, onValue, set } from "firebase/database";
-import { Typography, Button } from 'antd';
+import { Typography, Button, Input, message } from 'antd';
 import { useUser } from '../../contexts/UserContext';
 import {
     Chart as ChartJS,
@@ -17,6 +17,7 @@ import CurrentDeviceData from '../../components/CurrentDeviceData';
 import Chart from '../../components/Chart';
 import RelayControl from '../../components/RelayControl';
 import RequireLogin from '../../components/RequireLogin';
+import { Loading3QuartersOutlined, EditOutlined } from '@ant-design/icons';
 
 // Register ChartJS components
 ChartJS.register(
@@ -39,6 +40,8 @@ const DeviceDetail = () => {
     const [latestData, setLatestData] = useState(null);
     const [relayState, setRelayState] = useState('OFF');
     const [error, setError] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [tempDeviceName, setTempDeviceName] = useState('');
 
     useEffect(() => {
         if (!userId || !deviceId) return;
@@ -104,6 +107,23 @@ const DeviceDetail = () => {
         }
     };
 
+    const handleUpdateDeviceName = async () => {
+        try {
+            const db = getDatabase();
+            const deviceRef = ref(db, `devices/${deviceId}`);
+            await set(deviceRef, {
+                ...deviceData,
+                name: tempDeviceName
+            });
+            setDeviceName(tempDeviceName);
+            setIsEditing(false);
+            message.success('Cập nhật tên thiết bị thành công');
+        } catch (error) {
+            console.error("Error updating device name:", error);
+            message.error('Có lỗi khi cập nhật tên thiết bị');
+        }
+    };
+
     const chartData = deviceData && deviceData.flow_sensor ? {
         labels: Object.values(deviceData.flow_sensor).map(data => data.timestamp),
         datasets: [
@@ -137,25 +157,58 @@ const DeviceDetail = () => {
         <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300">
             <Navbar onLogout={handleLogout} />
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8 mt-5">
-                <AntTitle level={2} className="mt-8 !text-white">
-                    <strong>Chi tiết thiết bị: {deviceName}</strong>
-                </AntTitle>
+                <div className="flex gap-2 items-end justify-center mb-3">
+                    <AntTitle level={2} className="mt-8 !text-white !mb-0">
+                        <strong>Chi tiết thiết bị: {isEditing ? (
+                            <Input
+                                value={tempDeviceName}
+                                onChange={(e) => setTempDeviceName(e.target.value)}
+                                onPressEnter={handleUpdateDeviceName}
+                                style={{ width: '200px' }}
+                            />
+                        ) : deviceName}</strong>
+                    </AntTitle>
+                    <Button
+                        icon={<EditOutlined />}
+                        onClick={() => {
+                            if (isEditing) {
+                                handleUpdateDeviceName();
+                            } else {
+                                setTempDeviceName(deviceName);
+                                setIsEditing(true);
+                            }
+                        }}
+                        type="primary"
+                    >
+                        {isEditing ? 'Lưu' : 'Sửa'}
+                    </Button>
+                </div>
 
                 {error ? (
                     <div className="text-red-500 mt-4">{error}</div>
                 ) : (
                     <>
-                        <div className="flex flex-col md:flex-row items-center gap-4 w-full max-w-4xl justify-center">
+                        <div className="flex flex-col md:flex-row items-center gap-4 w-3/4 justify-evenly glassmorphism mb-5 p-5">
                             <Button 
                                 onClick={() => navigate('/home')}
-                                className="bg-blue-600 text-white hover:bg-blue-700"
+                                size="large"
+                                type="primary"
+                                ghost
+                                danger
+                                style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }}
                             >
                                 ← Trở về
                             </Button>
                             <RelayControl relayState={relayState} onToggleRelay={toggleRelay} />
                             <Button 
                                 onClick={() => navigate(`/device/${deviceId}/history`)}
-                                className="bg-green-600 text-white hover:bg-green-700"
+                                size="large"
+                                style={{ 
+                                    borderColor: '#52c41a', 
+                                    color: '#52c41a',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.5)'
+                                }}
+                                ghost
                             >
                                 Xem lịch sử
                             </Button>
@@ -167,7 +220,7 @@ const DeviceDetail = () => {
                                 {chartData && <Chart chartData={chartData} className="mt-4 hidden-mobile" />}
                             </>
                         ) : (
-                            <p>Đang tải dữ liệu...</p>
+                            <Loading3QuartersOutlined className="text-4xl text-white mt-4" />
                         )}
                     </>
                 )}
