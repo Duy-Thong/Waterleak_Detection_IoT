@@ -67,7 +67,7 @@ const Home = () => {
             // Log each warning's resolved status
             console.log('Warning:', warning);
             console.log('Warning resolved status:', warning.resolved);
-            return warningDate === today && warning.resolved === false;
+            return warningDate === today && warning.resolved !== true;
         });
 
         // Log filtered results

@@ -218,7 +218,7 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
                                             </div>
                                             <div className="flex items-center gap-2 text-blue-900/90 font-medium p-2 rounded-lg glassmorphism-light">
                                                 <DashboardOutlined className="text-blue-600" />
-                                                <span>Chênh lệch: <span className="text-blue-600 font-bold">{formatFlow(warning?.flowDifference)} L/min</span></span>
+                                                <span>Chênh lệch: <span className="text-blue-600 font-bold">{formatFlow(warning?.flowDifference1 -warning?.flowDifference2)} L/min</span></span>
                                             </div>
                                         </div>
 
