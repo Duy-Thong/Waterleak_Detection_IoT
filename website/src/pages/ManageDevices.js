@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, remove, update } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
-import { Input, Button, List, message, Form, Modal } from 'antd';
+import { Input, Button, List, Form, Modal, notification } from 'antd';
 import Navbar from '../components/Navbar';
 import './style.css'; // Đảm bảo import file CSS
 import RequireLogin from '../components/RequireLogin';
@@ -10,7 +10,6 @@ import RequireLogin from '../components/RequireLogin';
 const ManageDevices = () => {
     const [devices, setDevices] = useState([]); // Will now store array of {id, name} objects
     const [newDeviceId, setNewDeviceId] = useState('');
-    const [error, setError] = useState('');
     const [deviceToRemove, setDeviceToRemove] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const { userId, logout } = useUser();
@@ -43,7 +42,11 @@ const ManageDevices = () => {
                 }
             } catch (error) {
                 console.error("Error fetching devices:", error);
-                message.error('Có lỗi khi tải danh sách thiết bị');
+                notification.error({
+                    message: 'Lỗi',
+                    description: 'Có lỗi khi tải danh sách thiết bị',
+                    placement: 'topRight'
+                });
             }
         };
 
@@ -55,11 +58,19 @@ const ManageDevices = () => {
         try {
             await remove(ref(db, `users/${userId}/devices/${deviceToRemove}`));
             setDevices(devices.filter(device => device.id !== deviceToRemove));
-            message.success('Hủy liên kết với thiết bị thành công');
+            notification.success({
+                message: 'Thành công',
+                description: 'Hủy liên kết với thiết bị thành công',
+                placement: 'topRight'
+            });
             setIsModalVisible(false);
         } catch (error) {
             console.error("Lỗi khi xóa thiết bị:", error);
-            message.error('Có lỗi khi xóa thiết bị. Vui lòng thử lại.');
+            notification.error({
+                message: 'Lỗi',
+                description: 'Có lỗi khi xóa thiết bị. Vui lòng thử lại.',
+                placement: 'topRight'
+            });
         }
     };
 
@@ -77,14 +88,22 @@ const ManageDevices = () => {
             const devicesSnapshot = await get(devicesRef);
 
             if (!devicesSnapshot.exists()) {
-                setError("Không có thiết bị nào có sẵn để đăng ký.");
+                notification.warning({
+                    message: 'Cảnh báo',
+                    description: 'Không có thiết bị nào có sẵn để đăng ký.',
+                    placement: 'topRight'
+                });
                 return;
             }
 
             const availableDevices = devicesSnapshot.val();
 
             if (!availableDevices[deviceId]) {
-                setError("Không tìm thấy ID thiết bị trong danh sách thiết bị có sẵn.");
+                notification.warning({
+                    message: 'Cảnh báo',
+                    description: 'Không tìm thấy ID thiết bị trong danh sách thiết bị có sẵn.',
+                    placement: 'topRight'
+                });
                 return;
             }
 
@@ -93,7 +112,11 @@ const ManageDevices = () => {
             const userDevices = userDevicesSnapshot.exists() ? userDevicesSnapshot.val() : {};
 
             if (userDevices[deviceId]) {
-                setError("ID thiết bị đã tồn tại trong danh sách thiết bị của bạn.");
+                notification.warning({
+                    message: 'Cảnh báo',
+                    description: 'ID thiết bị đã tồn tại trong danh sách thiết bị của bạn.',
+                    placement: 'topRight'
+                });
                 return;
             }
 
@@ -102,11 +125,18 @@ const ManageDevices = () => {
             });
             setDevices([...devices, { id: deviceId, name: availableDevices[deviceId].name || 'Unnamed Device' }]);
             setNewDeviceId('');
-            setError('');
-            message.success('Thêm thiết bị thành công!');
+            notification.success({
+                message: 'Thành công',
+                description: 'Thêm thiết bị thành công!',
+                placement: 'topRight'
+            });
         } catch (error) {
             console.error("Lỗi khi thêm thiết bị:", error);
-            message.error("Có lỗi khi thêm thiết bị. Vui lòng thử lại.");
+            notification.error({
+                message: 'Lỗi',
+                description: 'Có lỗi khi thêm thiết bị. Vui lòng thử lại.',
+                placement: 'topRight'
+            });
         }
     };
 
@@ -121,7 +151,6 @@ const ManageDevices = () => {
             <div className="flex items-center justify-center flex-1">
                 <div className="glassmorphism p-6 shadow-md rounded-lg flex flex-col justify-center items-center w-full max-w-md"> {/* Card container */}
                     <h2 className="text-2xl font-semibold mb-6 text-white text-center">Quản lý thiết bị</h2>
-                    {error && <p className="text-red-500">{error}</p>}
 
                     {devices.length > 0 ? (
                         <List

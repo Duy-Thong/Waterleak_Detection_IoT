@@ -207,7 +207,7 @@ const DeviceDetail = () => {
                                 danger
                                 style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }}
                             >
-                                ← Trở về
+                                Trở về
                             </Button>
                             <RelayControl relayState={relayState} onToggleRelay={toggleRelay} />
                             <Button 
