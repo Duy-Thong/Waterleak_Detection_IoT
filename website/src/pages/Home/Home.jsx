@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get } from "firebase/database";
 import { useUser } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
-import { Typography } from 'antd';
+import { Typography, Input, Tooltip } from 'antd';
+import { SearchOutlined, CustomerServiceOutlined } from '@ant-design/icons';
 import Navbar from '../../components/Navbar';
 import DeviceCard from '../../components/DeviceCard';
 import RequireLogin from '../../components/RequireLogin';
@@ -15,6 +16,8 @@ const Home = () => {
     const [username, setUsername] = useState('');
     const { userId, logout } = useUser();
     const navigate = useNavigate();
+    const [searchText, setSearchText] = useState('');
+    const [showSearch, setShowSearch] = useState(false);
 
     useEffect(() => {
         if (userId) {
@@ -62,6 +65,12 @@ const Home = () => {
         navigate('/login');
     };
 
+    
+
+    const filteredDevices = devices.filter(deviceId => 
+        deviceNames[deviceId]?.toLowerCase().includes(searchText.toLowerCase())
+    );
+
     if (!userId) {
         return <RequireLogin />;
     }
@@ -75,7 +84,7 @@ const Home = () => {
                 </AntTitle>
                 
                 <div className="flex flex-wrap justify-center gap-4 mt-8">
-                    {devices.map(deviceId => (
+                    {filteredDevices.map(deviceId => (
                         <DeviceCard
                             key={deviceId}
                             deviceId={deviceId}
@@ -88,6 +97,28 @@ const Home = () => {
                         onClick={handleAddDevice}
                     />
                 </div>
+            </div>
+
+            {/* Floating Buttons */}
+            <div className="fixed bottom-8 right-8 flex items-center gap-2">
+                {showSearch && (
+                    <Input
+                        placeholder="Tìm kiếm thiết bị..."
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        className="rounded-full bg-white shadow-lg"
+                        style={{ width: 200 }}
+                    />
+                )}
+                <Tooltip title="Tìm kiếm" placement="left">
+                    <button
+                        onClick={() => setShowSearch(!showSearch)}
+                        className="w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-blue-600 transition-colors"
+                    >
+                        <SearchOutlined style={{ fontSize: '20px' }} />
+                    </button>
+                </Tooltip>
+                
             </div>
         </div>
     );
