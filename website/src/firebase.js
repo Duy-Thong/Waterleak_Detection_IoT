@@ -1,6 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getDatabase } from 'firebase/database';
+import { getAuth } from 'firebase/auth'; // Import getAuth to initialize Firebase Authentication
 
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCR98EPOgJvByjRJPsapt15YsaEmHKGTcA",
     authDomain: "esp8266firebase-2f31a.firebaseapp.com",
@@ -11,6 +13,11 @@ const firebaseConfig = {
     appId: "1:261851321671:web:e2318ad58b052a6184e862"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export default app;
+
+// Initialize Firebase services
+const database = getDatabase(app);
+const auth = getAuth(app); // Initialize Firebase Authentication
+// Export both services
+export { database, auth };
