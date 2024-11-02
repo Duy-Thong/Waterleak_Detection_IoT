@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get } from "firebase/database";
 import { useUser } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Input, Tooltip, Row, Col, Modal, Form, Input as AntInput, Button, message } from 'antd';
+import { Typography, Input, Tooltip, Row, Col, Modal, Form, Input as AntInput, Button, message, Badge } from 'antd';
 import { SearchOutlined, AppstoreOutlined, AlertOutlined, HomeOutlined, CustomerServiceOutlined } from '@ant-design/icons';
 import { Spin, Alert, Card, Statistic } from 'antd';
 import emailjs from '@emailjs/browser';
@@ -34,6 +34,42 @@ const Home = () => {
     const [isContactModalVisible, setIsContactModalVisible] = useState(false);
     const [form] = Form.useForm();
 
+    const [deviceStatuses, setDeviceStatuses] = useState({});
+
+    // Modified isDeviceActive function
+    const isDeviceActive = (deviceData) => {
+        if (!deviceData || !deviceData.flow_sensor) return false;
+        
+        const flowSensorData = deviceData.flow_sensor;
+        const sortedKeys = Object.keys(flowSensorData).sort();
+        
+        if (sortedKeys.length === 0) return false;
+        
+        const latestKey = sortedKeys[sortedKeys.length - 1];
+        const latestTimestamp = flowSensorData[latestKey].timestamp;
+        
+        const now = Date.now();
+        const lastActivity = new Date(latestTimestamp).getTime();
+        return (now - lastActivity) < 60000; // 60000 ms = 1 minute
+    };
+
+    const countWarningsToday = (deviceData) => {
+        if (!deviceData || !deviceData.warning) return 0;
+
+        const warnings = Object.values(deviceData.warning);
+        const today = new Date().setHours(0, 0, 0, 0);
+
+        return warnings.filter(warning => {
+            const warningDate = new Date(warning.timestamp).setHours(0, 0, 0, 0);
+            return warningDate === today;
+        }).length;
+    };
+
+    const getWarningsCount = (deviceId) => {
+        const deviceData = deviceStatuses[deviceId]?.data;
+        return countWarningsToday(deviceData);
+    };
+
     useEffect(() => {
         if (userId) {
             setLoading(true);
@@ -46,24 +82,48 @@ const Home = () => {
                         const userDevices = Object.keys(userData.devices || {});
                         setDevices(userDevices);
                         setUsername(userData.username);
-                        setStats({
-                            totalDevices: userDevices.length,
-                            activeDevices: userDevices.length, // You can modify this based on actual active status
-                            alertsToday: 0 // You can fetch real alerts count
+
+                        // Fetch each device's data
+                        const devicePromises = userDevices.map(deviceId => {
+                            const deviceRef = ref(db, `devices/${deviceId}`);
+                            return get(deviceRef);
                         });
 
-                        // Fetch device names
-                        userDevices.forEach(deviceId => {
-                            const deviceRef = ref(db, `devices/${deviceId}`);
-                            get(deviceRef).then((deviceSnapshot) => {
-                                if (deviceSnapshot.exists()) {
-                                    const deviceData = deviceSnapshot.val();
-                                    setDeviceNames(prev => ({
-                                        ...prev,
-                                        [deviceId]: deviceData.name || deviceId
-                                    }));
+                        Promise.all(devicePromises).then(deviceSnapshots => {
+                            const statuses = {};
+                            let activeCount = 0;
+                            let totalWarningsToday = 0;
+
+                            deviceSnapshots.forEach(snapshot => {
+                                if (snapshot.exists()) {
+                                    const deviceData = snapshot.val();
+                                    const isActive = isDeviceActive(deviceData);
+                                    
+                                    statuses[snapshot.key] = {
+                                        name: deviceData.name || snapshot.key,
+                                        data: deviceData,
+                                        isActive
+                                    };
+
+                                    if (isActive) activeCount++;
+                                    totalWarningsToday += countWarningsToday(deviceData);
                                 }
                             });
+
+                            setDeviceStatuses(statuses);
+                            setDeviceNames(prev => ({
+                                ...prev,
+                                ...Object.fromEntries(
+                                    Object.entries(statuses).map(([id, data]) => [id, data.name])
+                                )
+                            }));
+                            
+                            setStats(prev => ({
+                                ...prev,
+                                totalDevices: userDevices.length,
+                                activeDevices: activeCount,
+                                alertsToday: totalWarningsToday
+                            }));
                         });
                     }
                 })
@@ -73,6 +133,26 @@ const Home = () => {
                 .finally(() => setLoading(false));
         }
     }, [userId]);
+
+    // Modified periodic update
+    useEffect(() => {
+        if (!devices.length) return;
+
+        const updateActiveDevices = () => {
+            const activeCount = Object.values(deviceStatuses)
+                .filter(status => isDeviceActive(status.data))
+                .length;
+
+            setStats(prev => ({
+                ...prev,
+                activeDevices: activeCount
+            }));
+        };
+
+        const intervalId = setInterval(updateActiveDevices, 1000); // Update every 10 seconds
+
+        return () => clearInterval(intervalId);
+    }, [devices, deviceStatuses]);
 
     const handleDeviceClick = (deviceId) => {
         navigate(`/device/${deviceId}`);
@@ -141,10 +221,10 @@ const Home = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+        <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-300">
             <Navbar onLogout={handleLogout}/>
             
-            <div className="container mx-auto px-4 py-8">
+            <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center">
                 {/* Header Section */}
                 <div className="text-center mb-8 mt-16">
                     <AntTitle level={2} className="text-gray-800">
@@ -154,38 +234,32 @@ const Home = () => {
                 </div>
 
                 {/* Statistics Section */}
-                <Row gutter={[16, 16]} className="mb-8">
-                    <Col xs={24} sm={8}>
-                        <Card hoverable className="text-center shadow-md">
-                            <Statistic 
-                                title="Tổng số thiết bị"
-                                value={stats.totalDevices}
-                                prefix={<HomeOutlined className="text-blue-500" />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card hoverable className="text-center shadow-md">
-                            <Statistic 
-                                title="Thiết bị đang hoạt động"
-                                value={stats.activeDevices}
-                                prefix={<AppstoreOutlined className="text-green-500" />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card hoverable className="text-center shadow-md">
-                            <Statistic 
-                                title="Cảnh báo hôm nay"
-                                value={stats.alertsToday}
-                                prefix={<AlertOutlined className="text-red-500" />}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl mx-auto mb-12 px-4">
+                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px]">
+                        <Statistic 
+                            title={<span className="text-lg font-medium">Tổng số thiết bị</span>}
+                            value={stats.totalDevices}
+                            prefix={<HomeOutlined className="text-blue-500 text-xl" />}
+                        />
+                    </Card>
+                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px]">
+                        <Statistic 
+                            title={<span className="text-lg font-medium">Thiết bị đang hoạt động</span>}
+                            value={stats.activeDevices}
+                            prefix={<AppstoreOutlined className="text-green-500 text-xl" />}
+                        />
+                    </Card>
+                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px]">
+                        <Statistic 
+                            title={<span className="text-lg font-medium">Cảnh báo hôm nay</span>}
+                            value={stats.alertsToday}
+                            prefix={<AlertOutlined className="text-red-500 text-xl" />}
+                        />
+                    </Card>
+                </div>
 
                 {/* Search Bar */}
-                <div className="mb-6 max-w-md mx-auto">
+                <div className="mb-6 max-w-md w-full">
                     <Input
                         size="large"
                         placeholder="Tìm kiếm thiết bị..."
@@ -196,24 +270,30 @@ const Home = () => {
                     />
                 </div>
 
-                {/* Devices List - Changed to Flex */}
-                <div className="max-w-5xl mx-auto">
-                    <div className="flex flex-wrap justify-center gap-4">
+                {/* Devices List */}
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
                         {filteredDevices.map(deviceId => (
-                            <div className="w-[280px]" key={deviceId}>
-                                <DeviceCard
-                                    deviceId={deviceId}
-                                    deviceName={deviceNames[deviceId]}
-                                    onClick={() => handleDeviceClick(deviceId)}
-                                />
+                            <div className="w-full sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)] min-w-[280px] flex items-center justify-center" key={deviceId}>
+                                <Badge count={getWarningsCount(deviceId)} size="large" offset={[-10, 10]}>
+                                    <DeviceCard
+                                        deviceId={deviceId}
+                                        deviceName={deviceNames[deviceId]}
+                                        onClick={() => handleDeviceClick(deviceId)}
+                                    />
+                                </Badge>
                             </div>
                         ))}
-                        <div className="w-[280px]">
+                        <div className="w-full sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)] min-w-[280px] flex items-center justify-center">
                             <DeviceCard
                                 isAddCard
                                 onClick={handleAddDevice}
                             />
                         </div>
+                        {/* Add empty placeholder divs to maintain grid on larger screens */}
+                        {[...Array((4 - ((filteredDevices.length + 1) % 4)) % 4)].map((_, index) => (
+                            <div key={`empty-${index}`} className="hidden lg:block lg:w-[calc(25%-12px)] min-w-[280px]" />
+                        ))}
                     </div>
                 </div>
             </div>

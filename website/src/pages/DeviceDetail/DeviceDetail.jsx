@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, get, onValue, set } from "firebase/database";
-import { Typography, Button, Input, message } from 'antd';
+import { Typography, Button, Input, message, Card, Statistic } from 'antd';
 import { useUser } from '../../contexts/UserContext';
 import {
     Chart as ChartJS,
@@ -17,7 +17,7 @@ import CurrentDeviceData from '../../components/CurrentDeviceData';
 import Chart from '../../components/Chart';
 import RelayControl from '../../components/RelayControl';
 import RequireLogin from '../../components/RequireLogin';
-import { Loading3QuartersOutlined, EditOutlined } from '@ant-design/icons';
+import { Loading3QuartersOutlined, EditOutlined, WarningOutlined, AlertOutlined, CheckCircleOutlined, ExclamationCircleOutlined, PercentageOutlined } from '@ant-design/icons';
 
 // Register ChartJS components
 ChartJS.register(
@@ -42,6 +42,13 @@ const DeviceDetail = () => {
     const [error, setError] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [tempDeviceName, setTempDeviceName] = useState('');
+    const [warnings, setWarnings] = useState([]);
+    const [warningStats, setWarningStats] = useState({
+        total: 0,
+        resolved: 0,
+        unresolved: 0,
+        resolutionRate: 0
+    });
 
     useEffect(() => {
         if (!userId || !deviceId) return;
@@ -49,6 +56,20 @@ const DeviceDetail = () => {
         const intervalId = setInterval(fetchDeviceData, 5000);
         return () => clearInterval(intervalId);
     }, [userId, deviceId]);
+
+    const calculateWarningStats = (warningsArray) => {
+        const total = warningsArray.length;
+        const resolved = warningsArray.filter(w => w.resolved).length;
+        const unresolved = total - resolved;
+        const resolutionRate = total > 0 ? (resolved / total * 100).toFixed(1) : 0;
+
+        setWarningStats({
+            total,
+            resolved,
+            unresolved,
+            resolutionRate
+        });
+    };
 
     const fetchDeviceData = async () => {
         try {
@@ -71,6 +92,20 @@ const DeviceDetail = () => {
                 }
                 
                 setRelayState(data.relay?.control || 'OFF');
+                // Convert warnings object to array with IDs
+                if (data.warning) {
+                    const warningsArray = Object.entries(data.warning).map(([id, warning]) => ({
+                        ...warning,
+                        id: id  // Ensure each warning has its unique ID
+                    }));
+                    console.log('Warnings with IDs:', warningsArray); // Debug log
+                    setWarnings(warningsArray);
+                    calculateWarningStats(warningsArray);
+                } else {
+                    setWarnings([]);
+                    calculateWarningStats([]);
+                }
+                
                 setError(null);
             } else {
                 setError("Không tìm thấy dữ liệu thiết bị");
@@ -157,6 +192,15 @@ const DeviceDetail = () => {
         navigate('/login');
     };
 
+    const handleResolveWarning = (warning, resolved) => {
+        console.log('Handling resolve warning:', warning.id, resolved);
+        setWarnings(prevWarnings => 
+            prevWarnings.map(w => 
+                w.id === warning.id ? { ...w, resolved } : w
+            )
+        );
+    };
+
     if (!userId) {
         return <RequireLogin />;
     }
@@ -200,7 +244,7 @@ const DeviceDetail = () => {
                     <div className="text-red-500 mt-4">{error}</div>
                 ) : (
                     <>
-                        <div className="flex flex-col md:flex-row items-center gap-4 w-3/4 justify-evenly glassmorphism mb-5 p-4">
+                        <div className="flex flex-col md:flex-row items-center gap-4 w-3/4 justify-evenly glassmorphism mb-3 p-4">
                             <Button 
                                 onClick={() => navigate('/home')}
                                 size="middle"
@@ -212,6 +256,7 @@ const DeviceDetail = () => {
                                 Trở về
                             </Button>
                             <RelayControl relayState={relayState} onToggleRelay={toggleRelay} />
+                        
                             <Button 
                                 onClick={() => navigate(`/device/${deviceId}/history`)}
                                 size="middle"
@@ -226,14 +271,65 @@ const DeviceDetail = () => {
                             </Button>
                         </div>
 
+                        <div className="w-3/4 glassmorphism p-6 mb-3 ">
+                            <div className="flex flex-col space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <Card bordered={false} className="text-center shadow-sm glassmorphism">
+                                        <Statistic
+                                            title="Tổng số cảnh báo"
+                                            value={warningStats.total}
+                                            prefix={<AlertOutlined style={{ color: '#1890ff' }} />}
+                                        />
+                                    </Card>
+                                    <Card bordered={false} className="text-center shadow-sm glassmorphism">
+                                        <Statistic
+                                            title="Đã giải quyết"
+                                            value={warningStats.resolved}
+                                            valueStyle={{ color: '#3f8600' }}
+                                            prefix={<CheckCircleOutlined style={{ color: '#3f8600' }} />}
+                                        />
+                                    </Card>
+                                    <Card bordered={false} className="text-center shadow-sm glassmorphism">
+                                        <Statistic
+                                            title="Chưa giải quyết"
+                                            value={warningStats.unresolved}
+                                            valueStyle={{ color: '#cf1322' }}
+                                            prefix={<ExclamationCircleOutlined style={{ color: '#cf1322' }} />}
+                                        />
+                                    </Card>
+                                    <Card bordered={false} className="text-center shadow-sm glassmorphism">
+                                        <Statistic
+                                            title="Tỉ lệ giải quyết"
+                                            value={warningStats.resolutionRate}
+                                            suffix="%"
+                                            precision={1}
+                                            prefix={<PercentageOutlined style={{ color: '#1890ff' }} />}
+                                        />
+                                    </Card>
+                                </div>
+                                <div className="flex justify-center mt-4">
+                                    <Button
+                                        type="primary"
+                                        icon={<WarningOutlined />}
+                                        onClick={() => navigate(`/device/${deviceId}/warnings`)}
+                                        style={{ backgroundColor: '#1890ff' }}
+                                        size="large"
+                                    >
+                                        Xem chi tiết cảnh báo
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                        
                         {deviceData && latestData ? (
                             <>
                                 <CurrentDeviceData latestData={latestData} />
                                 {chartData && <Chart chartData={chartData} className="mt-4 hidden-mobile" />}
                             </>
-                        ) : (
-                            <Loading3QuartersOutlined className="text-4xl text-white mt-4" />
-                        )}
+                            ) : (
+                                <Loading3QuartersOutlined spin className="text-4xl text-white mt-4" />
+                            )
+                            }
                     </>
                 )}
             </div>

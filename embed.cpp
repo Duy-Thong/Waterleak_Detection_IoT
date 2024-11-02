@@ -428,6 +428,23 @@ void checkFlowRateDifference()
       if (Firebase.RTDB.setString(&fbdo, relayPath, "OFF"))
       {
         Serial.println("Emergency: Relay turned OFF due to leak detection");
+        
+        // Create warning object
+        FirebaseJson warningData;
+        warningData.set("timestamp", formatTimestamp());
+        warningData.set("flowDifference1", flowDifference1);
+        warningData.set("flowDifference2", flowDifference2);
+        
+        // Send warning to Firebase
+        String warningPath = "/devices/" + String(DEVICE_ID) + "/warning";
+        if (Firebase.RTDB.pushJSON(&fbdo, warningPath.c_str(), &warningData))
+        {
+          Serial.println("Warning data sent successfully");
+        }
+        else
+        {
+          Serial.printf("Failed to send warning data: %s\n", fbdo.errorReason().c_str());
+        }
       }
       else
       {
