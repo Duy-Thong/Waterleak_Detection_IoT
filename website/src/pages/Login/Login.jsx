@@ -5,6 +5,8 @@ import { useUser } from '../../contexts/UserContext';
 import { Form, Input, Button, Alert, Divider } from 'antd';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import login from '../../assets/login.jpg';
+import { getDatabase, ref, get, set } from 'firebase/database'; // Add Realtime Database imports
+
 
 function Login() {
   const [error, setError] = useState(""); 
@@ -36,39 +38,62 @@ function Login() {
     setLoading(true);
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
-    const db = getFirestore();
-
+    
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      // Check if user exists in Firestore
-      const userRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userRef);
+      // Check if user exists in Realtime Database
+      const db = getDatabase();
+      const userRef = ref(db, `users/${user.uid}`);
+      
+      try {
+        const snapshot = await get(userRef);
+        
+        if (!snapshot.exists()) {
+          // Create new user profile with basic information
+          const userData = {
+            username: user.displayName || '',
+            email: user.email,
+            photoURL: user.photoURL || '',
+            registrationMethod: 'google',
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+          };
 
-      if (!userDoc.exists()) {
-        // User doesn't exist - redirect to registration
-        navigate("/register", { 
-          state: { 
-            googleUser: {
-              uid: user.uid,
-              email: user.email,
-              displayName: user.displayName,
-              photoURL: user.photoURL
-            }
-          }
-        });
-        return;
+          await set(userRef, userData);
+        } else {
+          // Update last login time for existing users
+          await set(ref(db, `users/${user.uid}/lastLogin`), new Date().toISOString());
+        }
+
+        setUserId(user.uid);
+        localStorage.setItem('userId', user.uid);
+        navigate("/home");
+      } catch (dbError) {
+        console.error("Database error:", dbError);
+        setError("Không thể kết nối với cơ sở dữ liệu. Vui lòng thử lại sau.");
       }
-
-      // User exists - proceed with login
-      setUserId(user.uid);
-      localStorage.setItem('userId', user.uid);
-      navigate("/home");
 
     } catch (error) {
       console.error("Google sign-in error:", error);
-      setError("Đăng nhập bằng Google thất bại!");
+      let errorMessage = "Đăng nhập bằng Google thất bại. ";
+      
+      switch (error.code) {
+        case 'auth/popup-blocked':
+          errorMessage += "Vui lòng cho phép popup để tiếp tục.";
+          break;
+        case 'auth/popup-closed-by-user':
+          errorMessage += "Đăng nhập bị hủy.";
+          break;
+        case 'auth/cancelled-popup-request':
+          errorMessage += "Yêu cầu đăng nhập bị hủy.";
+          break;
+        default:
+          errorMessage += "Vui lòng thử lại sau.";
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -129,12 +154,15 @@ function Login() {
           <Button 
             onClick={handleGoogleLogin} 
             className="w-full flex items-center justify-center gap-2"
-              icon={
-              <img 
-                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                alt="Google" 
-                className="w-4 h-4"
-              />
+            loading={loading}
+            icon={
+              !loading && (
+                <img 
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                  alt="Google" 
+                  className="w-4 h-4"
+                />
+              )
             }
           >
             Đăng nhập với Google
