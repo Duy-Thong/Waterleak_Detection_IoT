@@ -59,7 +59,10 @@ const WarningPage = () => {
         logout();
         navigate('/login');
     };
-
+    
+    if (!userId) {
+        return <RequireLogin />;
+    }
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -82,9 +85,6 @@ const WarningPage = () => {
     }
 
    
-    if (!userId) {
-        return <RequireLogin />;
-    }
 
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-tl from-white to-blue-300">

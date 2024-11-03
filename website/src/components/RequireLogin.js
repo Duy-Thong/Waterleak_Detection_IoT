@@ -1,40 +1,62 @@
 import React from 'react';
 import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import accessDeniedImage from '../assets/accessdenied.webp';
+import { LoginOutlined, UserAddOutlined, WarningOutlined } from '@ant-design/icons';
+import accessDeniedImage from '../assets/popup.gif';
 
 const RequireLogin = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-t from-red-800 to-red-500">
-            <div className="bg-white rounded-lg flex flex-col md:flex-row w-11/12 md:w-3/4 max-w-4xl overflow-hidden backdrop-blur-sm bg-opacity-80 border-gray-200 h-96"> {/* Thay đổi chiều cao tại đây */}
-
-                {/* Left side with illustration */}
-                <div className="md:w-1/2 bg-cyan-500 flex items-center justify-center">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-700 via-red-600 to-red-500 p-3">
+            <div className="bg-white/95 rounded-2xl w-full max-w-md overflow-hidden shadow-xl backdrop-blur-xl">
+                {/* Top image section */}
+                <div className="relative h-40 bg-gradient-to-r from-red-600 to-red-400 flex items-center justify-center overflow-hidden">
                     <img
                         src={accessDeniedImage}
                         alt="Access Denied"
-                        className="w-full h-48 md:h-full object-cover max-w-2xl"
+                        className="w-full h-full object-fit"
                     />
                 </div>
 
-                {/* Right side with notification */}
-                <div className="w-full md:w-1/2 p-8 flex flex-col items-center justify-center">
-                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Truy cập bị từ chối</h2>
-                    <p className="text-red-500 text-lg font-bold mb-6 text-center">Bạn cần đăng nhập để sử dụng các chức năng này.</p>
-                    <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
+                {/* Content section */}
+                <div className="p-6">
+                    <div className="text-center mb-6">
+                        <div className="flex items-center justify-center mb-3">
+                            <WarningOutlined className="text-3xl text-red-600" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                            Oops! Vội thế bạn ơi 🤡
+                        </h2>
+                        <div className="h-0.5 w-12 bg-red-600 mx-auto mb-3"></div>
+                        <p className="text-gray-600 text-base">
+                            Hãy đăng nhập để xem những điều thú vị phía sau nhé! 🚀
+                        </p>
+                    </div>
+
+                    <div className="space-y-3">
                         <Button
-                            className="hover:scale-105 transition-transform"
                             type="primary"
+                            icon={<LoginOutlined />}
                             onClick={() => navigate('/login')}
+                            className="w-full h-10 text-sm font-medium bg-gradient-to-r from-red-600 to-red-500 border-none shadow-md flex items-center justify-center"
                         >
                             Đăng Nhập
                         </Button>
+                        <div className="relative my-4">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-300"></div>
+                            </div>
+                            <div className="relative flex justify-center text-xs">
+                                <span className="px-2 bg-white text-gray-500">Hoặc</span>
+                            </div>
+                        </div>
                         <Button
+                            icon={<UserAddOutlined />}
                             onClick={() => navigate('/register')}
+                            className="w-full h-10 text-sm font-medium border border-gray-300 hover:border-red-500 hover:text-red-500 shadow-sm flex items-center justify-center"
                         >
-                            Đăng Ký
+                            Đăng Ký Tài Khoản Mới
                         </Button>
                     </div>
                 </div>
