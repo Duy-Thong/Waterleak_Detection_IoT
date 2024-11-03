@@ -1,8 +1,8 @@
 import React from 'react';
-import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { LoginOutlined, UserAddOutlined, WarningOutlined } from '@ant-design/icons';
-import accessDeniedImage from '../assets/popup.gif';
+import { WarningOutlined } from '@ant-design/icons';
+import accessDeniedImage from '../assets/denied.jpg';
+import '../styles/button.css';
 
 const RequireLogin = () => {
     const navigate = useNavigate();
@@ -34,16 +34,15 @@ const RequireLogin = () => {
                         </p>
                     </div>
 
-                    <div className="space-y-3">
-                        <Button
-                            type="primary"
-                            icon={<LoginOutlined />}
-                            onClick={() => navigate('/login')}
-                            className="w-full h-10 text-sm font-medium bg-gradient-to-r from-red-600 to-red-500 border-none shadow-md flex items-center justify-center"
-                        >
-                            Đăng Nhập
-                        </Button>
-                        <div className="relative my-4">
+                    <div className="space-y-3 flex flex-col items-center">
+                        <button className="button w-3/4 mx-auto flex justify-center items-center" onClick={() => navigate('/login')}>
+                            <div className="dots_border"></div>
+                            <span className="text_button mr-2">Đăng Nhập</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="sparkle w-5 h-5">
+                                <path className="path" d="M3 12H21M21 12L15 6M21 12L15 18" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </button>
+                        <div className="relative my-4 w-full">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-gray-300"></div>
                             </div>
@@ -51,13 +50,15 @@ const RequireLogin = () => {
                                 <span className="px-2 bg-white text-gray-500">Hoặc</span>
                             </div>
                         </div>
-                        <Button
-                            icon={<UserAddOutlined />}
-                            onClick={() => navigate('/register')}
-                            className="w-full h-10 text-sm font-medium border border-gray-300 hover:border-red-500 hover:text-red-500 shadow-sm flex items-center justify-center"
-                        >
-                            Đăng Ký Tài Khoản Mới
-                        </Button>
+                        <div className="block w-full flex justify-center">
+                            <button className="button w-3/4 flex justify-center items-center" onClick={() => navigate('/register')}>
+                                <div className="dots_border"></div>
+                                <span className="text_button mr-2">Đăng Ký </span>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="sparkle w-5 h-5">
+                                    <path className="path" d="M12 4V20M20 12H4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

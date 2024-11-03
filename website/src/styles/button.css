@@ -1,0 +1,23 @@
+.button {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: white;
+    color: #dc2626;
+    border: 1px solid #dc2626;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.button:hover {
+    color: white;
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+.button .text_button {
+    color: currentColor;
+}
