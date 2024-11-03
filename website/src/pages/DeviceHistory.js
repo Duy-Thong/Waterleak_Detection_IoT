@@ -124,10 +124,27 @@ const DeviceHistory = () => {
     };
 
     const columns = [
-        { title: 'Thời gian', dataIndex: 'timestamp', key: 'timestamp' },
-        { title: 'Cảm biến 1', dataIndex: 'sensor1', key: 'sensor1' },
-        { title: 'Cảm biến 2', dataIndex: 'sensor2', key: 'sensor2' },
-        { title: 'Trạng thái Relay', dataIndex: 'relayState', key: 'relayState' },
+        {
+            title: 'Thời gian',
+            dataIndex: 'timestamp',
+            key: 'timestamp',
+            responsive: ['md'],
+        },
+        {
+            title: 'Cảm biến 1',
+            dataIndex: 'sensor1',
+            key: 'sensor1',
+        },
+        {
+            title: 'Cảm biến 2',
+            dataIndex: 'sensor2',
+            key: 'sensor2',
+        },
+        {
+            title: 'Relay',
+            dataIndex: 'relayState',
+            key: 'relayState',
+        },
     ];
 
     const handleDeleteHistory = async () => {
@@ -186,18 +203,18 @@ const DeviceHistory = () => {
     return (
         <div className="bg-gradient-to-r from-white to-blue-200 min-h-screen">
             <Navbar onLogout={handleLogout} />
-            <div className="p-8 flex flex-col items-center pt-20">
-                <Title level={2} className="text-gray-800">Lịch Sử Thiết Bị: {deviceName}</Title>
-                
+            <div className="p-4 md:p-8 flex flex-col items-center pt-16 md:pt-20">
+                <Title level={2} className="text-gray-800 text-xl md:text-2xl text-center">
+                    Lịch Sử Thiết Bị: {deviceName}
+                </Title>
 
-                <div className="glassmorphism-filter-section p-4 rounded shadow-lg w-full max-w-3xl">
-                    <Row gutter={16}>
-                        <Col span={24}>
+                <div className="glassmorphism-filter-section p-3 md:p-4 rounded shadow-lg w-full max-w-3xl">
+                    <Row gutter={[8, 16]}>
+                        <Col xs={24}>
                             <Text>Chọn Khoảng Ngày</Text>
                             <RangePicker
                                 onChange={(dates) => {
                                     if (dates && dates.length === 2) {
-                                        // Convert Day.js to moment
                                         const startDate = moment(dates[0].toISOString());
                                         const endDate = moment(dates[1].toISOString());
                                         setDateRange([startDate, endDate]);
@@ -210,8 +227,8 @@ const DeviceHistory = () => {
                             />
                         </Col>
                     </Row>
-                    <Row gutter={16} className="mt-2">
-                        <Col span={12}>
+                    <Row gutter={[8, 16]} className="mt-2">
+                        <Col xs={24} md={12}>
                             <Text>Giá Trị Cảm Biến 1</Text>
                             <Slider
                                 range
@@ -221,7 +238,7 @@ const DeviceHistory = () => {
                                 onChange={setSensor1Range}
                             />
                         </Col>
-                        <Col span={12}>
+                        <Col xs={24} md={12}>
                             <Text>Giá Trị Cảm Biến 2</Text>
                             <Slider
                                 range
@@ -232,8 +249,8 @@ const DeviceHistory = () => {
                             />
                         </Col>
                     </Row>
-                    <Row gutter={16} className="mt-2">
-                        <Col span={12}>
+                    <Row gutter={[8, 16]} className="mt-2">
+                        <Col xs={24} md={12}>
                             <Text>Chênh Lệch</Text>
                             <Input
                                 value={sensorDifference}
@@ -241,7 +258,7 @@ const DeviceHistory = () => {
                                 placeholder="Nhập giá trị chênh lệch"
                             />
                         </Col>
-                        <Col span={12}>
+                        <Col xs={24} md={12}>
                             <Text>Trạng Thái Relay</Text>
                             <Select
                                 value={relayState}
@@ -254,23 +271,22 @@ const DeviceHistory = () => {
                             </Select>
                         </Col>
                     </Row>
-                    <div className="flex justify-between mt-4">
+                    <div className="flex flex-col md:flex-row justify-between gap-2 mt-4">
                         <Button
                             onClick={() => navigate(`/device/${deviceId}`)}
-                            className="border-blue-600 text-blue-600 hover:text-blue-500 hover:border-blue-500 transition duration-300 mb-4 bg-white"
+                            className="w-full md:w-auto border-blue-600 text-blue-600 hover:text-blue-500 hover:border-blue-500 transition duration-300 bg-white"
                         >
                             Quay về 
                         </Button>
                         <Button 
                             onClick={handleFilter} 
-                            className="border-blue-600 text-blue-600 hover:text-blue-500 hover:border-blue-500 bg-white"
+                            className="w-full md:w-auto border-blue-600 text-blue-600 hover:text-blue-500 hover:border-blue-500 bg-white"
                         >
                             Lọc Dữ Liệu
                         </Button>
-                        
                         <Button 
                             onClick={handleDeleteHistory} 
-                            className="border-red-500 text-red-500 hover:text-red-400 hover:border-red-400 bg-white"
+                            className="w-full md:w-auto border-red-500 text-red-500 hover:text-red-400 hover:border-red-400 bg-white"
                             type="danger"
                         >
                             Xóa Lịch Sử
@@ -283,9 +299,13 @@ const DeviceHistory = () => {
                     columns={columns}
                     rowKey="timestamp"
                     className="mt-4 w-full max-w-3xl glassmorphism-table"
-                    pagination={true}
+                    pagination={{
+                        responsive: true,
+                        pageSize: 5,
+                        showSizeChanger: false
+                    }}
+                    scroll={{ x: 'max-content' }}
                 />
-
             </div>
         </div>
     );
