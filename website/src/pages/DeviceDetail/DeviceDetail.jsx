@@ -19,7 +19,7 @@ import RelayControl from '../../components/RelayControl';
 import RequireLogin from '../../components/RequireLogin';
 import { Loading3QuartersOutlined, EditOutlined } from '@ant-design/icons';
 import WarningStats from '../../components/WarningStats';  // Make sure this path is correct
-import { UserOutlined, MailOutlined } from '@ant-design/icons';
+import { UserOutlined, MailOutlined, GoogleOutlined } from '@ant-design/icons';  // Add GoogleOutlined
 
 // Register ChartJS components
 ChartJS.register(
@@ -196,6 +196,18 @@ const DeviceDetail = () => {
         fetchUsersWithAccess();
     };
 
+    // Add this helper function to get provider icon
+    const getProviderIcon = (providerType) => {
+        switch (providerType) {
+            case 'google':
+                return <GoogleOutlined className="text-red-500" />;
+            case 'email':
+                return <MailOutlined className="text-blue-500" />;
+            default:
+                return null;
+        }
+    };
+
     const chartData = state.deviceData && state.deviceData.flow_sensor ? {
         labels: Object.values(state.deviceData.flow_sensor).map(data => data.timestamp),
         datasets: [
@@ -343,17 +355,20 @@ const DeviceDetail = () => {
 
                         <Modal
                             title={
-                                <div className="flex items-center gap-2 text-lg">
-                                    <UserOutlined />
-                                    <span>Danh sách người dùng có quyền truy cập</span>
+                                <div className="flex items-center gap-3 py-2 border-b border-gray-100">
+                                    <div className="bg-blue-50 p-2 rounded-lg">
+                                        <UserOutlined className="text-xl text-blue-500" />
+                                    </div>
+                                    <span className="text-xl font-medium text-gray-700">
+                                        Danh sách người dùng có quyền truy cập
+                                    </span>
                                 </div>
                             }
                             open={isUsersModalVisible}
                             onCancel={() => setIsUsersModalVisible(false)}
                             footer={null}
-                            width={600}
-                            centered
                             className="custom-modal"
+                            style={{ maxWidth: '600px' }}
                         >
                             {loadingUsers ? (
                                 <div className="flex justify-center items-center py-8">
@@ -363,30 +378,43 @@ const DeviceDetail = () => {
                                 <List
                                     dataSource={usersWithAccess}
                                     renderItem={user => (
-                                        <List.Item className="hover:bg-gray-50 rounded-lg transition-all duration-300">
+                                        <List.Item className="hover:bg-gray-50 rounded-lg transition-all duration-300 p-4">
                                             <List.Item.Meta
                                                 avatar={
                                                     user.photoURL ? (
                                                         <img 
                                                             src={user.photoURL} 
                                                             alt={user.username || 'User'} 
-                                                            className="w-10 h-10 rounded-full object-cover"
+                                                            className="w-12 h-12 rounded-full object-cover border-2 border-blue-100"
                                                         />
                                                     ) : (
-                                                        <div className="flex justify-center items-center w-10 h-10 rounded-full bg-blue-100 text-blue-500">
-                                                            <UserOutlined />
+                                                        <div className="flex justify-center items-center w-12 h-12 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 text-blue-500">
+                                                            <UserOutlined className="text-xl" />
                                                         </div>
                                                     )
                                                 }
                                                 title={
-                                                    <span className="font-semibold">
-                                                        {user.username || 'Người dùng'}
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-semibold text-gray-800">
+                                                            {user.username || 'Người dùng'}
+                                                        </span>
+                                                        <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
+                                                            {getProviderIcon(user.registrationMethod)}
+                                                            <span className="text-xs text-gray-600">
+                                                                {user.registrationMethod === 'google' ? 'Google' : 'Email'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 }
                                                 description={
-                                                    <div className="flex items-center gap-2 text-gray-500">
-                                                        <MailOutlined />
-                                                        <span>{user.email}</span>
+                                                    <div className="flex flex-col gap-1 mt-1">
+                                                        <div className="flex items-center gap-2 text-gray-500">
+                                                            <MailOutlined className="text-blue-400" />
+                                                            <span>{user.email}</span>
+                                                        </div>
+                                                        <div className="text-xs text-gray-400">
+                                                            Đã tham gia: {new Date(user.createdAt).toLocaleDateString()}
+                                                        </div>
                                                     </div>
                                                 }
                                             />
@@ -395,8 +423,11 @@ const DeviceDetail = () => {
                                     locale={{
                                         emptyText: (
                                             <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                                                <UserOutlined style={{ fontSize: '2rem' }} />
-                                                <span className="mt-2">Không có người dùng nào</span>
+                                                <div className="bg-gray-100 p-4 rounded-full mb-3">
+                                                    <UserOutlined style={{ fontSize: '2rem' }} />
+                                                </div>
+                                                <span className="text-lg font-medium">Không có người dùng nào</span>
+                                                <span className="text-sm text-gray-400 mt-1">Chưa có người dùng nào được cấp quyền truy cập</span>
                                             </div>
                                         )
                                     }}

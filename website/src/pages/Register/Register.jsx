@@ -114,8 +114,9 @@ function Register() {
           await set(newUserRef, {
             username: values.username,
             email: values.email,
-            registeredWith: 'email',
-            password : values.password
+            registrationMethod: 'email',
+            password: values.password,
+            createdAt: new Date().toISOString(),
           });
 
           // Set user ID and navigate
@@ -164,7 +165,8 @@ function Register() {
         username: result.user.displayName,
         email: result.user.email,
         photoURL: result.user.photoURL,
-        registeredWith: 'google'
+        registrationMethod: 'google',
+        createdAt: new Date().toISOString(),
       });
       
       // Set user ID in context and local storage
