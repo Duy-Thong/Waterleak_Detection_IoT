@@ -125,10 +125,18 @@ const DeviceHistory = () => {
 
     const columns = [
         {
+            title: 'Ngày',
+            dataIndex: 'timestamp',
+            key: 'date',
+            responsive: ['md'],
+            render: (timestamp) => moment(timestamp, 'YYYY-MM-DD HH:mm:ss').format('DD/MM/YYYY')
+        },
+        {
             title: 'Thời gian',
             dataIndex: 'timestamp',
-            key: 'timestamp',
+            key: 'time',
             responsive: ['md'],
+            render: (timestamp) => moment(timestamp, 'YYYY-MM-DD HH:mm:ss').format('HH:mm:ss')
         },
         {
             title: 'Cảm biến 1',
