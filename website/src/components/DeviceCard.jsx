@@ -1,8 +1,32 @@
-import React from 'react';
-import { Card } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Switch } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import { ref, onValue, set } from 'firebase/database';
+import { database } from '../firebase';  // Changed from 'db' to 'database'
 
 const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
+  const [relayState, setRelayState] = useState(false);
+
+  useEffect(() => {
+    if (!isAddCard && deviceId) {
+      const relayRef = ref(database, `devices/${deviceId}/relay/control`);
+      const unsubscribe = onValue(relayRef, (snapshot) => {
+        setRelayState(snapshot.val() === 'ON');
+      });
+      
+      return () => unsubscribe();
+    }
+  }, [deviceId, isAddCard]);
+
+  const handleToggleRelay = async (checked) => {
+    try {
+      const relayRef = ref(database, `devices/${deviceId}/relay/control`);
+      await set(relayRef, checked ? 'ON' : 'OFF');
+    } catch (error) {
+      console.error('Error updating relay state:', error);
+    }
+  };
+
   const glassStyle = {
     background: 'rgba(255, 255, 255, 0.2)',
     backdropFilter: 'blur(8px)',
@@ -56,13 +80,28 @@ const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
         alignItems: 'center',
         padding: '16px'
       }}
-      onClick={onClick}
+      onClick={(e) => {
+        // Prevent card click when toggling switch
+        if (e.target.closest('.ant-switch')) {
+          e.stopPropagation();
+          return;
+        }
+        onClick();
+      }}
     >
       <div className="text-center">
-        <h4 className=" font-bold text-blue-500">Thiết bị</h4>
+        <h4 className="font-bold text-blue-500">Thiết bị</h4>
         <h3 className="text-xl font-bold text-blue-500">
           {deviceName || 'Thiết bị'}
         </h3>
+        <div className="mt-3">
+          <Switch
+            checked={relayState}
+            onChange={handleToggleRelay}
+            className="bg-gray-300"
+          />
+          
+        </div>
       </div>
     </Card>
   );
