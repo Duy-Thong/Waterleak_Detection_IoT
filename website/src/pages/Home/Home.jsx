@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDatabase, ref, get } from "firebase/database";
+import { getDatabase, ref, get, onValue, off } from "firebase/database";  // Add onValue and off
 import { useUser } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Input, Tooltip, Row, Col, Modal, Form, Input as AntInput, Button, message, Badge } from 'antd';
@@ -36,6 +36,9 @@ const Home = () => {
 
     const [deviceStatuses, setDeviceStatuses] = useState({});
 
+    // Add reference for warning listeners
+    const [warningListeners, setWarningListeners] = useState({});
+
     // Modified isDeviceActive function
     const isDeviceActive = (deviceData) => {
         if (!deviceData || !deviceData.flow_sensor) return false;
@@ -50,7 +53,7 @@ const Home = () => {
         
         const now = Date.now();
         const lastActivity = new Date(latestTimestamp).getTime();
-        return (now - lastActivity) < 60000; // 60000 ms = 1 minute
+        return (now - lastActivity) < 10000; // 60000 ms = 1 minute
     };
 
     const countWarningsToday = (deviceData) => {
@@ -145,25 +148,120 @@ const Home = () => {
         }
     }, [userId]);
 
-    // Modified periodic update
+    // Modified fetchDeviceData function to set up warning listeners
+    const fetchDeviceData = async () => {
+        if (!userId || !devices.length) return;
+        
+        const db = getDatabase();
+        const devicePromises = devices.map(deviceId => {
+            const deviceRef = ref(db, `devices/${deviceId}`);
+            return get(deviceRef);
+        });
+
+        try {
+            const deviceSnapshots = await Promise.all(devicePromises);
+            const statuses = {};
+            let activeCount = 0;
+            let totalWarningsToday = 0;
+
+            deviceSnapshots.forEach(snapshot => {
+                if (snapshot.exists()) {
+                    const deviceData = snapshot.val();
+                    const isActive = isDeviceActive(deviceData);
+                    
+                    statuses[snapshot.key] = {
+                        name: deviceData.name || snapshot.key,
+                        data: deviceData,
+                        isActive
+                    };
+
+                    if (isActive) activeCount++;
+                    totalWarningsToday += countWarningsToday(deviceData);
+
+                    // Set up warning listener if not already set
+                    if (!warningListeners[snapshot.key]) {
+                        const warningRef = ref(db, `devices/${snapshot.key}/warning`);
+                        const listener = onValue(warningRef, (warningSnapshot) => {
+                            const warningData = warningSnapshot.exists() ? warningSnapshot.val() : null;
+                            
+                            setDeviceStatuses(prev => {
+                                const updatedStatuses = {
+                                    ...prev,
+                                    [snapshot.key]: {
+                                        ...prev[snapshot.key],
+                                        data: {
+                                            ...prev[snapshot.key]?.data,
+                                            warning: warningData
+                                        }
+                                    }
+                                };
+
+                                // Calculate new total warnings
+                                const newTotal = Object.values(updatedStatuses).reduce((total, device) => {
+                                    return total + countWarningsToday(device.data);
+                                }, 0);
+
+                                // Update stats after calculating new total
+                                setStats(prevStats => ({
+                                    ...prevStats,
+                                    alertsToday: newTotal
+                                }));
+
+                                return updatedStatuses;
+                            });
+                        });
+
+                        setWarningListeners(prev => ({
+                            ...prev,
+                            [snapshot.key]: listener
+                        }));
+                    }
+                }
+            });
+
+            setDeviceStatuses(statuses);
+            setDeviceNames(prev => ({
+                ...prev,
+                ...Object.fromEntries(
+                    Object.entries(statuses).map(([id, data]) => [id, data.name])
+                )
+            }));
+            
+            setStats(prev => ({
+                totalDevices: devices.length,
+                activeDevices: activeCount,
+                alertsToday: totalWarningsToday
+            }));
+        } catch (error) {
+            console.error('Error fetching device data:', error);
+        }
+    };
+
+    // Replace the old periodic update useEffect with this new one
     useEffect(() => {
         if (!devices.length) return;
 
-        const updateActiveDevices = () => {
-            const activeCount = Object.values(deviceStatuses)
-                .filter(status => isDeviceActive(status.data))
-                .length;
+        // Initial fetch
+        fetchDeviceData();
 
-            setStats(prev => ({
-                ...prev,
-                activeDevices: activeCount
-            }));
-        };
-
-        const intervalId = setInterval(updateActiveDevices, 1000); // Update every 10 seconds
+        // Set up periodic updates
+        const intervalId = setInterval(fetchDeviceData, 5000); // Update every 5 seconds
 
         return () => clearInterval(intervalId);
-    }, [devices, deviceStatuses]);
+    }, [devices]);
+
+    // Add cleanup for warning listeners
+    useEffect(() => {
+        return () => {
+            const db = getDatabase();
+            // Clean up all warning listeners
+            Object.entries(warningListeners).forEach(([deviceId, listener]) => {
+                const warningRef = ref(db, `devices/${deviceId}/warning`);
+                off(warningRef, listener);
+            });
+            setWarningListeners({});
+        };
+    }, []);
 
     const handleDeviceClick = (deviceId) => {
         navigate(`/device/${deviceId}`);
