@@ -44,3 +44,12 @@
     background-color: #007ee4;
     /* Light blue avatar background */
 }
+
+.ant-dropdown-menu-item:hover {
+    background: rgba(255, 255, 255, 0.4) !important;
+    transform: translateX(5px);
+}
+
+.ant-dropdown-menu {
+    overflow: hidden !important;
+}
