@@ -33,167 +33,91 @@ ChartJS.register(
 const { Title: AntTitle } = Typography;
 
 const DeviceDetail = () => {
-    // Add navigate and destructure logout from useUser
     const navigate = useNavigate();
     const { userId, logout } = useUser();
+    const { deviceId } = useParams();
     
-    // Consolidate states into a single object
     const [state, setState] = useState({
         deviceData: null,
         deviceName: '',
         latestData: null,
         relayState: 'OFF',
-        warnings: [] // Add warnings array to state
+        warnings: [] // Add warnings to state
     });
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [tempDeviceName, setTempDeviceName] = useState('');
-
-    const { deviceId } = useParams();
     
-    // Refs for optimization
-    const prevDataRef = useRef(null);
-    const intervalRef = useRef(null);
+    // Chỉ giữ lại refs cần thiết
     const isMountedRef = useRef(true);
-    const lastUpdateTimeRef = useRef(Date.now());
-    const reconnectAttempts = useRef(0);
-    const MAX_RECONNECT_ATTEMPTS = 3;
-
-    const handlePollingError = (error) => {
-        console.error("Polling error:", error);
-        if (isMountedRef.current) {
-            setError("Có lỗi khi tải dữ liệu thiết bị");
-        }
-    };
 
     useEffect(() => {
         isMountedRef.current = true;
-        let unsubscribe = null;
-        let warningUnsubscribe = null; // Add new unsubscribe for warnings
+        let deviceUnsubscribe = null;
+        let warningUnsubscribe = null;
 
-        const setupRealtimeConnection = () => {
+        const setupRealtimeConnections = () => {
             if (!userId || !deviceId) return;
 
             const db = getDatabase();
             const deviceRef = ref(db, `devices/${deviceId}`);
-            const warningsRef = ref(db, `warnings/${deviceId}`); // Add warnings reference
+            const warningRef = ref(db, `devices/${deviceId}/warning`);
 
-            // Setup warning listener
-            warningUnsubscribe = onValue(warningsRef, (snapshot) => {
+            // Device data subscription
+            deviceUnsubscribe = onValue(deviceRef, (snapshot) => {
+                if (!isMountedRef.current) return;
+
+                if (snapshot.exists()) {
+                    const newData = snapshot.val();
+                    setState(prev => ({
+                        ...prev,
+                        deviceData: newData,
+                        deviceName: newData.name || deviceId,
+                        relayState: newData.relay?.control || 'OFF',
+                        latestData: newData.flow_sensor ? 
+                            Object.values(newData.flow_sensor)[Object.values(newData.flow_sensor).length - 1] 
+                            : null
+                    }));
+                    setError(null);
+                } else {
+                    setError("Không tìm thấy dữ liệu thiết bị");
+                }
+                setLoading(false);
+            });
+
+            // Separate warning subscription
+            warningUnsubscribe = onValue(warningRef, (snapshot) => {
                 if (!isMountedRef.current) return;
 
                 if (snapshot.exists()) {
                     const warningsData = snapshot.val();
-                    const warningsArray = Object.keys(warningsData).map(key => ({
-                        id: key,
-                        ...warningsData[key]
-                    }));
+                    const warningsArray = Object.entries(warningsData)
+                        .map(([key, value]) => ({
+                            id: key,
+                            ...value
+                        }))
+                        .sort((a, b) => b.timestamp - a.timestamp);
 
                     setState(prev => ({
                         ...prev,
-                        warnings: warningsArray.sort((a, b) => b.timestamp - a.timestamp)
+                        warnings: warningsArray
                     }));
                 } else {
-                    setState(prev => ({ ...prev, warnings: [] }));
-                }
-            }, (errorVal) => {
-                console.error("Warning listener error:", errorVal);
-                if (isMountedRef.current) {
-                    setError("Có lỗi khi tải dữ liệu cảnh báo");
+                    setState(prev => ({
+                        ...prev,
+                        warnings: []
+                    }));
                 }
             });
-
-            // Existing device data listener
-            unsubscribe = onValue(deviceRef, (snapshot) => {
-                if (!isMountedRef.current) return;
-
-                if (snapshot.exists()) {
-                    const newData = snapshot.val();
-                    lastUpdateTimeRef.current = Date.now();
-                    reconnectAttempts.current = 0;
-
-                    if (JSON.stringify(newData) !== JSON.stringify(prevDataRef.current)) {
-                        prevDataRef.current = newData;
-                        
-                        setState(prev => ({
-                            ...prev,
-                            deviceData: newData,
-                            deviceName: newData.name || deviceId,
-                            relayState: newData.relay?.control || 'OFF',
-                            latestData: newData.flow_sensor ? 
-                                Object.values(newData.flow_sensor)[Object.values(newData.flow_sensor).length - 1] 
-                                : null
-                        }));
-                    }
-                    setError(null);
-                    setLoading(false);
-                } else {
-                    if (isMountedRef.current) {
-                        setError("Không tìm thấy dữ liệu thiết bị");
-                    }
-                }
-            }, (errorVal) => {
-                console.error("Real-time connection error:", errorVal);
-                handleConnectionError();
-            });
         };
 
-        const handleConnectionError = () => {
-            if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
-                reconnectAttempts.current++;
-                setTimeout(() => {
-                    if (isMountedRef.current) {
-                        setupRealtimeConnection();
-                    }
-                }, 1000 * reconnectAttempts.current); // Exponential backoff
-            } else {
-                setError("Không thể kết nối tới thiết bị. Vui lòng thử lại sau.");
-            }
-        };
-
-        // Polling fallback
-        const pollData = async () => {
-            if (!isMountedRef.current || Date.now() - lastUpdateTimeRef.current < 10000) return;
-
-            try {
-                const db = getDatabase();
-                const deviceRef = ref(db, `devices/${deviceId}`);
-                const snapshot = await get(deviceRef);
-
-                if (snapshot.exists() && isMountedRef.current) {
-                    const newData = snapshot.val();
-                    lastUpdateTimeRef.current = Date.now();
-
-                    if (JSON.stringify(newData) !== JSON.stringify(prevDataRef.current)) {
-                        prevDataRef.current = newData;
-                        setState(prev => ({
-                            ...prev,
-                            deviceData: newData,
-                            deviceName: newData.name || deviceId,
-                            relayState: newData.relay?.control || 'OFF',
-                            latestData: newData.flow_sensor ?
-                                Object.values(newData.flow_sensor)[Object.values(newData.flow_sensor).length - 1]
-                                : null
-                        }));
-                    }
-                }
-            } catch (errorVal) {
-                handlePollingError(errorVal);
-            }
-        };
-
-        // Setup initial connection
-        setupRealtimeConnection();
-
-        // Setup polling interval
-        intervalRef.current = setInterval(pollData, 5000);
+        setupRealtimeConnections();
 
         return () => {
             isMountedRef.current = false;
-            if (unsubscribe) unsubscribe();
-            if (warningUnsubscribe) warningUnsubscribe(); // Clean up warnings listener
-            if (intervalRef.current) clearInterval(intervalRef.current);
+            if (deviceUnsubscribe) deviceUnsubscribe();
+            if (warningUnsubscribe) warningUnsubscribe();
         };
     }, [userId, deviceId]);
 
@@ -259,19 +183,22 @@ const DeviceDetail = () => {
         navigate('/login');
     };
 
-    // Update handleResolveWarning to use Firebase
     const handleResolveWarning = async (warningId, resolved) => {
         try {
+            const warning = state.warnings.find(w => w.id === warningId);
+            if (!warning) {
+                throw new Error('Warning not found');
+            }
+
             const db = getDatabase();
-            const warningRef = ref(db, `warnings/${deviceId}/${warningId}`);
-            await set(warningRef, {
-                ...state.warnings.find(w => w.id === warningId),
+            await set(ref(db, `devices/${deviceId}/warning/${warningId}`), {
+                ...warning,
                 resolved,
                 resolvedAt: resolved ? Date.now() : null
             });
             message.success('Cập nhật trạng thái cảnh báo thành công');
-        } catch (errorVal) {
-            console.error("Error updating warning:", errorVal);
+        } catch (error) {
+            console.error("Error updating warning:", error);
             message.error('Có lỗi khi cập nhật trạng thái cảnh báo');
         }
     };
@@ -359,8 +286,10 @@ const DeviceDetail = () => {
                         <WarningStats 
                             deviceId={deviceId} 
                             navigate={navigate}
-                            warnings={state.warnings} // Pass warnings to WarningStats
+                            warnings={state.warnings} // Use warnings from state
                             onResolveWarning={handleResolveWarning}
+                            loading={loading}
+                            error={error}
                         />
                         
                         {state.deviceData && state.latestData ? (

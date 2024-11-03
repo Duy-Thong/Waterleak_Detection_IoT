@@ -46,7 +46,7 @@ const WarningStats = ({ deviceId, navigate }) => {
         };
 
         fetchWarnings();
-        intervalRef.current = setInterval(fetchWarnings, 50000);
+        intervalRef.current = setInterval(fetchWarnings,500);
 
         return () => {
             if (intervalRef.current) {

@@ -31,9 +31,9 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
         if (severityFilter !== 'all') {
             filtered = filtered.filter(w => {
                 const difference = calculateAbsDifference(w.flowDifference1, w.flowDifference2);
-                if (severityFilter === 'critical') return difference >= 20;
-                if (severityFilter === 'warning') return difference >= 10 && difference < 20;
-                if (severityFilter === 'notice') return difference < 10;
+                if (severityFilter === 'critical') return difference >= 40;
+                if (severityFilter === 'warning') return difference >= 20 && difference < 40;
+                if (severityFilter === 'notice') return difference < 20;
                 return true;
             });
         }
@@ -94,7 +94,7 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
 
     // Add function to determine severity
     const getSeverityInfo = (difference) => {
-        if (difference >= 20) {
+        if (difference >= 40) {
             return {
                 level: 'critical',
                 color: '#dc2626',
@@ -103,7 +103,7 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
                 icon: <AlertOutlined style={{ fontSize: '24px', color: '#dc2626' }} />,
                 text: 'Nguy hiểm'
             };
-        } else if (difference >= 10) {
+        } else if (difference >= 20) {
             return {
                 level: 'warning',
                 color: '#d97706',
