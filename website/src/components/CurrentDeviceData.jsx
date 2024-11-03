@@ -9,8 +9,8 @@ const CurrentDeviceData = ({ latestData, deviceId, navigate }) => {
                     <h3 className="text-lg font-normal mb-2">Cảm Biến 1</h3>
                     <Progress
                         type="circle"
-                        percent={((latestData?.sensor1 || 0) / 200) * 100}
-                        format={() => `${latestData?.sensor1 || 0} L/min`}
+                        percent={((latestData?.sensor1 || 0) / 1000) * 100}
+                        format={() => `${latestData?.sensor1 || 0} L/h`}
                         strokeColor={{
                             '0%': '#FF5F6D',
                             '100%': '#FFC371',
@@ -23,8 +23,8 @@ const CurrentDeviceData = ({ latestData, deviceId, navigate }) => {
                     <h3 className="text-lg font-medium mb-2">Cảm Biến 2</h3>
                     <Progress
                         type="circle"
-                        percent={((latestData?.sensor2 || 0) / 200) * 100}
-                        format={() => `${latestData?.sensor2 || 0} L/min`}
+                        percent={((latestData?.sensor2 || 0) / 1000) * 100}
+                        format={() => `${latestData?.sensor2 || 0} L/h`}
                         strokeColor={{
                             '0%': '#00C9FF',
                             '100%': '#92FE9D',
@@ -33,13 +33,13 @@ const CurrentDeviceData = ({ latestData, deviceId, navigate }) => {
                     />
                 </Col>
             </Row>
-
+            
             <div className="flex justify-center mt-4">
-                <Button
+                <Button 
                     onClick={() => navigate(`/device/${deviceId}/history`)}
                     size="middle"
-                    style={{
-                        borderColor: '#52c41a',
+                    style={{ 
+                        borderColor: '#52c41a', 
                         color: '#52c41a',
                         backgroundColor: 'rgba(255, 255, 255, 0.5)'
                     }}

@@ -216,7 +216,7 @@ const DeviceDetail = () => {
                                 value={tempDeviceName}
                                 onChange={(e) => setTempDeviceName(e.target.value)}
                                 onPressEnter={handleUpdateDeviceName}
-                                style={{ width: '200px' }}
+                                style={{ width: '300px' }}
                                 maxLength={30} // Add maxLength prop
                                 showCount // Show character count
                             />
@@ -257,18 +257,7 @@ const DeviceDetail = () => {
                             </Button>
                             <RelayControl relayState={relayState} onToggleRelay={toggleRelay} />
                         
-                            <Button 
-                                onClick={() => navigate(`/device/${deviceId}/history`)}
-                                size="middle"
-                                style={{ 
-                                    borderColor: '#52c41a', 
-                                    color: '#52c41a',
-                                    backgroundColor: 'rgba(255, 255, 255, 0.5)'
-                                }}
-                                ghost
-                            >
-                                Xem lịch sử
-                            </Button>
+                            
                         </div>
 
                         <div className="w-3/4 glassmorphism p-6 mb-3 ">
@@ -323,7 +312,11 @@ const DeviceDetail = () => {
                         
                         {deviceData && latestData ? (
                             <>
-                                <CurrentDeviceData latestData={latestData} />
+                                <CurrentDeviceData 
+                                    latestData={latestData} 
+                                    deviceId={deviceId} 
+                                    navigate={navigate}
+                                />
                                 {chartData && <Chart chartData={chartData} className="mt-4 hidden-mobile" />}
                             </>
                             ) : (
