@@ -30,7 +30,7 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
         // Filter by severity
         if (severityFilter !== 'all') {
             filtered = filtered.filter(w => {
-                const difference = calculateAbsDifference(w.flowDifference1, w.flowDifference2);
+                const difference = calculateAbsDifference(w.flowRate1, w.flowRate2);
                 if (severityFilter === 'critical') return difference >= 40;
                 if (severityFilter === 'warning') return difference >= 20 && difference < 40;
                 if (severityFilter === 'notice') return difference < 20;
@@ -255,7 +255,7 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
                 {/* Warning Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {getFilteredWarnings().map((warning) => {
-                        const absDifference = calculateAbsDifference(warning.flowDifference1, warning.flowDifference2);
+                        const absDifference = calculateAbsDifference(warning.flowRate1, warning.flowRate2);
                         const severity = getSeverityInfo(absDifference);
                         
                         return (
@@ -305,13 +305,13 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
                                             <div className={`p-2 rounded-lg bg-white/30 border ${warning.resolved ? 'border-green-200' : severity.borderColor}`}>  {/* Giảm padding */}
                                                 <div className="text-xs text-gray-600 mb-1">Cảm biến 1</div>  {/* Giảm font size */}
                                                 <div className="text-lg font-bold font-mono min-w-[90px]" style={{ color: severity.color }}>  {/* Giảm font size và min-width */}
-                                                    {formatFlow(warning?.flowDifference1)} L/min
+                                                    {formatFlow(warning?.flowRate1)} L/min
                                                 </div>
                                             </div>
                                             <div className={`p-2 rounded-lg bg-white/30 border ${warning.resolved ? 'border-green-200' : severity.borderColor}`}>
                                                 <div className="text-xs text-gray-600 mb-1">Cảm biến 2</div>
                                                 <div className="text-lg font-bold font-mono min-w-[90px]" style={{ color: severity.color }}>
-                                                    {formatFlow(warning?.flowDifference2)} L/min
+                                                    {formatFlow(warning?.flowRate2)} L/min
                                                 </div>
                                             </div>
                                         </div>

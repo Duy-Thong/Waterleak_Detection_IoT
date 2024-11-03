@@ -25,7 +25,7 @@ FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 
-#define DEVICE_ID "emyeuptit2025"
+#define DEVICE_ID "HocVienBuuChinh"
 unsigned long sendDataPrevMillis = 0;
 const long sendDataIntervalMillis = 5000; // 10 seconds
 bool signupOK = false;
@@ -356,7 +356,6 @@ void loop()
     flowSensorData.set("sensor1", flowRate1);
     flowSensorData.set("sensor2", flowRate2);
     flowSensorData.set("timestamp", formatTimestamp());
-    flowSensorData.set("resolved", false);
     flowSensorData.set("relayState", relayState);
 
     String path = "/devices/" + String(DEVICE_ID) + "/flow_sensor";
@@ -409,36 +408,34 @@ void checkAndCreateRelayPath()
 
 void checkFlowRateDifference()
 {
-  static float lastFlowRate1 = 0.0;
-  static float lastFlowRate2 = 0.0;
+  float flowDifference = abs(flowRate1 - flowRate2);
+  Serial.printf("Flow rate difference between sensors: %.2f\n", flowDifference);
 
-  float flowDifference1 = abs(flowRate1 - lastFlowRate1);
-  float flowDifference2 = abs(flowRate2 - lastFlowRate2);
+  String relayPath = "/devices/" + String(DEVICE_ID) + "/relay/control";
+  String currentRelayState;
+  if (Firebase.RTDB.getString(&fbdo, relayPath)) {
+    currentRelayState = fbdo.stringData();
+  }
 
-  Serial.printf("Flow rate differences - Sensor 1: %.2f, Sensor 2: %.2f\n", flowDifference1, flowDifference2);
-
-  if (flowDifference1 > 10 || flowDifference2 > 10)
+  if (flowDifference > 10 )
   {
     flowExceedsThreshold = true;
     exceedCount++;
     Serial.printf("Flow rate exceeded threshold. Exceed count: %d\n", exceedCount);
-    if (exceedCount >= 1)
+    if (exceedCount >= 1) // Thay đổi thành 2 để delay 10 giây
     {
       digitalWrite(RELAY_PIN, HIGH);
-      String relayPath = "/devices/" + String(DEVICE_ID) + "/relay/control";
       if (Firebase.RTDB.setString(&fbdo, relayPath, "OFF"))
       {
         Serial.println("Emergency: Relay turned OFF due to leak detection");
         
-        // Create warning object
         FirebaseJson warningData;
         warningData.set("timestamp", formatTimestamp());
-        warningData.set("flowDifference1", flowDifference1);
-        warningData.set("flowDifference2", flowDifference2);
-        warningData.set("resovled", false);
-
+        warningData.set("flowRate1", flowRate1);
+        warningData.set("flowRate2", flowRate2);
+        warningData.set("flowDifference", flowDifference);
+        warningData.set("resolved", false);
         
-        // Send warning to Firebase
         String warningPath = "/devices/" + String(DEVICE_ID) + "/warning";
         if (Firebase.RTDB.pushJSON(&fbdo, warningPath.c_str(), &warningData))
         {
@@ -460,9 +457,6 @@ void checkFlowRateDifference()
     flowExceedsThreshold = false;
     exceedCount = 0;
   }
-
-  lastFlowRate1 = flowRate1;
-  lastFlowRate2 = flowRate2;
 }
 
 void checkAndCreateNamePath()
