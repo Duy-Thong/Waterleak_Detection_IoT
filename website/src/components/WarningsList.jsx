@@ -168,7 +168,7 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
                     </div>
 
                     {/* Filters Section */}
-                    <div className="flex flex-col gap-4 p-3 md:p-4 bg-white/10 rounded-xl border border-blue-100 mt-3 mb-3">
+                    <div className="flex flex-col gap-4 p-3 md:p-4 bg-white/10 rounded-xl border border-blue-100 mt-3 mb-3 glassmorphism">
                         <div className="text-blue-900 font-medium mb-1">Bộ lọc</div>
                         <div className="flex flex-col md:flex-row flex-wrap gap-4">
                             {/* Date Filter */}
