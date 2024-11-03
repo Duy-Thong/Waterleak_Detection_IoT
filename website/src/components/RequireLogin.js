@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { WarningOutlined } from '@ant-design/icons';
+import { WarningOutlined, LoginOutlined, UserAddOutlined } from '@ant-design/icons';
 import accessDeniedImage from '../assets/denied.jpg';
 import '../styles/button.css';
 
@@ -35,12 +35,11 @@ const RequireLogin = () => {
                     </div>
 
                     <div className="space-y-3 flex flex-col items-center">
-                        <button className="button w-3/4 mx-auto flex justify-center items-center" onClick={() => navigate('/login')}>
-                            <div className="dots_border"></div>
-                            <span className="text_button mr-2">Đăng Nhập</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="sparkle w-5 h-5">
-                                <path className="path" d="M3 12H21M21 12L15 6M21 12L15 18" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                        <button className="button w-3/4 mx-auto" onClick={() => navigate('/login')}>
+                            <div className="flex items-center justify-center w-full">
+                                <LoginOutlined className="mr-2" />
+                                <span>Đăng Nhập</span>
+                            </div>
                         </button>
                         <div className="relative my-4 w-full">
                             <div className="absolute inset-0 flex items-center">
@@ -51,12 +50,11 @@ const RequireLogin = () => {
                             </div>
                         </div>
                         <div className="block w-full flex justify-center">
-                            <button className="button w-3/4 flex justify-center items-center" onClick={() => navigate('/register')}>
-                                <div className="dots_border"></div>
-                                <span className="text_button mr-2">Đăng Ký </span>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="sparkle w-5 h-5">
-                                    <path className="path" d="M12 4V20M20 12H4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
+                            <button className="button w-3/4" onClick={() => navigate('/register')}>
+                                <div className="flex items-center justify-center w-full">
+                                    <UserAddOutlined className="mr-2" />
+                                    <span>Đăng Ký</span>
+                                </div>
                             </button>
                         </div>
                     </div>
