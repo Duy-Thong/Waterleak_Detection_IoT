@@ -14,7 +14,7 @@
     /* Tăng độ mờ nền để tạo hiệu ứng glassmorphism rõ hơn */
     -webkit-backdrop-filter: blur(5px);
     /* Tăng độ mờ nền để tạo hiệu ứng glassmorphism rõ hơn */
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.5);
     /* Giảm độ mờ của đường viền */
     /* Padding inside the container */
     /* color: #fff; */

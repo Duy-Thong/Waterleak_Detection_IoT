@@ -3,7 +3,7 @@ import { getDatabase, ref, get } from "firebase/database";
 import { useUser } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Input, Tooltip, Row, Col, Modal, Form, Input as AntInput, Button, message, Badge } from 'antd';
-import { SearchOutlined, AppstoreOutlined, AlertOutlined, HomeOutlined, CustomerServiceOutlined } from '@ant-design/icons';
+import { SearchOutlined, AppstoreOutlined, AlertOutlined, HomeOutlined, CustomerServiceOutlined, UserOutlined, MailOutlined, MessageOutlined } from '@ant-design/icons';
 import { Spin, Alert, Card, Statistic } from 'antd';
 import emailjs from '@emailjs/browser';
 
@@ -178,7 +178,10 @@ const Home = () => {
         navigate('/login');
     };
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const handleContactSubmit = async (values) => {
+        setIsSubmitting(true);
         try {
             const templateParams = {
                 from_name: values.name,
@@ -199,6 +202,8 @@ const Home = () => {
         } catch (error) {
             console.error('Error sending email:', error);
             message.error('Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại sau.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -323,46 +328,97 @@ const Home = () => {
 
             {/* Contact Modal */}
             <Modal
-                title="Liên hệ hỗ trợ"
+                title={
+                    <div className="text-center text-xl font-semibold text-gray-800 pb-4 border-b">
+                        <CustomerServiceOutlined className="mr-2 text-blue-500" />
+                        Liên hệ hỗ trợ
+                    </div>
+                }
                 open={isContactModalVisible}
                 onCancel={() => setIsContactModalVisible(false)}
                 footer={null}
+                width={480}
+                className="custom-modal"
+                centered
+                maskStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+                bodyStyle={{ padding: '24px' }}
             >
                 <Form
                     form={form}
                     layout="vertical"
                     onFinish={handleContactSubmit}
+                    className="contact-form"
+                    disabled={isSubmitting}
                 >
                     <Form.Item
                         name="name"
-                        label="Họ và tên"
+                        label={
+                            <span className="text-gray-700 font-medium">
+                                Họ và tên
+                            </span>
+                        }
                         rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}
                     >
-                        <AntInput />
+                        <AntInput 
+                            prefix={<UserOutlined className="text-gray-400" />}
+                            className="rounded-lg"
+                            size="large"
+                            placeholder="Nhập họ và tên của bạn"
+                        />
                     </Form.Item>
                     <Form.Item
                         name="email"
-                        label="Email"
+                        label={
+                            <span className="text-gray-700 font-medium">
+                                Email
+                            </span>
+                        }
                         rules={[
                             { required: true, message: 'Vui lòng nhập email!' },
                             { type: 'email', message: 'Email không hợp lệ!' }
                         ]}
                     >
-                        <AntInput />
+                        <AntInput 
+                            prefix={<MailOutlined className="text-gray-400" />}
+                            className="rounded-lg"
+                            size="large"
+                            placeholder="Nhập địa chỉ email của bạn"
+                        />
                     </Form.Item>
                     <Form.Item
                         name="message"
-                        label="Nội dung"
+                        label={
+                            <span className="text-gray-700 font-medium">
+                                Nội dung
+                            </span>
+                        }
                         rules={[{ required: true, message: 'Vui lòng nhập nội dung!' }]}
                     >
-                        <AntInput.TextArea rows={4} />
+                        <AntInput.TextArea 
+                            prefix={<MessageOutlined className="text-gray-400" />}
+                            className="rounded-lg"
+                            rows={4}
+                            placeholder="Nhập nội dung cần hỗ trợ"
+                        />
                     </Form.Item>
-                    <Form.Item>
-                        <div className="flex justify-end gap-2">
-                            <Button onClick={() => setIsContactModalVisible(false)}>
+                    <Form.Item className="mb-0">
+                        <div className="flex justify-end gap-3">
+                            <Button 
+                                onClick={() => setIsContactModalVisible(false)}
+                                size="large"
+                                className="min-w-[100px] rounded-lg"
+                                disabled={isSubmitting}
+                            >
                                 Hủy
                             </Button>
-                            <Button type="primary" htmlType="submit">
+                            <Button 
+                                type="primary" 
+                                htmlType="submit"
+                                size="large"
+                                className="min-w-[100px] rounded-lg bg-blue-500 hover:bg-blue-600 border-blue-500 hover:border-blue-600"
+                                loading={isSubmitting}
+                                disabled={isSubmitting}
+                            >
                                 Gửi
                             </Button>
                         </div>

@@ -156,7 +156,7 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
                             <Button 
                                 icon={<ArrowLeftOutlined />}
                                 onClick={() => navigate(-1)}
-                                className="flex items-center border border-blue-600 text-blue-600 bg-white/50 hover:bg-blue-50 shrink-0"
+                                className="flex items-center border border-red-600 text-red-600 bg-white/50 hover:bg-red-50 shrink-0"
                             >
                                 Trở về
                             </Button>

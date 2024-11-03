@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, get, onValue, set } from "firebase/database";
-import { Typography, Button, Input, message, Card, Statistic } from 'antd';
+import { Typography, Button, Input, message, Card, Statistic, Alert, Spin } from 'antd';
 import { useUser } from '../../contexts/UserContext';
 import {
     Chart as ChartJS,
@@ -49,6 +49,7 @@ const DeviceDetail = () => {
         unresolved: 0,
         resolutionRate: 0
     });
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (!userId || !deviceId) return;
@@ -72,6 +73,7 @@ const DeviceDetail = () => {
     };
 
     const fetchDeviceData = async () => {
+        setLoading(true);
         try {
             const db = getDatabase();
             const deviceRef = ref(db, `devices/${deviceId}`);
@@ -113,6 +115,8 @@ const DeviceDetail = () => {
         } catch (error) {
             console.error("Error fetching device data:", error);
             setError("Có lỗi khi tải dữ liệu thiết bị");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -201,12 +205,33 @@ const DeviceDetail = () => {
         );
     };
 
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Spin size="large" />
+            </div>
+        );
+    }
+
+    // Add error handling
+    if (error) {
+        return (
+            <Alert
+                message="Error"
+                description={error}
+                type="error"
+                showIcon
+                className="m-4"
+            />
+        );
+    }
+
     if (!userId) {
         return <RequireLogin />;
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300">
+        <div className="flex flex-col min-h-screen bg-gradient-to-tl from-blue-100 to-blue-300">
             <Navbar onLogout={handleLogout} />
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8 mt-5">
                 <div className="flex gap-2 items-end justify-center mb-3">
@@ -298,13 +323,16 @@ const DeviceDetail = () => {
                                 </div>
                                 <div className="flex justify-center mt-4">
                                     <Button
-                                        type="primary"
-                                        icon={<WarningOutlined />}
+                                        type="ghost"
+                                        danger
                                         onClick={() => navigate(`/device/${deviceId}/warnings`)}
-                                        style={{ backgroundColor: '#1890ff' }}
                                         size="large"
+                                        style={{ 
+                                            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                            borderColor: '#ff4d4f'
+                                        }}
                                     >
-                                        Xem chi tiết cảnh báo
+                                        Xem chi tiết cảnh báo <WarningOutlined />
                                     </Button>
                                 </div>
                             </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, get } from "firebase/database";
-import { Button, Empty, Spin } from 'antd';
+import { Button, Empty, Spin,Alert } from 'antd';
 import { useUser } from '../../contexts/UserContext';
 import Navbar from '../../components/Navbar';
 import WarningsList from '../../components/WarningsList';
@@ -60,12 +60,34 @@ const WarningPage = () => {
         navigate('/login');
     };
 
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Spin size="large" />
+            </div>
+        );
+    }
+
+    // Add error handling
+    if (error) {
+        return (
+            <Alert
+                message="Error"
+                description={error}
+                type="error"
+                showIcon
+                className="m-4"
+            />
+        );
+    }
+
+   
     if (!userId) {
         return <RequireLogin />;
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300">
+        <div className="flex flex-col min-h-screen bg-gradient-to-tl from-white to-blue-300">
             <Navbar onLogout={handleLogout} />
             <div className="flex flex-col items-center p-4 md:p-8 pt-10 mt-10">
                 
