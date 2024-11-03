@@ -1,20 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Switch } from 'antd';
+import { Card, Switch, Badge } from 'antd';
 import { PlusOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { ref, onValue, set } from 'firebase/database';
-import { database } from '../firebase';  // Changed from 'db' to 'database'
+import { database } from '../firebase';
 
 const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
   const [relayState, setRelayState] = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
+
+  const isDeviceActive = (deviceData) => {
+    if (!deviceData || !deviceData.flow_sensor) return false;
+    
+    const flowSensorData = deviceData.flow_sensor;
+    const sortedKeys = Object.keys(flowSensorData).sort();
+    
+    if (sortedKeys.length === 0) return false;
+    
+    const latestKey = sortedKeys[sortedKeys.length - 1];
+    const latestTimestamp = flowSensorData[latestKey].timestamp;
+    
+    const now = Date.now();
+    const lastActivity = new Date(latestTimestamp).getTime();
+    return (now - lastActivity) < 10000; // 10 seconds threshold
+  };
+
+  const checkDeviceStatus = () => {
+    if (!isAddCard && deviceId) {
+      const deviceRef = ref(database, `devices/${deviceId}`);
+      onValue(deviceRef, (snapshot) => {
+        const deviceData = snapshot.val();
+        setIsOnline(isDeviceActive(deviceData));
+      }, { onlyOnce: true });
+    }
+  };
 
   useEffect(() => {
     if (!isAddCard && deviceId) {
+      // Initial check
+      checkDeviceStatus();
+
+      // Set up periodic checks
+      const intervalId = setInterval(checkDeviceStatus, 5000); // Check every 5 seconds
+
+      // Relay state listener
       const relayRef = ref(database, `devices/${deviceId}/relay/control`);
-      const unsubscribe = onValue(relayRef, (snapshot) => {
+      const unsubscribeRelay = onValue(relayRef, (snapshot) => {
         setRelayState(snapshot.val() === 'ON');
       });
+
+      // Device data listener for online status
+      const deviceRef = ref(database, `devices/${deviceId}`);
+      const unsubscribeDevice = onValue(deviceRef, (snapshot) => {
+        const deviceData = snapshot.val();
+        setIsOnline(isDeviceActive(deviceData));
+      });
       
-      return () => unsubscribe();
+      return () => {
+        clearInterval(intervalId);
+        unsubscribeRelay();
+        unsubscribeDevice();
+      };
     }
   }, [deviceId, isAddCard]);
 
@@ -90,9 +135,15 @@ const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
       }}
     >
       <div className="text-center">
-        <h4 className="font-bold text-blue-500">Thiết bị</h4>
+        <div className="flex items-center justify-center gap-2">
+          <h4 className="font-bold text-blue-500">Thiết bị</h4>
+          <Badge 
+            status={isOnline ? "success" : "error"} 
+            text={isOnline ? "Online" : "Offline"}
+          />
+        </div>
         <h3 className="text-xl font-bold text-blue-500">
-          {deviceName || 'Thiết bị'}
+          {deviceName || 'Thiết b���'}
         </h3>
         <div className="mt-3">
           <Switch
