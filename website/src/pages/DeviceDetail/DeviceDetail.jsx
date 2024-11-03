@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';  // Add useRef
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, get, onValue, set } from "firebase/database";
 import { Typography, Button, Input, message, Card, Statistic, Alert, Spin } from 'antd';
@@ -18,6 +18,7 @@ import Chart from '../../components/Chart';
 import RelayControl from '../../components/RelayControl';
 import RequireLogin from '../../components/RequireLogin';
 import { Loading3QuartersOutlined, EditOutlined, WarningOutlined, AlertOutlined, CheckCircleOutlined, ExclamationCircleOutlined, PercentageOutlined } from '@ant-design/icons';
+import WarningStats from '../../components/WarningStats';  // Make sure this path is correct
 
 // Register ChartJS components
 ChartJS.register(
@@ -32,115 +33,100 @@ ChartJS.register(
 const { Title: AntTitle } = Typography;
 
 const DeviceDetail = () => {
-    const { deviceId } = useParams();
+    // Add navigate and destructure logout from useUser
     const navigate = useNavigate();
     const { userId, logout } = useUser();
-    const [deviceData, setDeviceData] = useState(null);
-    const [deviceName, setDeviceName] = useState('');
-    const [latestData, setLatestData] = useState(null);
-    const [relayState, setRelayState] = useState('OFF');
+    
+    // Consolidate states into a single object
+    const [state, setState] = useState({
+        deviceData: null,
+        deviceName: '',
+        latestData: null,
+        relayState: 'OFF'
+    });
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [tempDeviceName, setTempDeviceName] = useState('');
-    const [warnings, setWarnings] = useState([]);
-    const [warningStats, setWarningStats] = useState({
-        total: 0,
-        resolved: 0,
-        unresolved: 0,
-        resolutionRate: 0
-    });
-    const [loading, setLoading] = useState(false);
+
+    const { deviceId } = useParams();
+    
+    // Refs for optimization
+    const prevDataRef = useRef(null);
+    const intervalRef = useRef(null);
+    const isMountedRef = useRef(true);
 
     useEffect(() => {
-        if (!userId || !deviceId) return;
-        fetchDeviceData();
-        const intervalId = setInterval(fetchDeviceData, 5000);
-        return () => clearInterval(intervalId);
-    }, [userId, deviceId]);
-
-    const calculateWarningStats = (warningsArray) => {
-        const total = warningsArray.length;
-        const resolved = warningsArray.filter(w => w.resolved).length;
-        const unresolved = total - resolved;
-        const resolutionRate = total > 0 ? (resolved / total * 100).toFixed(1) : 0;
-
-        setWarningStats({
-            total,
-            resolved,
-            unresolved,
-            resolutionRate
-        });
-    };
-
-    const fetchDeviceData = async () => {
-        setLoading(true);
-        try {
-            const db = getDatabase();
-            const deviceRef = ref(db, `devices/${deviceId}`);
-            const snapshot = await get(deviceRef);
+        isMountedRef.current = true;
+        
+        const fetchDeviceData = async () => {
+            if (!isMountedRef.current || loading) return;
             
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                setDeviceData(data);
-                setDeviceName(data.name || deviceId);
+            setLoading(true);
+            try {
+                const db = getDatabase();
+                const deviceRef = ref(db, `devices/${deviceId}`);
+                const snapshot = await get(deviceRef);
                 
-                if (data.flow_sensor) {
-                    const flowSensorData = data.flow_sensor;
-                    const sortedKeys = Object.keys(flowSensorData).sort();
-                    if (sortedKeys.length > 0) {
-                        const latestKey = sortedKeys[sortedKeys.length - 1];
-                        setLatestData(flowSensorData[latestKey]);
-                    }
-                }
-                
-                setRelayState(data.relay?.control || 'OFF');
-                // Convert warnings object to array with IDs
-                if (data.warning) {
-                    const warningsArray = Object.entries(data.warning).map(([id, warning]) => ({
-                        ...warning,
-                        id: id  // Ensure each warning has its unique ID
-                    }));
-                    console.log('Warnings with IDs:', warningsArray); // Debug log
-                    setWarnings(warningsArray);
-                    calculateWarningStats(warningsArray);
-                } else {
-                    setWarnings([]);
-                    calculateWarningStats([]);
-                }
-                
-                setError(null);
-            } else {
-                setError("Không tìm thấy dữ liệu thiết bị");
-            }
-        } catch (error) {
-            console.error("Error fetching device data:", error);
-            setError("Có lỗi khi tải dữ liệu thiết bị");
-        } finally {
-            setLoading(false);
-        }
-    };
+                if (snapshot.exists() && isMountedRef.current) {
+                    const newData = snapshot.val();
+                    
+                    // Compare with previous data
+                    if (JSON.stringify(newData) !== JSON.stringify(prevDataRef.current)) {
+                        prevDataRef.current = newData;
+                        
+                        const updates = {
+                            deviceData: newData,
+                            deviceName: newData.name || deviceId,
+                            relayState: newData.relay?.control || 'OFF'
+                        };
 
-    useEffect(() => {
-        if (userId && deviceId) {
-            const db = getDatabase();
-            const relayRef = ref(db, `devices/${deviceId}/relay`);
-            const unsubscribe = onValue(relayRef, (snapshot) => {
-                const relayData = snapshot.val();
-                if (relayData) {
-                    setRelayState(relayData.control || 'OFF');
+                        // Process flow sensor data
+                        if (newData.flow_sensor) {
+                            const sortedKeys = Object.keys(newData.flow_sensor).sort();
+                            if (sortedKeys.length > 0) {
+                                updates.latestData = newData.flow_sensor[sortedKeys[sortedKeys.length - 1]];
+                            }
+                        }
+
+                        if (isMountedRef.current) {
+                            setState(prev => ({ ...prev, ...updates }));
+                            setError(null);
+                        }
+                    }
+                } else if (isMountedRef.current) {
+                    setError("Không tìm thấy dữ liệu thiết bị");
                 }
-            });
-            return () => unsubscribe();
+            } catch (error) {
+                console.error("Error fetching device data:", error);
+                if (isMountedRef.current) {
+                    setError("Có lỗi khi tải dữ liệu thiết bị");
+                }
+            } finally {
+                if (isMountedRef.current) setLoading(false);
+            }
+        };
+
+        if (userId && deviceId) {
+            fetchDeviceData();
+            intervalRef.current = setInterval(fetchDeviceData, 50000);
         }
+
+        return () => {
+            isMountedRef.current = false;
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
     }, [userId, deviceId]);
 
     const toggleRelay = async () => {
-        const newRelayState = relayState === 'OFF' ? 'ON' : 'OFF';
+        const newRelayState = state.relayState === 'OFF' ? 'ON' : 'OFF';
         try {
             const db = getDatabase();
             const relayRef = ref(db, `devices/${deviceId}/relay`);
             await set(relayRef, { control: newRelayState });
-            setRelayState(newRelayState);
+            setState(prev => ({ ...prev, relayState: newRelayState }));
         } catch (error) {
             console.error("Error toggling relay:", error);
         }
@@ -148,7 +134,7 @@ const DeviceDetail = () => {
 
     const handleUpdateDeviceName = async () => {
         if (!tempDeviceName.trim()) {
-            message.error('Tên thiết bị không được để trống');
+            message.error('Tên thiết bị không đư���c để trống');
             return;
         }
         if (tempDeviceName.length > 30) {
@@ -159,10 +145,10 @@ const DeviceDetail = () => {
             const db = getDatabase();
             const deviceRef = ref(db, `devices/${deviceId}`);
             await set(deviceRef, {
-                ...deviceData,
+                ...state.deviceData,
                 name: tempDeviceName.trim()
             });
-            setDeviceName(tempDeviceName.trim());
+            setState(prev => ({ ...prev, deviceName: tempDeviceName.trim() }));
             setIsEditing(false);
             message.success('Cập nhật tên thiết bị thành công');
         } catch (error) {
@@ -171,19 +157,19 @@ const DeviceDetail = () => {
         }
     };
 
-    const chartData = deviceData && deviceData.flow_sensor ? {
-        labels: Object.values(deviceData.flow_sensor).map(data => data.timestamp),
+    const chartData = state.deviceData && state.deviceData.flow_sensor ? {
+        labels: Object.values(state.deviceData.flow_sensor).map(data => data.timestamp),
         datasets: [
             {
                 label: 'Cảm biến 1',
-                data: Object.values(deviceData.flow_sensor).map(data => data.sensor1),
+                data: Object.values(state.deviceData.flow_sensor).map(data => data.sensor1),
                 borderColor: 'rgba(75, 192, 192, 1)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 fill: true,
             },
             {
                 label: 'Cảm biến 2',
-                data: Object.values(deviceData.flow_sensor).map(data => data.sensor2),
+                data: Object.values(state.deviceData.flow_sensor).map(data => data.sensor2),
                 borderColor: 'rgba(153, 102, 255, 1)',
                 backgroundColor: 'rgba(153, 102, 255, 0.2)',
                 fill: true,
@@ -198,11 +184,10 @@ const DeviceDetail = () => {
 
     const handleResolveWarning = (warning, resolved) => {
         console.log('Handling resolve warning:', warning.id, resolved);
-        setWarnings(prevWarnings => 
-            prevWarnings.map(w => 
-                w.id === warning.id ? { ...w, resolved } : w
-            )
-        );
+        setState(prev => ({
+            ...prev,
+            warnings: prev.warnings.map(w => w.id === warning.id ? { ...w, resolved } : w)
+        }));
     };
 
     if (loading) {
@@ -245,7 +230,7 @@ const DeviceDetail = () => {
                                 maxLength={30} // Add maxLength prop
                                 showCount // Show character count
                             />
-                        ) : deviceName}</strong>
+                        ) : state.deviceName}</strong>
                     </AntTitle>
                     <Button
                         icon={<EditOutlined />}
@@ -253,7 +238,7 @@ const DeviceDetail = () => {
                             if (isEditing) {
                                 handleUpdateDeviceName();
                             } else {
-                                setTempDeviceName(deviceName);
+                                setTempDeviceName(state.deviceName);
                                 setIsEditing(true);
                             }
                         }}
@@ -280,68 +265,17 @@ const DeviceDetail = () => {
                             >
                                 Trở về
                             </Button>
-                            <RelayControl relayState={relayState} onToggleRelay={toggleRelay} />
+                            <RelayControl relayState={state.relayState} onToggleRelay={toggleRelay} />
                         
                             
                         </div>
 
-                        <div className="w-3/4 glassmorphism p-6 mb-3 ">
-                            <div className="flex flex-col space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <Card bordered={false} className="text-center shadow-sm glassmorphism">
-                                        <Statistic
-                                            title="Tổng số cảnh báo"
-                                            value={warningStats.total}
-                                            prefix={<AlertOutlined style={{ color: '#1890ff' }} />}
-                                        />
-                                    </Card>
-                                    <Card bordered={false} className="text-center shadow-sm glassmorphism">
-                                        <Statistic
-                                            title="Đã giải quyết"
-                                            value={warningStats.resolved}
-                                            valueStyle={{ color: '#3f8600' }}
-                                            prefix={<CheckCircleOutlined style={{ color: '#3f8600' }} />}
-                                        />
-                                    </Card>
-                                    <Card bordered={false} className="text-center shadow-sm glassmorphism">
-                                        <Statistic
-                                            title="Chưa giải quyết"
-                                            value={warningStats.unresolved}
-                                            valueStyle={{ color: '#cf1322' }}
-                                            prefix={<ExclamationCircleOutlined style={{ color: '#cf1322' }} />}
-                                        />
-                                    </Card>
-                                    <Card bordered={false} className="text-center shadow-sm glassmorphism">
-                                        <Statistic
-                                            title="Tỉ lệ giải quyết"
-                                            value={warningStats.resolutionRate}
-                                            suffix="%"
-                                            precision={1}
-                                            prefix={<PercentageOutlined style={{ color: '#1890ff' }} />}
-                                        />
-                                    </Card>
-                                </div>
-                                <div className="flex justify-center mt-4">
-                                    <Button
-                                        type="ghost"
-                                        danger
-                                        onClick={() => navigate(`/device/${deviceId}/warnings`)}
-                                        size="large"
-                                        style={{ 
-                                            backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                            borderColor: '#ff4d4f'
-                                        }}
-                                    >
-                                        Xem chi tiết cảnh báo <WarningOutlined />
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
+                        <WarningStats deviceId={deviceId} navigate={navigate} />
                         
-                        {deviceData && latestData ? (
+                        {state.deviceData && state.latestData ? (
                             <>
                                 <CurrentDeviceData 
-                                    latestData={latestData} 
+                                    latestData={state.latestData} 
                                     deviceId={deviceId} 
                                     navigate={navigate}
                                 />
