@@ -1,21 +1,21 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WarningOutlined, LoginOutlined, UserAddOutlined } from '@ant-design/icons';
-import accessDeniedImage from '../assets/denied.jpg';
+import accessDeniedImage from '../assets/Shuba_duck.webp';
 import '../styles/button.css';
-
+import '../styles/global.css';
 const RequireLogin = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-700 via-red-600 to-red-500 p-3">
-            <div className="bg-white/95 rounded-2xl w-full max-w-md overflow-hidden shadow-xl backdrop-blur-xl">
+        <div className="min-h-screen flex items-center justify-center p-3 gradient-bg bg-gradient-to-r from-[#ee7752] via-[#e73c7e] to-[#23a6d5] bg-[length:400%_400%]">
+            <div className="bg-white/90 rounded-2xl w-full max-w-md overflow-hidden shadow-xl backdrop-blur-xl border-2 border-white">
                 {/* Top image section */}
-                <div className="relative h-40 bg-gradient-to-r from-red-600 to-red-400 flex items-center justify-center overflow-hidden">
+                <div className="relative h-40 bg-gradient-to-r from-red-600 to-red-400 flex items-center justify-center overflow-hidden ">
                     <img
                         src={accessDeniedImage}
                         alt="Access Denied"
-                        className="w-full h-full object-fit"
+                        className="h-full object-fit"
                     />
                 </div>
 
@@ -29,19 +29,22 @@ const RequireLogin = () => {
                             Oops! Vội thế bạn ơi 🤡
                         </h2>
                         <div className="h-0.5 w-12 bg-red-600 mx-auto mb-3"></div>
-                        <p className="text-gray-600 text-base">
-                            Hãy đăng nhập để xem những điều thú vị phía sau nhé! 🚀
+                        <p className="text-gray-600 leading-relaxed text-sm">
+                            Vội gì thì cũng đăng nhập đã bạn nhé! 🤖
                         </p>
                     </div>
 
-                    <div className="space-y-3 flex flex-col items-center">
-                        <button className="button w-3/4 mx-auto" onClick={() => navigate('/login')}>
+                    <div className="space-y-4 flex flex-col items-center">
+                        <button 
+                            className="button w-3/4 px-6 py-2.5 rounded-lg bg-red-500 text-white font-semibold shadow-lg hover:bg-white hover:text-red-500 border-2 border-red-500 transition-all duration-300 transform hover:scale-105" 
+                            onClick={() => navigate('/login')}
+                        >
                             <div className="flex items-center justify-center w-full">
                                 <LoginOutlined className="mr-2" />
                                 <span>Đăng Nhập</span>
                             </div>
                         </button>
-                        <div className="relative my-4 w-full">
+                        <div className="relative my-2 w-full">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-gray-300"></div>
                             </div>
@@ -49,14 +52,15 @@ const RequireLogin = () => {
                                 <span className="px-2 bg-white text-gray-500">Hoặc</span>
                             </div>
                         </div>
-                        <div className="block w-full flex justify-center">
-                            <button className="button w-3/4" onClick={() => navigate('/register')}>
-                                <div className="flex items-center justify-center w-full">
-                                    <UserAddOutlined className="mr-2" />
-                                    <span>Đăng Ký</span>
-                                </div>
-                            </button>
-                        </div>
+                        <button 
+                            className="button w-3/4 px-6 py-2.5 rounded-lg bg-red-500 text-white font-semibold shadow-lg hover:bg-white hover:text-red-500 border-2 border-red-500 transition-all duration-300 transform hover:scale-105" 
+                            onClick={() => navigate('/register')}
+                        >
+                            <div className="flex items-center justify-center w-full">
+                                <UserAddOutlined className="mr-2" />
+                                <span>Đăng Ký</span>
+                            </div>
+                        </button>
                     </div>
                 </div>
             </div>
