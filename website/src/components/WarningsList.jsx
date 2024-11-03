@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Typography, Card, Statistic, Badge, message, Radio, Space, DatePicker, Button } from 'antd';
+import { Typography, Card, Badge, message, Radio, Space, DatePicker, Button } from 'antd';
 import '../styles/Checkbox.css';
-import { WarningOutlined, DashboardOutlined, ClockCircleOutlined, ArrowLeftOutlined, ExclamationCircleOutlined, AlertOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { WarningOutlined, ArrowLeftOutlined, ExclamationCircleOutlined, AlertOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { ref, update } from 'firebase/database';
@@ -85,13 +85,7 @@ const WarningsList = ({ warnings, onResolveWarning, deviceId }) => {  // Thêm d
     };
 
     // Thêm hàm tính toán số lượng warnings
-    const getWarningStats = () => {
-        const resolved = warnings.filter(w => w.resolved).length;
-        const unresolved = warnings.filter(w => !w.resolved).length;
-        return { resolved, unresolved };
-    };
 
-    const stats = getWarningStats();
 
     // Add function to calculate absolute difference
     const calculateAbsDifference = (flow1, flow2) => {

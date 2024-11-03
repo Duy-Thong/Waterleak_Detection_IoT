@@ -84,7 +84,6 @@ const DeviceHistory = () => {
                     logout();
                     navigate('/login');
                 } else {
-                    message.error('Error loading device history');
                 }
             }
         };

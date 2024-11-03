@@ -42,11 +42,7 @@ const ManageDevices = () => {
                 }
             } catch (error) {
                 console.error("Error fetching devices:", error);
-                notification.error({
-                    message: 'Lỗi',
-                    description: 'Có lỗi khi tải danh sách thiết bị',
-                    placement: 'topRight'
-                });
+                
             }
         };
 

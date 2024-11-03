@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ref, set, get, child } from "firebase/database";
+import { ref, set, get } from "firebase/database";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { getFirestore, doc, setDoc } from 'firebase/firestore'; // Add Firestore imports
 import { database, auth } from "../../firebase";
@@ -16,7 +16,7 @@ function Register() {
     confirmPassword: "",
     email: "",
   });
-  const [passwordStrength, setPasswordStrength] = useState("");
+  const [, setPasswordStrength] = useState("");
   const [strengthPercent, setStrengthPercent] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -193,7 +193,7 @@ function Register() {
       <div className="bg-white shadow-xl rounded-lg flex w-3/4 max-w-4xl overflow-hidden backdrop-blur-sm bg-opacity-80 border-gray-200">
         
         {/* Left side with illustration */}
-        <div className="hidden md:block w-1/2 bg-blue-500 flex items-center justify-center">
+        <div className="md:block w-1/2 bg-blue-500 flex items-center justify-center">
           <img
             src={register} 
             alt="Illustration"

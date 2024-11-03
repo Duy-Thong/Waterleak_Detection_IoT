@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';  // Add useRef
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, get, onValue, set } from "firebase/database";
-import { Typography, Button, Input, message, Card, Statistic, Alert, Spin } from 'antd';
+import { Typography, Button, Input, message, Alert, Spin } from 'antd';
 import { useUser } from '../../contexts/UserContext';
 import {
     Chart as ChartJS,
@@ -17,7 +17,7 @@ import CurrentDeviceData from '../../components/CurrentDeviceData';
 import Chart from '../../components/Chart';
 import RelayControl from '../../components/RelayControl';
 import RequireLogin from '../../components/RequireLogin';
-import { Loading3QuartersOutlined, EditOutlined, WarningOutlined, AlertOutlined, CheckCircleOutlined, ExclamationCircleOutlined, PercentageOutlined } from '@ant-design/icons';
+import { Loading3QuartersOutlined, EditOutlined } from '@ant-design/icons';
 import WarningStats from '../../components/WarningStats';  // Make sure this path is correct
 
 // Register ChartJS components
