@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';  // Add useRef
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, get, onValue, set } from "firebase/database";
-import { Typography, Button, Input, message, Alert, Spin } from 'antd';
+import { Typography, Button, Input, message, Alert, Spin, Modal, List } from 'antd';
 import { useUser } from '../../contexts/UserContext';
 import {
     Chart as ChartJS,
@@ -19,6 +19,7 @@ import RelayControl from '../../components/RelayControl';
 import RequireLogin from '../../components/RequireLogin';
 import { Loading3QuartersOutlined, EditOutlined } from '@ant-design/icons';
 import WarningStats from '../../components/WarningStats';  // Make sure this path is correct
+import { UserOutlined, MailOutlined } from '@ant-design/icons';
 
 // Register ChartJS components
 ChartJS.register(
@@ -48,6 +49,9 @@ const DeviceDetail = () => {
     const [error, setError] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [tempDeviceName, setTempDeviceName] = useState('');
+    const [usersWithAccess, setUsersWithAccess] = useState([]);
+    const [isUsersModalVisible, setIsUsersModalVisible] = useState(false);
+    const [loadingUsers, setLoadingUsers] = useState(false);
     
     // Chỉ giữ lại refs cần thiết
     const isMountedRef = useRef(true);
@@ -158,6 +162,40 @@ const DeviceDetail = () => {
         }
     };
 
+    const fetchUsersWithAccess = async () => {
+        setLoadingUsers(true);
+        try {
+            const db = getDatabase();
+            const usersRef = ref(db, 'users');
+            const snapshot = await get(usersRef);
+            
+            if (snapshot.exists()) {
+                const users = [];
+                const userData = snapshot.val();
+                
+                for (const [uid, user] of Object.entries(userData)) {
+                    if (user.devices && user.devices[deviceId]) {
+                        users.push({
+                            id: uid,
+                            ...user
+                        });
+                    }
+                }
+                
+                setUsersWithAccess(users);
+            }
+        } catch (error) {
+            console.error("Error fetching users:", error);
+            message.error('Không thể tải danh sách người dùng');
+        }
+        setLoadingUsers(false);
+    };
+
+    const showUsersModal = () => {
+        setIsUsersModalVisible(true);
+        fetchUsersWithAccess();
+    };
+
     const chartData = state.deviceData && state.deviceData.flow_sensor ? {
         labels: Object.values(state.deviceData.flow_sensor).map(data => data.timestamp),
         datasets: [
@@ -231,21 +269,34 @@ const DeviceDetail = () => {
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-tl from-blue-100 to-blue-300">
             <Navbar onLogout={handleLogout} />
-            <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8 mt-5">
-                <div className="flex gap-2 items-end justify-center mb-3">
-                    <AntTitle level={2} className="mt-8 !text-white !mb-0">
-                        <strong>Chi tiết thiết bị: {isEditing ? (
-                            <Input
-                                value={tempDeviceName}
-                                onChange={(e) => setTempDeviceName(e.target.value)}
-                                onPressEnter={handleUpdateDeviceName}
-                                style={{ width: '300px' }}
-                                maxLength={30} // Add maxLength prop
-                                showCount // Show character count
-                            />
-                        ) : state.deviceName}</strong>
+            <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8 mt-16">
+                <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-center mb-3 w-full px-4">
+                    <AntTitle level={2} className="!text-white !mb-0 text-center sm:text-left mt-0">
+                        <strong className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                            <span className="whitespace-nowrap">Chi tiết thiết bị:</span>
+                            {isEditing ? (
+                                <Input
+                                    value={tempDeviceName}
+                                    onChange={(e) => setTempDeviceName(e.target.value)}
+                                    onPressEnter={handleUpdateDeviceName}
+                                    style={{ 
+                                        width: '100%',
+                                        minWidth: '200px',
+                                        maxWidth: '300px',
+                                        background: 'transparent',
+                                        border: '2px solid rgba(255, 255, 255, 0.8)',
+                                        color: 'white'
+                                    }}
+                                    maxLength={30}
+                                    showCount
+                                />
+                            ) : (
+                                <span className="break-all">{state.deviceName}</span>
+                            )}
+                        </strong>
                     </AntTitle>
                     <Button
+                        className="self-center sm:self-auto mt-2 sm:mt-0"
                         icon={<EditOutlined />}
                         onClick={() => {
                             if (isEditing) {
@@ -279,9 +330,80 @@ const DeviceDetail = () => {
                                 Trở về
                             </Button>
                             <RelayControl relayState={state.relayState} onToggleRelay={toggleRelay} />
-                        
-                            
+                            <Button
+                                onClick={showUsersModal}
+                                size="middle"
+                                type="primary"
+                                ghost
+                                style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }}
+                            >
+                                Xem người dùng
+                            </Button>
                         </div>
+
+                        <Modal
+                            title={
+                                <div className="flex items-center gap-2 text-lg">
+                                    <UserOutlined />
+                                    <span>Danh sách người dùng có quyền truy cập</span>
+                                </div>
+                            }
+                            open={isUsersModalVisible}
+                            onCancel={() => setIsUsersModalVisible(false)}
+                            footer={null}
+                            width={600}
+                            centered
+                            className="custom-modal"
+                        >
+                            {loadingUsers ? (
+                                <div className="flex justify-center items-center py-8">
+                                    <Spin size="large" />
+                                </div>
+                            ) : (
+                                <List
+                                    dataSource={usersWithAccess}
+                                    renderItem={user => (
+                                        <List.Item className="hover:bg-gray-50 rounded-lg transition-all duration-300">
+                                            <List.Item.Meta
+                                                avatar={
+                                                    user.photoURL ? (
+                                                        <img 
+                                                            src={user.photoURL} 
+                                                            alt={user.username || 'User'} 
+                                                            className="w-10 h-10 rounded-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex justify-center items-center w-10 h-10 rounded-full bg-blue-100 text-blue-500">
+                                                            <UserOutlined />
+                                                        </div>
+                                                    )
+                                                }
+                                                title={
+                                                    <span className="font-semibold">
+                                                        {user.username || 'Người dùng'}
+                                                    </span>
+                                                }
+                                                description={
+                                                    <div className="flex items-center gap-2 text-gray-500">
+                                                        <MailOutlined />
+                                                        <span>{user.email}</span>
+                                                    </div>
+                                                }
+                                            />
+                                        </List.Item>
+                                    )}
+                                    locale={{
+                                        emptyText: (
+                                            <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                                                <UserOutlined style={{ fontSize: '2rem' }} />
+                                                <span className="mt-2">Không có người dùng nào</span>
+                                            </div>
+                                        )
+                                    }}
+                                    className="px-2"
+                                />
+                            )}
+                        </Modal>
 
                         <WarningStats 
                             deviceId={deviceId} 
@@ -301,10 +423,9 @@ const DeviceDetail = () => {
                                 />
                                 {chartData && <Chart chartData={chartData} className="mt-4 hidden-mobile" />}
                             </>
-                            ) : (
-                                <Loading3QuartersOutlined spin className="text-4xl text-white mt-4" />
-                            )
-                            }
+                        ) : (
+                            <Loading3QuartersOutlined spin className="text-4xl text-white mt-4" />
+                        )}
                     </>
                 )}
             </div>
