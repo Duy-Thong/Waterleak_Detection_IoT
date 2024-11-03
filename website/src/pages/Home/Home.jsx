@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, onValue, off } from "firebase/database";  // Add onValue and off
 import { useUser } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Input, Tooltip, Row, Col, Modal, Form, Input as AntInput, Button, message, Badge } from 'antd';
-import { SearchOutlined, AppstoreOutlined, AlertOutlined, HomeOutlined, CustomerServiceOutlined, UserOutlined, MailOutlined, MessageOutlined } from '@ant-design/icons';
+import { Typography, Input, Tooltip, Row, Col, Modal, Form, Input as AntInput, Button, message, Badge, FloatButton } from 'antd';
+import { SearchOutlined, AppstoreOutlined, AlertOutlined, HomeOutlined, CustomerServiceOutlined, UserOutlined, MailOutlined, MessageOutlined, SendOutlined, CloseOutlined } from '@ant-design/icons';
 import { Spin, Alert, Card, Statistic } from 'antd';
 import emailjs from '@emailjs/browser';
 
@@ -380,7 +380,11 @@ const Home = () => {
                         prefix={<SearchOutlined className="text-gray-400" />}
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
-                        className="rounded-lg shadow-sm"
+                        className="rounded-lg shadow-sm glassmorphism border-0"
+                        style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                            backdropFilter: 'blur(10px)',
+                        }}
                     />
                 </div>
 
@@ -412,22 +416,18 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Floating Contact Button */}
-            <div className="fixed bottom-8 right-8 flex flex-col gap-4">
-                <Tooltip title="Liên hệ hỗ trợ" placement="left">
-                    <button
-                        onClick={() => setIsContactModalVisible(true)}
-                        className="w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-blue-600 transition-colors"
-                    >
-                        <CustomerServiceOutlined style={{ fontSize: '24px' }} />
-                    </button>
-                </Tooltip>
-            </div>
+            {/* Replace the custom floating button with this */}
+            <FloatButton
+                tooltip="Liên hệ hỗ trợ"
+                icon={<CustomerServiceOutlined />}
+                onClick={() => setIsContactModalVisible(true)}
+                type="primary"
+            />
 
             {/* Contact Modal */}
             <Modal
                 title={
-                    <div className="text-center text-xl font-semibold text-gray-800 pb-4 border-b">
+                    <div className="text-center text-xl font-semibold text-gray-800 pb-4">
                         <CustomerServiceOutlined className="mr-2 text-blue-500" />
                         Liên hệ hỗ trợ
                     </div>
@@ -436,10 +436,32 @@ const Home = () => {
                 onCancel={() => setIsContactModalVisible(false)}
                 footer={null}
                 width={480}
-                className="custom-modal"
+                className="custom-modal glassmorphism"
                 centered
-                maskStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-                bodyStyle={{ padding: '24px' }}
+                maskStyle={{ 
+                    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+                    backdropFilter: 'blur(4px)'
+                }}
+                styles={{
+                    content: {
+                        background: 'rgba(255, 255, 255, 0.7)',
+                        backdropFilter: 'blur(10px)',
+                        borderRadius: '16px',
+                        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                        border: '1px solid rgba(255, 255, 255, 0.18)',
+                    },
+                    mask: {
+                        backdropFilter: 'blur(4px)'
+                    },
+                    header: {
+                        background: 'transparent',
+                        border: 'none',
+                        paddingBottom: 0,
+                    },
+                    body: {
+                        padding: '24px',
+                    }
+                }}
             >
                 <Form
                     form={form}
@@ -459,9 +481,13 @@ const Home = () => {
                     >
                         <AntInput 
                             prefix={<UserOutlined className="text-gray-400" />}
-                            className="rounded-lg"
+                            className="rounded-lg glassmorphism-input"
                             size="large"
                             placeholder="Nhập họ và tên của bạn"
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.6)',
+                                backdropFilter: 'blur(4px)',
+                            }}
                         />
                     </Form.Item>
                     <Form.Item
@@ -478,9 +504,13 @@ const Home = () => {
                     >
                         <AntInput 
                             prefix={<MailOutlined className="text-gray-400" />}
-                            className="rounded-lg"
+                            className="rounded-lg glassmorphism-input"
                             size="large"
                             placeholder="Nhập địa chỉ email của bạn"
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.6)',
+                                backdropFilter: 'blur(4px)',
+                            }}
                         />
                     </Form.Item>
                     <Form.Item
@@ -493,18 +523,22 @@ const Home = () => {
                         rules={[{ required: true, message: 'Vui lòng nhập nội dung!' }]}
                     >
                         <AntInput.TextArea 
-                            prefix={<MessageOutlined className="text-gray-400" />}
-                            className="rounded-lg"
+                            className="rounded-lg glassmorphism-input"
                             rows={4}
                             placeholder="Nhập nội dung cần hỗ trợ"
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.6)',
+                                backdropFilter: 'blur(14px)',
+                            }}
                         />
                     </Form.Item>
                     <Form.Item className="mb-0">
-                        <div className="flex justify-end gap-3">
+                        <div className="flex justify-center gap-4">
                             <Button 
                                 onClick={() => setIsContactModalVisible(false)}
                                 size="large"
-                                className="min-w-[100px] rounded-lg"
+                                icon={<CloseOutlined />}
+                                className="min-w-[120px] rounded-lg glassmorphism-button"
                                 disabled={isSubmitting}
                             >
                                 Hủy
@@ -513,7 +547,8 @@ const Home = () => {
                                 type="primary" 
                                 htmlType="submit"
                                 size="large"
-                                className="min-w-[100px] rounded-lg bg-blue-500 hover:bg-blue-600 border-blue-500 hover:border-blue-600"
+                                icon={<SendOutlined />}
+                                className="min-w-[120px] rounded-lg bg-blue-500 hover:bg-blue-600 border-blue-500 hover:border-blue-600"
                                 loading={isSubmitting}
                                 disabled={isSubmitting}
                             >

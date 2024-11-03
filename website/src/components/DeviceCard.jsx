@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Switch } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { ref, onValue, set } from 'firebase/database';
 import { database } from '../firebase';  // Changed from 'db' to 'database'
 
@@ -99,8 +99,9 @@ const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
             checked={relayState}
             onChange={handleToggleRelay}
             className="bg-gray-300"
+            checkedChildren="ON"
+            unCheckedChildren="OFF"
           />
-          
         </div>
       </div>
     </Card>
@@ -108,3 +109,4 @@ const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
 };
 
 export default DeviceCard;
+
