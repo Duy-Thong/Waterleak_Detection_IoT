@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Switch, Badge } from 'antd';
-import { PlusOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined, CheckOutlined, CloseOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { ref, onValue, set } from 'firebase/database';
 import { database } from '../firebase';
 
@@ -76,25 +76,19 @@ const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
     background: 'rgba(255, 255, 255, 0.2)',
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
-    border: '2px solid rgba(255, 255, 255, 0.5)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-    borderRadius: '10px',
+    border: '2px solid rgba(255, 255, 255, 0.6)',
+    boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.15)',
+    borderRadius: '12px',
     transition: 'all 0.3s ease-in-out',
-    backgroundImage: isAddCard ? 
-      'url(/images/add-device-bg.jpg)' : 
-      'url(/images/device-bg.jpg)',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundBlendMode: 'overlay'
   };
 
-  const commonClasses = "w-48 h-48 m-2 transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-opacity-90";
+  const commonClasses = "w-52 h-52 m-2 transform transition-all duration-300 hover:scale-105 hover:shadow-lg";
 
   if (isAddCard) {
     return (
       <Card
         hoverable
-        className={`${commonClasses} bg-gradient-to-br from-emerald-200/50 to-green-400/50 hover:from-emerald-200/70 hover:to-green-400/70`}
+        className={`${commonClasses} hover:bg-white/30`}
         style={glassStyle}
         bodyStyle={{
           height: '100%',
@@ -106,8 +100,10 @@ const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
         }}
         onClick={onClick}
       >
-        <PlusOutlined className="text-3xl text-blue-500" />
-        <p className="mt-3 text-blue-500 font-medium">Thêm thiết bị</p>
+        <div className="p-3 rounded-full bg-white/30 mb-3">
+          <PlusOutlined className="text-3xl text-blue-500" />
+        </div>
+        <p className="text-base text-blue-600 font-medium">Thêm thiết bị</p>
       </Card>
     );
   }
@@ -115,14 +111,12 @@ const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
   return (
     <Card
       hoverable
-      className={`${commonClasses} bg-gradient-to-br from-emerald-300/50 to-green-600/50 hover:from-emerald-300/70 hover:to-green-600/70`}
+      className={`${commonClasses} hover:bg-white/30`}
       style={glassStyle}
       bodyStyle={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
         padding: '16px'
       }}
       onClick={(e) => {
@@ -134,25 +128,40 @@ const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
         onClick();
       }}
     >
-      <div className="text-center">
-        <div className="flex items-center justify-center gap-2">
-          <h4 className="font-bold text-blue-500">Thiết bị</h4>
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <AppstoreOutlined className="text-base text-blue-500" />
+            <span className="font-semibold text-blue-600 text-sm">Thiết bị</span>
+          </div>
           <Badge 
+            className="ml-auto"
             status={isOnline ? "success" : "error"} 
-            text={isOnline ? "Online" : "Offline"}
+            text={
+              <span className={`text-xs ${isOnline ? "text-green-600" : "text-red-600"}`}>
+                {isOnline ? "Online" : "Offline"}
+              </span>
+            }
           />
         </div>
-        <h3 className="text-xl font-bold text-blue-500">
-          {deviceName || 'Thiết b���'}
-        </h3>
-        <div className="mt-3">
-          <Switch
-            checked={relayState}
-            onChange={handleToggleRelay}
-            className="bg-gray-300"
-            checkedChildren="ON"
-            unCheckedChildren="OFF"
-          />
+
+        {/* Main Content */}
+        <div className="flex flex-col items-center mt-6">
+          <h3 className="text-xl font-bold text-blue-600 h-14 flex items-center px-2 text-center overflow-hidden">
+            {deviceName || 'Thiết bị'}
+          </h3>
+          
+          <div className="mt-auto mb-5">
+            <Switch
+              checked={relayState}
+              onChange={handleToggleRelay}
+              className={relayState ? 'bg-green-500 mt-5' : 'bg-gray-300 mt-5'}
+              size="large"
+              checkedChildren={<CheckOutlined />}
+              unCheckedChildren={<CloseOutlined />}
+            />
+          </div>
         </div>
       </div>
     </Card>
