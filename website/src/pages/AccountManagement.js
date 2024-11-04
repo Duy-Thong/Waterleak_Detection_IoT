@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, update } from "firebase/database";
 import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
+import { put } from '@vercel/blob';
 import { useUser } from '../contexts/UserContext';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +26,8 @@ const AccountManagement = () => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isGoogleUser, setIsGoogleUser] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState('');
+    const [uploading, setUploading] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -46,6 +49,7 @@ const AccountManagement = () => {
                     const userData = snapshot.val();
                     setUsername(userData.username || '');
                     setCurrentUsername(userData.username || '');
+                    setAvatarUrl(userData.photoURL || '');
                 } else {
                     openNotificationWithIcon('error', 'Không tìm thấy thông tin người dùng');
                 }
@@ -160,6 +164,44 @@ const AccountManagement = () => {
         }
     };
 
+    const handleAvatarUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!validImageTypes.includes(file.type)) {
+            openNotificationWithIcon('error', 'Vui lòng chọn file ảnh (JPEG, PNG, GIF)');
+            return;
+        }
+
+        setUploading(true);
+        try {
+            // Upload to Vercel Blob
+            const blob = await put(`avatars/${userId}-${file.name}`, file, {
+                access: 'public',
+                token: "vercel_blob_rw_vuBTDxs1Af4OyipF_7ktfANNunJPJCY1OsqLo4fevvrPM6A" // Direct token for testing
+            });
+
+
+            const downloadUrl = blob.url;
+            
+            // Update user profile in Firebase Database
+            const db = getDatabase();
+            const userRef = ref(db, 'users/' + userId);
+            await update(userRef, {
+                photoURL: downloadUrl
+            });
+
+            setAvatarUrl(downloadUrl);
+            openNotificationWithIcon('success', 'Ảnh đại diện đã được cập nhật');
+        } catch (error) {
+            console.error("Error uploading avatar:", error);
+            openNotificationWithIcon('error', 'Lỗi khi tải lên ảnh đại diện');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleLogout = () => {
         logout();
         window.location.href = '/login';
@@ -174,6 +216,31 @@ const AccountManagement = () => {
             <Navbar onLogout={handleLogout} />
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8 mt-16">
                 <Title level={2} className='!text-white'>Quản lý tài khoản</Title>
+
+                <div className="glassmorphism glassmorphism-filter-section w-full max-w-lg p-4 mb-4">
+                    <div className="flex flex-col items-center mb-4">
+                        <div className="w-32 h-32 rounded-full overflow-hidden mb-4 bg-gray-200">
+                            <img
+                                src={avatarUrl || 'https://via.placeholder.com/128'}
+                                alt="Avatar"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarUpload}
+                            className="hidden"
+                            id="avatar-upload"
+                        />
+                        <label
+                            htmlFor="avatar-upload"
+                            className="cursor-pointer bg-white text-blue-500 border border-blue-500 px-4 py-2 rounded hover:text-blue-600 hover:border-blue-600"
+                        >
+                            {uploading ? 'Đang tải...' : 'Thay đổi ảnh đại diện'}
+                        </label>
+                    </div>
+                </div>
 
                 <Form
                     onFinish={handleUpdate}
