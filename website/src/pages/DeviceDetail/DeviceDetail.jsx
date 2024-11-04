@@ -282,10 +282,10 @@ const DeviceDetail = () => {
         <div className="flex flex-col min-h-screen bg-gradient-to-tl from-blue-100 to-blue-300">
             <Navbar onLogout={handleLogout} />
             <div className="flex flex-col items-center justify-center flex-1 p-4 md:p-8 mt-16">
-                <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-center mb-3 w-full px-4">
-                    <AntTitle level={2} className="!text-white !mb-0 text-center sm:text-left mt-0">
-                        <strong className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                            <span className="whitespace-nowrap">Chi tiết thiết bị:</span>
+                <div className="flex flex-col sm:flex-row gap-2 items-center justify-center mb-3 w-full px-4">
+                    <AntTitle level={2} className="!text-white !mb-0 text-center">
+                        <strong className="flex items-center justify-center gap-2 flex-wrap sm:flex-nowrap">
+                            
                             {isEditing ? (
                                 <Input
                                     value={tempDeviceName}
@@ -297,18 +297,21 @@ const DeviceDetail = () => {
                                         maxWidth: '300px',
                                         background: 'transparent',
                                         border: '2px solid rgba(255, 255, 255, 0.8)',
-                                        color: 'white'
+                                        color: 'white',
+                                        textAlign: 'center'
                                     }}
                                     maxLength={30}
                                     showCount
                                 />
                             ) : (
-                                <span className="break-all">{state.deviceName}</span>
+                                <span className={`break-all text-center ${state.deviceName.length > 20 ? 'text-xl' : state.deviceName.length > 15 ? 'text-2xl' : 'text-3xl'}`}>
+                                    {state.deviceName}
+                                </span>
                             )}
                         </strong>
                     </AntTitle>
                     <Button
-                        className="self-center sm:self-auto mt-2 sm:mt-0"
+                        className="self-center"
                         icon={<EditOutlined />}
                         onClick={() => {
                             if (isEditing) {
@@ -359,7 +362,7 @@ const DeviceDetail = () => {
                                     <div className="bg-blue-50 p-2 rounded-lg">
                                         <UserOutlined className="text-xl text-blue-500" />
                                     </div>
-                                    <span className="text-xl font-medium text-gray-700">
+                                    <span className="text-base sm:text-xl font-medium text-gray-700 line-clamp-1">
                                         Danh sách người dùng có quyền truy cập
                                     </span>
                                 </div>
@@ -367,8 +370,12 @@ const DeviceDetail = () => {
                             open={isUsersModalVisible}
                             onCancel={() => setIsUsersModalVisible(false)}
                             footer={null}
-                            className="custom-modal"
-                            style={{ maxWidth: '600px' }}
+                            style={{ 
+                                maxWidth: '600px',
+                                padding:'20px',
+                                top: 20
+                            }}
+                            width="auto"
                         >
                             {loadingUsers ? (
                                 <div className="flex justify-center items-center py-8">
@@ -378,29 +385,29 @@ const DeviceDetail = () => {
                                 <List
                                     dataSource={usersWithAccess}
                                     renderItem={user => (
-                                        <List.Item className="hover:bg-gray-50 rounded-lg transition-all duration-300 p-4">
+                                        <List.Item className="hover:bg-gray-50 rounded-lg transition-all duration-300 p-2 sm:p-4">
                                             <List.Item.Meta
                                                 avatar={
                                                     user.photoURL ? (
                                                         <img 
                                                             src={user.photoURL} 
                                                             alt={user.username || 'User'} 
-                                                            className="w-12 h-12 rounded-full object-cover border-2 border-blue-100"
+                                                            className="w-8 h-8 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-blue-100"
                                                         />
                                                     ) : (
-                                                        <div className="flex justify-center items-center w-12 h-12 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 text-blue-500">
-                                                            <UserOutlined className="text-xl" />
+                                                        <div className="flex justify-center items-center w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 text-blue-500">
+                                                            <UserOutlined className="text-base sm:text-xl" />
                                                         </div>
                                                     )
                                                 }
                                                 title={
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-semibold text-gray-800">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="font-semibold text-gray-800 text-sm sm:text-base">
                                                             {user.username || 'Người dùng'}
                                                         </span>
-                                                        <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
+                                                        <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-xs">
                                                             {getProviderIcon(user.registrationMethod)}
-                                                            <span className="text-xs text-gray-600">
+                                                            <span className="text-gray-600">
                                                                 {user.registrationMethod === 'google' ? 'Google' : 'Email'}
                                                             </span>
                                                         </div>
@@ -408,8 +415,8 @@ const DeviceDetail = () => {
                                                 }
                                                 description={
                                                     <div className="flex flex-col gap-1 mt-1">
-                                                        <div className="flex items-center gap-2 text-gray-500">
-                                                            <MailOutlined className="text-blue-400" />
+                                                        <div className="flex items-center gap-2 text-gray-500 text-xs sm:text-sm break-all">
+                                                            <MailOutlined className="text-blue-400 flex-shrink-0" />
                                                             <span>{user.email}</span>
                                                         </div>
                                                         <div className="text-xs text-gray-400">
@@ -422,16 +429,16 @@ const DeviceDetail = () => {
                                     )}
                                     locale={{
                                         emptyText: (
-                                            <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                                                <div className="bg-gray-100 p-4 rounded-full mb-3">
-                                                    <UserOutlined style={{ fontSize: '2rem' }} />
+                                            <div className="flex flex-col items-center justify-center py-4 sm:py-8 text-gray-500">
+                                                <div className="bg-gray-100 p-3 sm:p-4 rounded-full mb-3">
+                                                    <UserOutlined style={{ fontSize: '1.5rem' }} />
                                                 </div>
-                                                <span className="text-lg font-medium">Không có người dùng nào</span>
-                                                <span className="text-sm text-gray-400 mt-1">Chưa có người dùng nào được cấp quyền truy cập</span>
+                                                <span className="text-base sm:text-lg font-medium">Không có người dùng nào</span>
+                                                <span className="text-xs sm:text-sm text-gray-400 mt-1">Chưa có người dùng nào được cấp quyền truy cập</span>
                                             </div>
                                         )
                                     }}
-                                    className="px-2"
+                                    className="px-0 sm:px-2"
                                 />
                             )}
                         </Modal>
