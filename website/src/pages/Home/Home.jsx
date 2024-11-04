@@ -340,36 +340,65 @@ const Home = () => {
             
             <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center">
                 {/* Header Section */}
-                <div className="text-center mb-8 mt-16">
-                    <AntTitle level={2} className="text-gray-800">
-                        <span className="font-bold">Xin chào, </span>
-                        <span className="text-blue-600">{username || 'User'}</span>
+                <div className="text-center mb-8 mt-12 md:mt-16 px-4 w-full">
+                    <AntTitle level={2} className="text-gray-800 text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words">
+                        <span className="font-bold block sm:inline">Xin chào, </span>
+                        <span className="text-blue-600 block sm:inline mt-2 sm:mt-0">{username || 'User'}</span>
                     </AntTitle>
                 </div>
 
                 {/* Statistics Section */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl mx-auto mb-12 px-4">
-                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px] glassmorphism">
-                        <Statistic 
-                            title={<span className="text-lg font-medium">Tổng số thiết bị</span>}
-                            value={stats.totalDevices}
-                            prefix={<HomeOutlined className="text-blue-500 text-xl" />}
-                        />
-                    </Card>
-                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px] glassmorphism">
-                        <Statistic 
-                            title={<span className="text-lg font-medium">Thiết bị đang hoạt động</span>}
-                            value={stats.activeDevices}
-                            prefix={<AppstoreOutlined className="text-green-500 text-xl" />}
-                        />
-                    </Card>
-                    <Card hoverable className="text-center shadow-lg hover:shadow-xl transition-all duration-300 min-w-[280px] glassmorphism">
-                        <Statistic 
-                            title={<span className="text-lg font-medium">Cảnh báo hôm nay</span>}
-                            value={stats.alertsToday}
-                            prefix={<AlertOutlined className="text-red-500 text-xl" />}
-                        />
-                    </Card>
+                <div className="w-full max-w-6xl mx-auto mb-8 px-4">
+                    <div className="grid grid-cols-3 gap-2 md:gap-4">
+                        <Card 
+                            hoverable 
+                            className="text-center shadow-lg hover:shadow-xl transition-all duration-300 glassmorphism p-1 md:p-3"
+                            bodyStyle={{ padding: '8px' }}
+                        >
+                            <Statistic 
+                                title={<span className="hidden md:inline-block text-sm font-medium">Thiết bị</span>}
+                                value={stats.totalDevices}
+                                prefix={<HomeOutlined className="text-blue-500 text-xl md:text-lg" />}
+                                valueStyle={{ 
+                                    fontSize: '1.25rem',
+                                    lineHeight: 1.2,
+                                    margin: 0
+                                }}
+                            />
+                        </Card>
+                        <Card 
+                            hoverable 
+                            className="text-center shadow-lg hover:shadow-xl transition-all duration-300 glassmorphism p-1 md:p-3"
+                            bodyStyle={{ padding: '8px' }}
+                        >
+                            <Statistic 
+                                title={<span className="hidden md:inline-block text-sm font-medium">Hoạt động</span>}
+                                value={stats.activeDevices}
+                                prefix={<AppstoreOutlined className="text-green-500 text-xl md:text-lg" />}
+                                valueStyle={{ 
+                                    fontSize: '1.25rem',
+                                    lineHeight: 1.2,
+                                    margin: 0
+                                }}
+                            />
+                        </Card>
+                        <Card 
+                            hoverable 
+                            className="text-center shadow-lg hover:shadow-xl transition-all duration-300 glassmorphism p-1 md:p-3"
+                            bodyStyle={{ padding: '8px' }}
+                        >
+                            <Statistic 
+                                title={<span className="hidden md:inline-block text-sm font-medium">Cảnh báo</span>}
+                                value={stats.alertsToday}
+                                prefix={<AlertOutlined className="text-red-500 text-xl md:text-lg" />}
+                                valueStyle={{ 
+                                    fontSize: '1.25rem',
+                                    lineHeight: 1.2,
+                                    margin: 0
+                                }}
+                            />
+                        </Card>
+                    </div>
                 </div>
 
                 {/* Search Bar */}
