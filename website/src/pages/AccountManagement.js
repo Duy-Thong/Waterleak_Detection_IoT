@@ -7,6 +7,7 @@ import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Typography, notification } from 'antd';
 import RequireLogin from '../components/RequireLogin';
+import { CameraFilled } from '@ant-design/icons'; // Add camera icon import
 import "./style.css";
 const { Title } = Typography;
 
@@ -218,13 +219,19 @@ const AccountManagement = () => {
                 <Title level={2} className='!text-white'>Quản lý tài khoản</Title>
 
                 <div className="glassmorphism glassmorphism-filter-section w-full max-w-lg p-4 mb-4">
-                    <div className="flex flex-col items-center mb-4">
-                        <div className="w-32 h-32 rounded-full overflow-hidden mb-4 bg-gray-200">
+                    <div className="flex flex-col items-center mb-4 relative">
+                        <div className="w-24 h-24 overflow-visible mb-4 relative">
                             <img
                                 src={avatarUrl || 'https://via.placeholder.com/128'}
                                 alt="Avatar"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover rounded-full"
                             />
+                            <label
+                                htmlFor="avatar-upload"
+                                className="absolute bottom-0 right-0 bg-white text-blue-500 border border-blue-500 rounded-full w-6 h-6 flex items-center justify-center cursor-pointer hover:text-blue-600 hover:border-blue-600 z-20"
+                            >
+                                <CameraFilled style={{ fontSize: '12px' }} />
+                            </label>
                         </div>
                         <input
                             type="file"
@@ -233,13 +240,8 @@ const AccountManagement = () => {
                             className="hidden"
                             id="avatar-upload"
                         />
-                        <label
-                            htmlFor="avatar-upload"
-                            className="cursor-pointer bg-white text-blue-500 border border-blue-500 px-4 py-2 rounded hover:text-blue-600 hover:border-blue-600"
-                        >
-                            {uploading ? 'Đang tải...' : 'Thay đổi ảnh đại diện'}
-                        </label>
                     </div>
+                    
                 </div>
 
                 <Form
