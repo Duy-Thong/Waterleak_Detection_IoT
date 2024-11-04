@@ -418,11 +418,11 @@ const Home = () => {
                 </div>
 
                 {/* Devices List */}
-                <div className="w-full max-w-6xl mx-auto">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 justify-items-center">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
                         {filteredDevices.map(deviceId => (
-                            <div className="w-full flex items-center justify-center" key={deviceId}>
-                                <Badge count={getWarningsCount(deviceId)} offset={[-8,8]}>
+                            <div className="w-full sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)] min-w-[280px] flex items-center justify-center" key={deviceId}>
+                                <Badge count={getWarningsCount(deviceId)} size="large" offset={[-10, 10]}>
                                     <DeviceCard
                                         deviceId={deviceId}
                                         deviceName={deviceNames[deviceId]}
@@ -431,7 +431,7 @@ const Home = () => {
                                 </Badge>
                             </div>
                         ))}
-                        <div className="w-full flex items-center justify-center">
+                        <div className="w-full sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)] min-w-[280px] flex items-center justify-center">
                             <DeviceCard
                                 isAddCard
                                 onClick={handleAddDevice}
@@ -439,11 +439,10 @@ const Home = () => {
                         </div>
                         {/* Add empty placeholder divs to maintain grid on larger screens */}
                         {[...Array((4 - ((filteredDevices.length + 1) % 4)) % 4)].map((_, index) => (
-                            <div key={`empty-${index}`} className="hidden lg:block w-full" />
+                            <div key={`empty-${index}`} className="hidden lg:block lg:w-[calc(25%-12px)] min-w-[280px]" />
                         ))}
                     </div>
                 </div>
-
             </div>
 
             {/* Replace the custom floating button with this */}
