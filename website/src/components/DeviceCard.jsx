@@ -156,10 +156,11 @@ const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
             <Switch
               checked={relayState}
               onChange={handleToggleRelay}
-              className={relayState ? 'bg-green-500 mt-5' : 'bg-gray-300 mt-5'}
+              className={`${relayState ? 'bg-green-500' : 'bg-gray-300'} mt-5 ${!isOnline && 'opacity-50 cursor-not-allowed'}`}
               size="large"
               checkedChildren={<CheckOutlined />}
               unCheckedChildren={<CloseOutlined />}
+              disabled={!isOnline}
             />
           </div>
         </div>

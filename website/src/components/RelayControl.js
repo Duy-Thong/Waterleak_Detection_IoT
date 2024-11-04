@@ -1,13 +1,14 @@
 import React from 'react';
 import './style.css'; // Import the CSS file
 
-const RelayControl = ({ relayState, onToggleRelay }) => (
+const RelayControl = ({ relayState, onToggleRelay, isActive }) => (
     <div className="flex items-center space-x-4  h-10">
         <label className="plane-switch">
             <input
                 type="checkbox"
                 checked={relayState === 'ON'}
                 onChange={onToggleRelay}
+                disabled={!isActive}  // Disable switch when device is not active
             />
             <div>
                 <div>

@@ -17,9 +17,26 @@ import CurrentDeviceData from '../../components/CurrentDeviceData';
 import Chart from '../../components/Chart';
 import RelayControl from '../../components/RelayControl';
 import RequireLogin from '../../components/RequireLogin';
-import { Loading3QuartersOutlined, EditOutlined } from '@ant-design/icons';
+import { Loading3QuartersOutlined, EditOutlined, CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import WarningStats from '../../components/WarningStats';  // Make sure this path is correct
 import { UserOutlined, MailOutlined, GoogleOutlined } from '@ant-design/icons';  // Add GoogleOutlined
+
+// Add isDeviceActive helper function
+const isDeviceActive = (deviceData) => {
+    if (!deviceData || !deviceData.flow_sensor) return false;
+    
+    const flowSensorData = deviceData.flow_sensor;
+    const sortedKeys = Object.keys(flowSensorData).sort();
+    
+    if (sortedKeys.length === 0) return false;
+    
+    const latestKey = sortedKeys[sortedKeys.length - 1];
+    const latestTimestamp = flowSensorData[latestKey].timestamp;
+    
+    const now = Date.now();
+    const lastActivity = new Date(latestTimestamp).getTime();
+    return (now - lastActivity) < 10000; // 10 seconds threshold
+};
 
 // Register ChartJS components
 ChartJS.register(
@@ -55,6 +72,8 @@ const DeviceDetail = () => {
     
     // Chỉ giữ lại refs cần thiết
     const isMountedRef = useRef(true);
+    const [isActive, setIsActive] = useState(false);
+    const activityCheckInterval = useRef(null);
 
     useEffect(() => {
         isMountedRef.current = true;
@@ -124,6 +143,19 @@ const DeviceDetail = () => {
             if (warningUnsubscribe) warningUnsubscribe();
         };
     }, [userId, deviceId]);
+
+    useEffect(() => {
+        // Set up activity check interval
+        activityCheckInterval.current = setInterval(() => {
+            setIsActive(isDeviceActive(state.deviceData));
+        }, 1000);
+
+        return () => {
+            if (activityCheckInterval.current) {
+                clearInterval(activityCheckInterval.current);
+            }
+        };
+    }, [state.deviceData]);
 
     const toggleRelay = async () => {
         const newRelayState = state.relayState === 'OFF' ? 'ON' : 'OFF';
@@ -344,7 +376,20 @@ const DeviceDetail = () => {
                             >
                                 Trở về
                             </Button>
-                            <RelayControl relayState={state.relayState} onToggleRelay={toggleRelay} />
+                                <RelayControl relayState={state.relayState} onToggleRelay={toggleRelay} isActive={isActive} />
+                            <div className="flex items-center gap-2">
+                                {isActive ? (
+                                    <>
+                                        <CheckCircleFilled className="text-green-500 text-xl" />
+                                        <span className="text-green-600 font-medium">Đang hoạt động</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <CloseCircleFilled className="text-red-500 text-xl" />
+                                        <span className="text-red-600 font-medium">Không hoạt động</span>
+                                    </>
+                                )}
+                            </div>
                             <Button
                                 onClick={showUsersModal}
                                 size="middle"
