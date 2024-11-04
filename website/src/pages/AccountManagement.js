@@ -1,15 +1,130 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getDatabase, ref, get, update } from "firebase/database";
 import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
 import { put } from '@vercel/blob';
 import { useUser } from '../contexts/UserContext';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Typography, notification } from 'antd';
+import { Form, Input, Button, Typography, notification, Modal } from 'antd';
 import RequireLogin from '../components/RequireLogin';
-import { CameraFilled } from '@ant-design/icons'; // Add camera icon import
+import { CameraFilled, MailOutlined } from '@ant-design/icons'; // Remove GoogleOutlined
+import Cropper from 'react-easy-crop' // Add this import
 import "./style.css";
+
 const { Title } = Typography;
+
+// Add Google Icon Component
+const GoogleIcon = () => (
+    <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        viewBox="0 0 48 48" 
+        width="16" 
+        height="16"
+    >
+        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+    </svg>
+);
+
+// Add ImageCropModal component
+const ImageCropModal = ({ image, visible, onCancel, onCropComplete }) => {
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+    const createImage = (url) =>
+        new Promise((resolve, reject) => {
+            const image = new Image();
+            image.addEventListener('load', () => resolve(image));
+            image.addEventListener('error', (error) => reject(error));
+            image.src = url;
+        });
+
+    const getCroppedImg = async (imageSrc, pixelCrop) => {
+        const image = await createImage(imageSrc);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const maxSize = Math.max(image.width, image.height);
+        const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
+
+        canvas.width = safeArea;
+        canvas.height = safeArea;
+
+        ctx.translate(safeArea / 2, safeArea / 2);
+        ctx.translate(-safeArea / 2, -safeArea / 2);
+
+        ctx.drawImage(
+            image,
+            safeArea / 2 - image.width * 0.5,
+            safeArea / 2 - image.height * 0.5
+        );
+
+        const data = ctx.getImageData(0, 0, safeArea, safeArea);
+
+        canvas.width = pixelCrop.width;
+        canvas.height = pixelCrop.height;
+
+        ctx.putImageData(
+            data,
+            Math.round(0 - safeArea / 2 + image.width * 0.5 - pixelCrop.x),
+            Math.round(0 - safeArea / 2 + image.height * 0.5 - pixelCrop.y)
+        );
+
+        return new Promise((resolve) => {
+            canvas.toBlob((blob) => {
+                resolve(blob);
+            }, 'image/jpeg');
+        });
+    };
+
+    const onCropAreaComplete = useCallback(async (_, croppedAreaPixels) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    }, []);
+
+    const handleSave = async () => {
+        try {
+            if (!croppedAreaPixels) return;
+            const croppedImage = await getCroppedImg(image, croppedAreaPixels);
+            onCropComplete(croppedImage);
+        } catch (e) {
+            console.error('Error cropping image:', e);
+            notification.error({ message: 'Lỗi khi cắt ảnh' });
+        }
+    };
+
+    return (
+        <Modal
+            visible={visible}
+            onCancel={onCancel}
+            title="Cắt ảnh đại diện"
+            okText="Xác nhận"
+            cancelText="Hủy"
+            onOk={handleSave}
+            width={520}
+            centered
+        >
+            <div style={{ position: 'relative', height: 400, background: '#333' }}>
+                <Cropper
+                    image={image}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={1}
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={onCropAreaComplete}
+                    cropShape="round"
+                    showGrid={false}
+                />
+            </div>
+            <div className="text-center text-sm text-gray-500 mt-2">
+                Kéo để di chuyển, cuộn chuột để phóng to/thu nhỏ
+            </div>
+        </Modal>
+    );
+};
 
 const openNotificationWithIcon = (type, message) => {
     notification[type]({
@@ -29,6 +144,11 @@ const AccountManagement = () => {
     const [isGoogleUser, setIsGoogleUser] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState('');
     const [uploading, setUploading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [createdAt, setCreatedAt] = useState('');
+    const [registrationMethod, setRegistrationMethod] = useState('');
+    const [cropModalVisible, setCropModalVisible] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -42,6 +162,11 @@ const AccountManagement = () => {
             if (currentUser) {
                 const providers = currentUser.providerData.map(provider => provider.providerId);
                 setIsGoogleUser(providers.includes('google.com'));
+                setEmail(currentUser.email);
+                // Convert timestamp to date string
+                const createdAtDate = new Date(currentUser.metadata.creationTime);
+                setCreatedAt(createdAtDate.toLocaleDateString('vi-VN'));
+                setRegistrationMethod(providers[0]); // Get the first provider as registration method
             }
 
             try {
@@ -165,7 +290,7 @@ const AccountManagement = () => {
         }
     };
 
-    const handleAvatarUpload = async (event) => {
+    const handleAvatarUpload = (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
@@ -175,14 +300,25 @@ const AccountManagement = () => {
             return;
         }
 
+        // Create URL for preview
+        const reader = new FileReader();
+        reader.onload = () => {
+            setSelectedImage(reader.result);
+            setCropModalVisible(true);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleCroppedImage = async (croppedBlob) => {
+        setCropModalVisible(false);
         setUploading(true);
+
         try {
             // Upload to Vercel Blob
-            const blob = await put(`avatars/${userId}-${file.name}`, file, {
+            const blob = await put(`avatars/${userId}-${Date.now()}.jpg`, croppedBlob, {
                 access: 'public',
-                token: "vercel_blob_rw_vuBTDxs1Af4OyipF_7ktfANNunJPJCY1OsqLo4fevvrPM6A" // Direct token for testing
+                token: "vercel_blob_rw_vuBTDxs1Af4OyipF_7ktfANNunJPJCY1OsqLo4fevvrPM6A"
             });
-
 
             const downloadUrl = blob.url;
             
@@ -219,7 +355,7 @@ const AccountManagement = () => {
                 <Title level={2} className='!text-white'>Quản lý tài khoản</Title>
 
                 <div className="glassmorphism glassmorphism-filter-section w-full max-w-lg p-4 mb-4">
-                    <div className="flex flex-col items-center mb-4 relative">
+                    <div className="flex flex-col items-center mb-4">
                         <div className="w-24 h-24 overflow-visible mb-4 relative">
                             <img
                                 src={avatarUrl || 'https://via.placeholder.com/128'}
@@ -240,8 +376,37 @@ const AccountManagement = () => {
                             className="hidden"
                             id="avatar-upload"
                         />
+                        
+                        {/* User Info Section */}
+                        <div className="w-full grid grid-cols-1 gap-3 mt-4">
+                            <div className="flex flex-col items-center">
+                                <span className="text-gray-500">Email</span>
+                                <span className="font-medium">{email}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-gray-500">Ngày đăng ký</span>
+                                <span className="font-medium">{createdAt}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-gray-500">Phương thức đăng ký</span>
+                                <div className="flex items-center">
+                                    {registrationMethod === 'google.com' ? (
+                                        <>
+                                            <div className="mr-2">
+                                                <GoogleIcon />
+                                            </div>
+                                            <span className="font-medium">Google</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <MailOutlined className="text-blue-500 mr-2" />
+                                            <span className="font-medium">Email</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
                 </div>
 
                 <Form
@@ -338,6 +503,13 @@ const AccountManagement = () => {
                     </>
                 )}
             </div>
+            {/* Add ImageCropModal */}
+            <ImageCropModal
+                visible={cropModalVisible}
+                image={selectedImage}
+                onCancel={() => setCropModalVisible(false)}
+                onCropComplete={handleCroppedImage}
+            />
         </div>
     );
 };
