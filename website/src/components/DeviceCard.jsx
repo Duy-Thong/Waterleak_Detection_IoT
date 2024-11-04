@@ -82,7 +82,7 @@ const DeviceCard = ({ deviceId, deviceName, isAddCard, onClick }) => {
     transition: 'all 0.3s ease-in-out',
   };
 
-  const commonClasses = "w-52 h-52 m-2 transform transition-all duration-300 hover:scale-105 hover:shadow-lg";
+  const commonClasses = "w-full sm:w-48 md:w-52 lg:w-56 h-52 m-2 transform transition-all duration-300 hover:scale-105 hover:shadow-lg";
 
   if (isAddCard) {
     return (

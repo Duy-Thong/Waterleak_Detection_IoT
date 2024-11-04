@@ -418,11 +418,11 @@ const Home = () => {
                 </div>
 
                 {/* Devices List */}
-                <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+                <div className="w-full max-w-6xl mx-auto">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 justify-items-center">
                         {filteredDevices.map(deviceId => (
-                            <div className="w-full min-w-[140px] max-w-[200px] sm:max-w-none mx-auto" key={deviceId}>
-                                <Badge count={getWarningsCount(deviceId)} size="small" offset={[-8, 8]}>
+                            <div className="w-full flex items-center justify-center" key={deviceId}>
+                                <Badge count={getWarningsCount(deviceId)} offset={[-8,8]}>
                                     <DeviceCard
                                         deviceId={deviceId}
                                         deviceName={deviceNames[deviceId]}
@@ -431,7 +431,7 @@ const Home = () => {
                                 </Badge>
                             </div>
                         ))}
-                        <div className="w-full min-w-[140px] max-w-[200px] sm:max-w-none mx-auto">
+                        <div className="w-full flex items-center justify-center">
                             <DeviceCard
                                 isAddCard
                                 onClick={handleAddDevice}
