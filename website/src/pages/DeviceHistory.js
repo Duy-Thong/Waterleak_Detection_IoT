@@ -8,6 +8,7 @@ import Navbar from '../components/Navbar';
 import "./style.css";
 import RequireLogin from '../components/RequireLogin';
 import { getAuth } from 'firebase/auth';
+import warning from 'antd/es/_util/warning';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -167,12 +168,10 @@ const DeviceHistory = () => {
 
                 const payload = {
                     flow_sensor: null,
-                    relay: {
-                        control: relayState ? String(relayState).toUpperCase() : 'OFF',
-                    },
-                    name : deviceName
+                    warning: null
+                    
                 };
-                await axios.put(
+                await axios.patch(
                     `https://esp8266firebase-2f31a-default-rtdb.asia-southeast1.firebasedatabase.app/devices/${deviceId}.json`,
                     payload,
                     {
