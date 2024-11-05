@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getDatabase, ref, get, update } from "firebase/database";
 import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
-import { put } from '@vercel/blob';
+import { put, del, list } from '@vercel/blob';
 import { useUser } from '../contexts/UserContext';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
@@ -318,28 +318,61 @@ const AccountManagement = () => {
         setUploading(true);
 
         try {
-            const blob = await put(`avatars/${userId}-${Date.now()}.jpg`, croppedBlob, {
-                access: 'public',
-                token: "vercel_blob_rw_vuBTDxs1Af4OyipF_7ktfANNunJPJCY1OsqLo4fevvrPM6A"
+            console.log('Starting avatar update process...');
+            
+            // Delete old avatar if exists in database
+            if (avatarUrl && process.env.NODE_ENV !== 'development') { // Skip deletion in development
+                try {
+                    console.log('Attempting to delete old avatar:', avatarUrl);
+                    const urlObj = new URL(avatarUrl);
+                    const pathname = urlObj.pathname.substring(1); 
+                    
+                    await del(pathname, {
+                        token: "vercel_blob_rw_vuBTDxs1Af4OyipF_7ktfANNunJPJCY1OsqLo4fevvrPM6A"
+                    });
+                    console.log('Successfully deleted old avatar');
+                } catch (deleteError) {
+                    console.warn('Error deleting old avatar:', deleteError);
+                    // Continue with upload even if delete fails
+                }
+            } else {
+                console.log('Skipping avatar deletion in development environment');
+            }
 
-                
+            // Upload new avatar
+            console.log('Starting new avatar upload...');
+            const fileName = `avatars/${userId}-${Date.now()}.jpg`;
+            console.log('Uploading to:', fileName);
+            
+            const blob = await put(fileName, croppedBlob, {
+                access: 'public',
+                token: "vercel_blob_rw_vuBTDxs1Af4OyipF_7ktfANNunJPJCY1OsqLo4fevvrPM6A",
+                ...(process.env.NODE_ENV === 'development' && { mode: 'no-cors' })
             });
 
+            if (!blob || !blob.url) {
+                throw new Error('Failed to upload new avatar');
+            }
+
             const downloadUrl = blob.url;
+            console.log('New avatar uploaded successfully:', downloadUrl);
 
             const db = getDatabase();
             const userRef = ref(db, 'users/' + userId);
             await update(userRef, {
                 photoURL: downloadUrl
             });
+            console.log('Database updated with new avatar URL');
 
             setAvatarUrl(downloadUrl);
             openNotificationWithIcon('success', 'Ảnh đại diện đã được cập nhật');
         } catch (error) {
-            console.error("Error uploading avatar:", error);
+            console.error("Error handling avatar:", error);
+            console.error("Error details:", error.message);
             openNotificationWithIcon('error', 'Lỗi khi tải lên ảnh đại diện');
         } finally {
             setUploading(false);
+            console.log('Avatar update process completed');
         }
     };
 
