@@ -17,7 +17,7 @@ import CurrentDeviceData from '../../components/CurrentDeviceData';
 import Chart from '../../components/Chart';
 import RelayControl from '../../components/RelayControl';
 import RequireLogin from '../../components/RequireLogin';
-import { Loading3QuartersOutlined, EditOutlined, CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
+import { Loading3QuartersOutlined, EditOutlined, CheckCircleFilled, CloseCircleFilled, LineChartOutlined } from '@ant-design/icons';
 import WarningStats from '../../components/WarningStats';  // Make sure this path is correct
 import { UserOutlined, MailOutlined, GoogleOutlined } from '@ant-design/icons';  // Add GoogleOutlined
 
@@ -504,7 +504,28 @@ const DeviceDetail = () => {
                                     deviceId={deviceId} 
                                     navigate={navigate}
                                 />
-                                {chartData && <Chart chartData={chartData} className="mt-4 hidden-mobile" />}
+                                {chartData && (
+                                    <div className="w-3/4  p-4 mt-4 glassmorphism rounded-lg min-h-36">
+                                        <div className="flex flex-col items-center">
+                                            <Chart chartData={chartData} className="w-full hidden-mobile" />
+                                            <Button 
+                                                onClick={() => navigate(`/device/${deviceId}/statistics`)}
+                                                type="primary"
+                                                icon={<LineChartOutlined />}
+                                                size="large"
+                                                className="flex items-center gap-2 mt-4"
+                                                style={{ 
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                                    borderRadius: '8px',
+                                                    padding: '0 20px',
+                                                }}
+                                                ghost
+                                            >
+                                                Thống kê chi tiết
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </>
                         ) : (
                             <Loading3QuartersOutlined spin className="text-4xl text-white mt-4" />

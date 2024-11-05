@@ -12,6 +12,7 @@ import DeviceDetail from './pages/DeviceDetail/DeviceDetail';
 import WarningPage from './pages/WarningPage/WarningPage';
 import RequireLogin from './components/RequireLogin';
 import './App.css';
+import DeviceStatistics from './pages/DeviceStatistics/DeviceStatistics';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -80,6 +81,13 @@ function AppContent() {
             <WarningPage />
           </ProtectedRoute>
         } />
+        <Route path="/device/:deviceId/statistics"
+          element={
+            <ProtectedRoute>
+              <DeviceStatistics />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Catch all redirect */}
         <Route path="*" element={<Navigate to="/home" replace />} />
