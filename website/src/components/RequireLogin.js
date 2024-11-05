@@ -11,7 +11,7 @@ const RequireLogin = () => {
         <div className="min-h-screen flex items-center justify-center p-3 gradient-bg bg-gradient-to-r from-[#ee7752] via-[#e73c7e] to-[#23a6d5] bg-[length:400%_400%]">
             <div className="bg-white/90 rounded-2xl w-full max-w-md overflow-hidden shadow-xl backdrop-blur-xl border-2 border-white">
                 {/* Top image section */}
-                <div className="relative h-40 bg-gradient-to-r from-red-600 to-red-400 flex items-center justify-center overflow-hidden ">
+                <div className="relative h-40 gradient-bg1 bg-gradient-to-r from-red-600 to-red-400 flex items-center justify-center overflow-hidden ">
                     <img
                         src={accessDeniedImage}
                         alt="Access Denied"
@@ -26,17 +26,17 @@ const RequireLogin = () => {
                             <WarningOutlined className="text-3xl text-red-600" />
                         </div>
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                            Oops! Vội thế bạn ơi 🤡
+                            ⚠️ Oops! Vội thế bạn ơi ⚠️
                         </h2>
                         <div className="h-0.5 w-12 bg-red-600 mx-auto mb-3"></div>
                         <p className="text-gray-600 leading-relaxed text-sm">
-                            Vội gì thì cũng đăng nhập đã bạn nhé! 🤖
+                            Vịt đang nhảy chờ bạn đăng nhập đấy 🦆
                         </p>
                     </div>
 
                     <div className="space-y-4 flex flex-col items-center">
-                        <button 
-                            className="button w-3/4 px-6 py-2.5 rounded-lg bg-red-500 text-white font-semibold shadow-lg hover:bg-white hover:text-red-500 border-2 border-red-500 transition-all duration-300 transform hover:scale-105" 
+                        <button
+                            className="button w-3/4 px-6 py-2.5 rounded-lg bg-red-500 text-white font-semibold shadow-lg hover:bg-white hover:text-red-500 border-2 border-red-500 transition-all duration-300 transform hover:scale-105"
                             onClick={() => navigate('/login')}
                         >
                             <div className="flex items-center justify-center w-full">
@@ -52,8 +52,8 @@ const RequireLogin = () => {
                                 <span className="px-2 bg-white text-gray-500">Hoặc</span>
                             </div>
                         </div>
-                        <button 
-                            className="button w-3/4 px-6 py-2.5 rounded-lg bg-red-500 text-white font-semibold shadow-lg hover:bg-white hover:text-red-500 border-2 border-red-500 transition-all duration-300 transform hover:scale-105" 
+                        <button
+                            className="button w-3/4 px-6 py-2.5 rounded-lg bg-red-500 text-white font-semibold shadow-lg hover:bg-white hover:text-red-500 border-2 border-red-500 transition-all duration-300 transform hover:scale-105"
                             onClick={() => navigate('/register')}
                         >
                             <div className="flex items-center justify-center w-full">
