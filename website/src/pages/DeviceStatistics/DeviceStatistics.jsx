@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getDatabase, ref, get } from "firebase/database";
+import { getDatabase, ref, get, onValue, off } from "firebase/database";
 import { Typography, Button, Card, Statistic, Spin, Alert, DatePicker, Radio } from 'antd';
 import { ArrowLeftOutlined, DropboxOutlined, DashboardOutlined, CalendarOutlined, RiseOutlined, FundOutlined, ClockCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import Navbar from '../../components/Navbar';
@@ -61,28 +61,30 @@ const DeviceStatistics = () => {
     const [viewType, setViewType] = useState('daily');
 
     useEffect(() => {
-        const fetchData = async () => {
-            if (!userId || !deviceId) return;
+        if (!userId || !deviceId) return;
 
-            try {
-                const db = getDatabase();
-                const deviceRef = ref(db, `devices/${deviceId}`);
-                const snapshot = await get(deviceRef);
+        const db = getDatabase();
+        const deviceRef = ref(db, `devices/${deviceId}`);
+        setLoading(true);
 
-                if (snapshot.exists()) {
-                    setDeviceData(snapshot.val());
-                    setError(null);
-                } else {
-                    setError("Không tìm thấy dữ liệu thiết bị");
-                }
-            } catch (err) {
-                setError("Lỗi khi tải dữ liệu: " + err.message);
-            } finally {
-                setLoading(false);
+        // Set up real-time listener
+        const unsubscribe = onValue(deviceRef, (snapshot) => {
+            if (snapshot.exists()) {
+                setDeviceData(snapshot.val());
+                setError(null);
+            } else {
+                setError("Không tìm thấy dữ liệu thiết bị");
             }
-        };
+            setLoading(false);
+        }, (error) => {
+            setError("Lỗi khi tải dữ liệu: " + error.message);
+            setLoading(false);
+        });
 
-        fetchData();
+        // Cleanup function
+        return () => {
+            off(deviceRef);
+        };
     }, [userId, deviceId]);
 
     const processData = useMemo(() => {
