@@ -506,13 +506,13 @@ const DeviceDetail = () => {
                                 />
                                 {chartData && (
                                     <div className="w-3/4  p-4 mt-4 glassmorphism rounded-lg min-h-36">
-                                        <div className="flex flex-col items-center">
-                                            <Chart chartData={chartData} className="w-full hidden-mobile" />
+                                        <div className="flex flex-col items-center w-full">
+                                            <Chart chartData={chartData} className="w-full" />
                                             <Button 
                                                 onClick={() => navigate(`/device/${deviceId}/statistics`)}
                                                 type="primary"
                                                 icon={<LineChartOutlined />}
-                                                size="large"
+                                                size="default"
                                                 className="flex items-center gap-2 mt-4"
                                                 style={{ 
                                                     backgroundColor: 'rgba(255, 255, 255, 0.5)',

@@ -16,8 +16,8 @@ const CurrentDeviceData = ({ latestData, deviceId, navigate }) => {
             </p>
             <h3 className="text-lg font-medium mb-2">{}</h3>
             <Row gutter={[16, 16]} justify="center">
-                <Col xs={24} sm={12} className="flex flex-col items-center">
-                    <h3 className="text-lg font-normal mb-2">Cảm Biến 1</h3>
+                <Col xs={12} sm={12} className="flex flex-col items-center">
+                    <h3 className="text-lg font-medium mb-2">Cảm Biến 1</h3>
                     <Progress
                         type="circle"
                         percent={((latestData?.sensor1 || 0) / 200) * 100}
@@ -27,10 +27,11 @@ const CurrentDeviceData = ({ latestData, deviceId, navigate }) => {
                             '100%': '#FFC371',
                         }}
                         width={150}
+                        className="scale-90 sm:scale-100"
                     />
                 </Col>
 
-                <Col xs={24} sm={12} className="flex flex-col items-center">
+                <Col xs={12} sm={12} className="flex flex-col items-center">
                     <h3 className="text-lg font-medium mb-2">Cảm Biến 2</h3>
                     <Progress
                         type="circle"
@@ -41,6 +42,7 @@ const CurrentDeviceData = ({ latestData, deviceId, navigate }) => {
                             '100%': '#92FE9D',
                         }}
                         width={150}
+                        className="scale-90 sm:scale-100"
                     />
                 </Col>
             </Row>
@@ -54,7 +56,7 @@ const CurrentDeviceData = ({ latestData, deviceId, navigate }) => {
                         borderColor: '#52c41a',
                         color: '#52c41a',
                         backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                        height: '40px',
+                        height: '30px',
                         fontSize: '16px',
                         display: 'flex',
                         alignItems: 'center',

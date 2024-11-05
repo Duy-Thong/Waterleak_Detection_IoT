@@ -57,8 +57,9 @@ const WarningStats = ({ deviceId, navigate }) => {
 
     return (
         <div className="w-3/4 glassmorphism p-2 md:p-6 mb-3">
-            <div className="flex flex-col space-y-2 md:space-y-4">
-                <div className="grid grid-cols-4 gap-1 md:gap-4">
+            <div className="flex flex-col space-y-2 md:space-y-4 mt-3 mb-3">
+                <div className='flex items-center justify-center'><h3>Cảnh báo</h3></div>
+                <div className="grid grid-cols-4 gap-1 md:gap-4 mt-2 mb-2">
                     <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-1" size="small">
                         <Statistic
                             title={<span className="hidden md:inline">Tổng số cảnh báo</span>}
@@ -95,7 +96,7 @@ const WarningStats = ({ deviceId, navigate }) => {
                         />
                     </Card>
                 </div>
-                <div className="flex justify-center mt-2 md:mt-4">
+                <div className="flex justify-center mt-4 md:mt-5">
                     <Button
                         type="ghost"
                         danger
