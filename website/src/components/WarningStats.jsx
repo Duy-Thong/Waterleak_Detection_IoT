@@ -58,41 +58,43 @@ const WarningStats = ({ deviceId, navigate }) => {
     return (
         <div className="w-3/4 glassmorphism p-2 md:p-6 mb-3">
             <div className="flex flex-col space-y-2 md:space-y-4 mt-3 mb-3">
-                <div className='flex items-center justify-center'><h3>Cảnh báo</h3></div>
+                <div className='flex items-center justify-center'><h1>Cảnh báo</h1></div>
                 <div className="grid grid-cols-4 gap-1 md:gap-4 mt-2 mb-2">
                     <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-2 py-1" size="small">
                         <Statistic
-                            title={<span className="hidden md:inline">Tổng số cảnh báo</span>}
+                            title={<span className="hidden md:inline text-base">Tổng số cảnh báo</span>}
                             value={warningStats.total}
-                            prefix={<AlertOutlined style={{ color: '#1890ff', marginRight: '8px' }} />}
-                            className="text-xs md:text-base"
+                            prefix={<AlertOutlined style={{ color: '#1890ff', marginRight: '8px' }} className="text-sm md:text-xl" />}
+                            className="text-xs md:text-lg"
+                            valueStyle={{ fontSize: '14px', '@media (min-width: 768px)': { fontSize: '24px' } }}
                         />
                     </Card>
                     <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-2 py-1" size="small">
                         <Statistic
-                            title={<span className="hidden md:inline">Đã giải quyết</span>}
+                            title={<span className="hidden md:inline text-base">Đã giải quyết</span>}
                             value={warningStats.resolved}
-                            valueStyle={{ color: '#3f8600' }}
-                            prefix={<CheckCircleOutlined style={{ color: '#3f8600', marginRight: '8px' }} />}
-                            className="text-xs md:text-base"
+                            valueStyle={{ color: '#3f8600', fontSize: '14px', '@media (min-width: 768px)': { fontSize: '24px' } }}
+                            prefix={<CheckCircleOutlined style={{ color: '#3f8600', marginRight: '8px' }} className="text-sm md:text-xl" />}
+                            className="text-xs md:text-lg"
                         />
                     </Card>
                     <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-2 py-1" size="small">
                         <Statistic
-                            title={<span className="hidden md:inline">Chưa giải quyết</span>}
+                            title={<span className="hidden md:inline text-base">Chưa giải quyết</span>}
                             value={warningStats.unresolved}
-                            valueStyle={{ color: '#cf1322' }}
-                            prefix={<ExclamationCircleOutlined style={{ color: '#cf1322', marginRight: '8px' }} />}
-                            className="text-xs md:text-base"
+                            valueStyle={{ color: '#cf1322', fontSize: '14px', '@media (min-width: 768px)': { fontSize: '24px' } }}
+                            prefix={<ExclamationCircleOutlined style={{ color: '#cf1322', marginRight: '8px' }} className="text-sm md:text-xl" />}
+                            className="text-xs md:text-lg"
                         />
                     </Card>
                     <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-2 py-1" size="small">
                         <Statistic
-                            title={<span className="hidden md:inline">Tỉ lệ giải quyết</span>}
+                            title={<span className="hidden md:inline text-base">Tỉ lệ giải quyết</span>}
                             value={warningStats.resolutionRate}
                             precision={1}
-                            prefix={<PercentageOutlined style={{ color: '#1890ff', marginRight: '8px' }} />}
-                            className="text-xs md:text-base"
+                            valueStyle={{ fontSize: '14px', '@media (min-width: 768px)': { fontSize: '24px' } }}
+                            prefix={<PercentageOutlined style={{ color: '#1890ff', marginRight: '8px' }} className="text-sm md:text-xl" />}
+                            className="text-xs md:text-lg"
                         />
                     </Card>
                 </div>
