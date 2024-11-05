@@ -292,6 +292,13 @@ const AccountManagement = () => {
         const file = event.target.files[0];
         if (!file) return;
 
+        // Add file size validation (2MB = 2 * 1024 * 1024 bytes)
+        const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+        if (file.size > maxSize) {
+            openNotificationWithIcon('error', 'Kích thước file không được vượt quá 2MB');
+            return;
+        }
+
         const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
         if (!validImageTypes.includes(file.type)) {
             openNotificationWithIcon('error', 'Vui lòng chọn file ảnh (JPEG, PNG, GIF)');
