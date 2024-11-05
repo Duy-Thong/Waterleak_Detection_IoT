@@ -60,38 +60,38 @@ const WarningStats = ({ deviceId, navigate }) => {
             <div className="flex flex-col space-y-2 md:space-y-4 mt-3 mb-3">
                 <div className='flex items-center justify-center'><h3>Cảnh báo</h3></div>
                 <div className="grid grid-cols-4 gap-1 md:gap-4 mt-2 mb-2">
-                    <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-1" size="small">
+                    <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-2 py-1" size="small">
                         <Statistic
                             title={<span className="hidden md:inline">Tổng số cảnh báo</span>}
                             value={warningStats.total}
-                            prefix={<AlertOutlined style={{ color: '#1890ff' }} />}
+                            prefix={<AlertOutlined style={{ color: '#1890ff', marginRight: '8px' }} />}
                             className="text-xs md:text-base"
                         />
                     </Card>
-                    <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-1" size="small">
+                    <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-2 py-1" size="small">
                         <Statistic
                             title={<span className="hidden md:inline">Đã giải quyết</span>}
                             value={warningStats.resolved}
                             valueStyle={{ color: '#3f8600' }}
-                            prefix={<CheckCircleOutlined style={{ color: '#3f8600' }} />}
+                            prefix={<CheckCircleOutlined style={{ color: '#3f8600', marginRight: '8px' }} />}
                             className="text-xs md:text-base"
                         />
                     </Card>
-                    <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-1" size="small">
+                    <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-2 py-1" size="small">
                         <Statistic
                             title={<span className="hidden md:inline">Chưa giải quyết</span>}
                             value={warningStats.unresolved}
                             valueStyle={{ color: '#cf1322' }}
-                            prefix={<ExclamationCircleOutlined style={{ color: '#cf1322' }} />}
+                            prefix={<ExclamationCircleOutlined style={{ color: '#cf1322', marginRight: '8px' }} />}
                             className="text-xs md:text-base"
                         />
                     </Card>
-                    <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-1" size="small">
+                    <Card bordered={false} className="text-center shadow-sm glassmorphism min-w-0 px-2 py-1" size="small">
                         <Statistic
                             title={<span className="hidden md:inline">Tỉ lệ giải quyết</span>}
                             value={warningStats.resolutionRate}
                             precision={1}
-                            prefix={<PercentageOutlined style={{ color: '#1890ff' }} />}
+                            prefix={<PercentageOutlined style={{ color: '#1890ff', marginRight: '8px' }} />}
                             className="text-xs md:text-base"
                         />
                     </Card>

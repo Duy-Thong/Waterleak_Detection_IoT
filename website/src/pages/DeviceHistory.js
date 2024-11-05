@@ -211,8 +211,8 @@ const DeviceHistory = () => {
         <div className="bg-gradient-to-r from-white to-blue-200 min-h-screen">
             <Navbar onLogout={handleLogout} />
             <div className="p-4 md:p-8 flex flex-col items-center pt-16 md:pt-20">
-                <Title level={2} className="text-gray-800 text-xl md:text-2xl text-center">
-                    Lịch Sử Thiết Bị: {deviceName}
+                <Title level={2} className="text-white text-xl md:text-2xl text-center mt-5">
+                    {deviceName}
                 </Title>
 
                 <div className="glassmorphism-filter-section p-3 md:p-4 rounded shadow-lg w-full max-w-3xl">
@@ -278,22 +278,22 @@ const DeviceHistory = () => {
                             </Select>
                         </Col>
                     </Row>
-                    <div className="flex flex-col md:flex-row justify-between gap-2 mt-4">
+                    <div className="flex justify-between gap-2 mt-4">
                         <Button
                             onClick={() => navigate(`/device/${deviceId}`)}
-                            className="w-full md:w-auto border-blue-600 text-blue-600 hover:text-blue-500 hover:border-blue-500 transition duration-300 bg-white"
+                            className="border-red-600 text-red-600 hover:text-blue-500 hover:border-blue-500 transition duration-300 bg-white"
                         >
                             Quay về 
                         </Button>
                         <Button 
                             onClick={handleFilter} 
-                            className="w-full md:w-auto border-blue-600 text-blue-600 hover:text-blue-500 hover:border-blue-500 bg-white"
+                            className="border-blue-600 text-blue-600 hover:text-blue-500 hover:border-blue-500 bg-white"
                         >
                             Lọc Dữ Liệu
                         </Button>
                         <Button 
                             onClick={handleDeleteHistory} 
-                            className="w-full md:w-auto border-red-500 text-red-500 hover:text-red-400 hover:border-red-400 bg-white"
+                            className="border-red-500 text-red-500 hover:text-red-400 hover:border-red-400 bg-white"
                             type="danger"
                         >
                             Xóa Lịch Sử

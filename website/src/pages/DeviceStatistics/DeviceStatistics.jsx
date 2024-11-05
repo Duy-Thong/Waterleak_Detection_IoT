@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, get } from "firebase/database";
 import { Typography, Button, Card, Statistic, Spin, Alert, DatePicker, Radio } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DropboxOutlined, DashboardOutlined, CalendarOutlined, RiseOutlined, FundOutlined, ClockCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import Navbar from '../../components/Navbar';
 import { useUser } from '../../contexts/UserContext';
 import RequireLogin from '../../components/RequireLogin';
@@ -33,10 +33,15 @@ ChartJS.register(
     Legend
 );
 
-const StatisticCard = ({ title, value, suffix, className }) => (
+const StatisticCard = ({ title, value, suffix, className, icon }) => (
     <Card className={`glassmorphism transition-all hover:shadow-sm p-2 ${className}`} size="small">
         <Statistic
-            title={<span className="text-gray-600 text-xs sm:text-sm">{title}</span>}
+            title={
+                <span className="text-gray-600 text-xs sm:text-sm flex items-center gap-2">
+                    {icon}
+                    {title}
+                </span>
+            }
             value={value}
             suffix={suffix}
             className="text-center"
@@ -181,16 +186,19 @@ const DeviceStatistics = () => {
         const config = chartConfigs[viewType];
 
         return (
-            <div className="bg-white/50 rounded-lg p-3 backdrop-blur-sm h-[300px]">
-                <AntTitle level={5} className="mb-2">{config.title}</AntTitle>
+            <div className="rounded-lg p-3 backdrop-blur-sm h-[300px]">
+                <AntTitle level={5} className="mb-2 flex items-center gap-2">
+                    <DropboxOutlined className="text-blue-500" />
+                    {config.title}
+                </AntTitle>
                 <Bar
                     data={{
                         labels: Object.keys(config.data),
                         datasets: [{
                             label: 'Lưu lượng (L)',
                             data: Object.values(config.data),
-                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.3)',
+                            borderColor: 'rgba(54, 162, 235, 0.8)',
                             borderWidth: 1
                         }]
                     }}
@@ -201,7 +209,17 @@ const DeviceStatistics = () => {
                             legend: { display: false }
                         },
                         scales: {
-                            y: { beginAtZero: true }
+                            y: { 
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
                         }
                     }}
                 />
@@ -250,31 +268,37 @@ const DeviceStatistics = () => {
                 title="Tổng nước"
                 value={chartData?.totalFlow.toFixed(1)}
                 suffix="L"
+                icon={<DropboxOutlined className="text-blue-500" />}
             />
             <StatisticCard
                 title="Lưu lượng TB"
                 value={chartData?.averageFlow.toFixed(1)}
                 suffix="L/s"
+                icon={<DashboardOutlined className="text-green-500" />}
             />
             <StatisticCard
                 title="Số ngày"
                 value={chartData?.dailyUsage ? Object.keys(chartData.dailyUsage).length : 0}
                 suffix="ngày"
+                icon={<CalendarOutlined className="text-orange-500" />}
             />
             <StatisticCard
                 title="Cao nhất"
                 value={chartData?.peakFlow.toFixed(1)}
                 suffix="L/s"
+                icon={<RiseOutlined className="text-red-500" />}
             />
             <StatisticCard
                 title="Biến động"
                 value={chartData?.flowVariability.toFixed(1)}
                 suffix="L/s"
+                icon={<FundOutlined className="text-purple-500" />}
             />
             <StatisticCard
                 title="T.gian chạy"
                 value={chartData?.operatingMinutes}
                 suffix="ph"
+                icon={<ClockCircleOutlined className="text-cyan-500" />}
             />
         </div>
     );
@@ -306,7 +330,7 @@ const DeviceStatistics = () => {
     const chartData = processData;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200">
+        <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-200 to-blue-100">
             <Navbar />
             <div className="container mx-auto px-4 pt-16 pb-4">
                 <div className="max-w-[75%] mx-auto">
@@ -331,7 +355,12 @@ const DeviceStatistics = () => {
                                 {renderStatistics()}
                                 {chartData?.potentialLeak && (
                                     <Alert
-                                        message="Cảnh báo rò rỉ!"
+                                        message={
+                                            <span className="flex items-center gap-2">
+                                                <WarningOutlined className="text-yellow-500" />
+                                                Cảnh báo rò rỉ!
+                                            </span>
+                                        }
                                         type="warning"
                                         showIcon
                                         banner

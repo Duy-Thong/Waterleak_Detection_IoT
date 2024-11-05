@@ -473,11 +473,10 @@ const Home = () => {
                 }}
                 styles={{
                     content: {
-                        background: 'rgba(255, 255, 255, 0.7)',
-                        backdropFilter: 'blur(10px)',
+                        background: 'rgba(255, 255, 255, 0.3)',
+                        backdropFilter: 'blur(5px)',
                         borderRadius: '16px',
-                        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-                        border: '1px solid rgba(255, 255, 255, 0.18)',
+                        border: '1px solid rgba(255, 255, 255, 0.8)',
                     },
                     mask: {
                         backdropFilter: 'blur(4px)'
