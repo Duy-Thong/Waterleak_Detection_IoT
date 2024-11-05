@@ -321,6 +321,8 @@ const AccountManagement = () => {
             const blob = await put(`avatars/${userId}-${Date.now()}.jpg`, croppedBlob, {
                 access: 'public',
                 token: "vercel_blob_rw_vuBTDxs1Af4OyipF_7ktfANNunJPJCY1OsqLo4fevvrPM6A"
+
+                
             });
 
             const downloadUrl = blob.url;
