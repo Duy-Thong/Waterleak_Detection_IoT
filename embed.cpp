@@ -11,6 +11,7 @@ ESP8266WebServer server(80);
 #include <Firebase_ESP_Client.h>
 #include <time.h>
 #include <ArduinoJson.h>
+#include <EEPROM.h>
 
 // Firebase configuration and helper libraries
 #include "addons/TokenHelper.h"
@@ -177,10 +178,15 @@ void handleSave();
 bool connectWiFi();
 void initializeFirebase();
 void checkAndCreateNamePath();
+void saveWiFiCredentials(const String& ssid, const String& password);
+void loadWiFiCredentials(String& ssid, String& password);
+void reconnectWiFi();
 
 unsigned long flowCheckStartMillis = 0;
 bool flowExceedsThreshold = false;
 int exceedCount = 0;
+unsigned long lastWiFiCheckMillis = 0;
+const long wifiCheckInterval = 30000; // Check every 30 seconds
 
 void setup()
 {
@@ -188,6 +194,9 @@ void setup()
   Serial.println();
   pinMode(On_Board_LED, OUTPUT);
   pinMode(RELAY_PIN, OUTPUT);
+
+  EEPROM.begin(512); // Initialize EEPROM with 512 bytes
+  loadWiFiCredentials(ssid, password);
 
   // Attempt WiFi connection
   if (!connectWiFi())
@@ -262,6 +271,8 @@ void handleSave()
     ssid = server.arg("ssid");
     password = server.arg("pass");
 
+    saveWiFiCredentials(ssid, password);
+
     server.send(200, "text/plain", "Settings saved. Re-attempting WiFi connection...");
     delay(1000);
 
@@ -306,6 +317,12 @@ void initializeFirebase()
 
 void loop()
 {
+  // Add WiFi check at the beginning of loop
+  if (millis() - lastWiFiCheckMillis >= wifiCheckInterval) {
+    lastWiFiCheckMillis = millis();
+    reconnectWiFi();
+  }
+
   if (WiFi.status() != WL_CONNECTED)
   {
     server.handleClient(); // Handle server requests in AP mode
@@ -477,5 +494,40 @@ void checkAndCreateNamePath()
   else
   {
     Serial.println("Name path exists.");
+  }
+}
+
+void writeString(int startAddr, const String& data) {
+  int len = data.length();
+  EEPROM.write(startAddr, len);
+  for (int i = 0; i < len; i++) {
+    EEPROM.write(startAddr + 1 + i, data[i]);
+  }
+}
+
+String readString(int startAddr) {
+  int len = EEPROM.read(startAddr);
+  String result = "";
+  for (int i = 0; i < len; i++) {
+    result += char(EEPROM.read(startAddr + 1 + i));
+  }
+  return result;
+}
+
+void saveWiFiCredentials(const String& ssid, const String& password) {
+  writeString(0, ssid);
+  writeString(32, password);
+  EEPROM.commit();
+}
+
+void loadWiFiCredentials(String& ssid, String& password) {
+  ssid = readString(0);
+  password = readString(32);
+}
+
+void reconnectWiFi() {
+  if (WiFi.status() != WL_CONNECTED) {
+      WiFi.disconnect();
+      WiFi.begin(ssid.c_str(), password.c_str());
   }
 }
