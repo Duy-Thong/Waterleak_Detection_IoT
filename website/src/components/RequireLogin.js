@@ -29,8 +29,14 @@ const RequireLogin = () => {
                             ⚠️ Oops! Vội thế bạn ơi ⚠️
                         </h2>
                         <div className="h-0.5 w-12 bg-red-600 mx-auto mb-3"></div>
-                        <p className="text-gray-600 leading-relaxed text-sm">
-                            Vịt đang nhảy chờ bạn đăng nhập đấy 🦆
+                        <p className="text-gray-600 leading-relaxed text-sm ">
+                            <span className='text-danger-glow blink'>🔴🔵</span> Xâm nhập trái phép chú công an bắt đấy<span className='text-danger-glow blink'>🔴🔵</span> 
+                        </p>
+                        <h1 className="text-gray-600 text-2xl mt-2">
+                            🚓👮‍♀️👮‍♂️
+                        </h1>
+                        <p className="text-gray-600 leading-relaxed text-sm mt-2">
+                            Đăng nhập đã nhé 👇
                         </p>
                     </div>
 
