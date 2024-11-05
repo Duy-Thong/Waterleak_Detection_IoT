@@ -5,10 +5,10 @@ import { put } from '@vercel/blob';
 import { useUser } from '../contexts/UserContext';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Typography, notification, Modal } from 'antd';
+import { Form, Input, Button, Typography, notification, Modal, Tooltip } from 'antd';
 import RequireLogin from '../components/RequireLogin';
-import { CameraFilled, MailOutlined } from '@ant-design/icons'; // Remove GoogleOutlined
-import Cropper from 'react-easy-crop' // Add this import
+import { CameraFilled, MailOutlined, EditOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import Cropper from 'react-easy-crop';
 import "./style.css";
 
 const { Title } = Typography;
@@ -16,7 +16,6 @@ const { Title } = Typography;
 // Add Google Icon Component
 const GoogleIcon = () => (
     <svg 
-        xmlns="http://www.w3.org/2000/svg" 
         viewBox="0 0 48 48" 
         width="16" 
         height="16"
@@ -28,7 +27,6 @@ const GoogleIcon = () => (
     </svg>
 );
 
-// Add ImageCropModal component
 const ImageCropModal = ({ image, visible, onCancel, onCropComplete }) => {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
@@ -149,6 +147,7 @@ const AccountManagement = () => {
     const [registrationMethod, setRegistrationMethod] = useState('');
     const [cropModalVisible, setCropModalVisible] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
+    const [isEditingUsername, setIsEditingUsername] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -158,15 +157,13 @@ const AccountManagement = () => {
             const auth = getAuth();
             const currentUser = auth.currentUser;
 
-            // Check if user is Google-authenticated
             if (currentUser) {
                 const providers = currentUser.providerData.map(provider => provider.providerId);
                 setIsGoogleUser(providers.includes('google.com'));
                 setEmail(currentUser.email);
-                // Convert timestamp to date string
                 const createdAtDate = new Date(currentUser.metadata.creationTime);
                 setCreatedAt(createdAtDate.toLocaleDateString('vi-VN'));
-                setRegistrationMethod(providers[0]); // Get the first provider as registration method
+                setRegistrationMethod(providers[0]);
             }
 
             try {
@@ -215,12 +212,16 @@ const AccountManagement = () => {
     };
 
     const handleUpdate = async (values) => {
-        const newUsername = username.trim(); // Trim whitespace
+        const newUsername = username.trim();
         const auth = getAuth();
 
-        // Check for empty username
         if (!newUsername) {
             openNotificationWithIcon('error', 'Tên đăng nhập không được để trống');
+            return;
+        }
+
+        if (newUsername.length > 30) {
+            openNotificationWithIcon('error', 'Tên đăng nhập không được vượt quá 30 ký tự');
             return;
         }
 
@@ -240,6 +241,7 @@ const AccountManagement = () => {
             };
             await update(userRef, updates);
             openNotificationWithIcon('success', 'Thông tin tài khoản đã được cập nhật thành công');
+            setIsEditingUsername(false);
         } catch (error) {
             console.error("Error updating user data:", error);
             openNotificationWithIcon('error', `Lỗi khi cập nhật thông tin tài khoản: ${error.message}`);
@@ -251,19 +253,16 @@ const AccountManagement = () => {
         const currentUser = auth.currentUser;
 
         try {
-            // Check if new passwords match
             if (newPassword !== confirmPassword) {
                 openNotificationWithIcon('error', 'Mật khẩu mới không khớp');
                 return;
             }
 
-            // Check password strength
             if (!isPasswordStrong(newPassword)) {
                 openNotificationWithIcon('error', 'Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt');
                 return;
             }
 
-            // Verify old password by reauthenticating
             const credential = EmailAuthProvider.credential(
                 currentUser.email,
                 currentPassword
@@ -276,7 +275,6 @@ const AccountManagement = () => {
                 return;
             }
 
-            // Update password in Firebase Authentication
             await updatePassword(currentUser, newPassword);
 
             openNotificationWithIcon('success', 'Mật khẩu đã được cập nhật thành công');
@@ -300,7 +298,6 @@ const AccountManagement = () => {
             return;
         }
 
-        // Create URL for preview
         const reader = new FileReader();
         reader.onload = () => {
             setSelectedImage(reader.result);
@@ -314,7 +311,6 @@ const AccountManagement = () => {
         setUploading(true);
 
         try {
-            // Upload to Vercel Blob
             const blob = await put(`avatars/${userId}-${Date.now()}.jpg`, croppedBlob, {
                 access: 'public',
                 token: "vercel_blob_rw_vuBTDxs1Af4OyipF_7ktfANNunJPJCY1OsqLo4fevvrPM6A"
@@ -322,7 +318,6 @@ const AccountManagement = () => {
 
             const downloadUrl = blob.url;
             
-            // Update user profile in Firebase Database
             const db = getDatabase();
             const userRef = ref(db, 'users/' + userId);
             await update(userRef, {
@@ -356,6 +351,7 @@ const AccountManagement = () => {
 
                 <div className="glassmorphism glassmorphism-filter-section w-full max-w-lg p-4 mb-4">
                     <div className="flex flex-col items-center mb-4">
+                        <h2 className="text-xl font-semibold mb-4 text-gray-700">Thông tin tài khoản</h2>
                         <div className="w-24 h-24 overflow-visible mb-4 relative">
                             <img
                                 src={avatarUrl || 'https://via.placeholder.com/128'}
@@ -377,8 +373,55 @@ const AccountManagement = () => {
                             id="avatar-upload"
                         />
                         
-                        {/* User Info Section */}
                         <div className="w-full grid grid-cols-1 gap-3 mt-4">
+                            <div className="flex flex-col items-center">
+                                <span className="text-gray-500 text-lg">Tên đăng nhập</span>
+                                <div className="flex items-center gap-2">
+                                    {isEditingUsername ? (
+                                        <>
+                                            <Input
+                                                value={username}
+                                                onChange={(e) => setUsername(e.target.value)}
+                                                size="default"
+                                                maxLength={30}
+                                                className="w-48 text-center text-lg"
+                                                showCount
+                                            />
+                                            <Tooltip title="Lưu">
+                                                <Button
+                                                    type="text"
+                                                    icon={<CheckOutlined className="text-green-500" />}
+                                                    size="default"
+                                                    onClick={handleUpdate}
+                                                />
+                                            </Tooltip>
+                                            <Tooltip title="Hủy">
+                                                <Button
+                                                    type="text"
+                                                    icon={<CloseOutlined className="text-red-500" />}
+                                                    size="default"
+                                                    onClick={() => {
+                                                        setUsername(currentUsername);
+                                                        setIsEditingUsername(false);
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="font-medium text-lg">{username}</span>
+                                            <Tooltip title="Sửa tên đăng nhập">
+                                                <Button
+                                                    type="text"
+                                                    icon={<EditOutlined />}
+                                                    size="default"
+                                                    onClick={() => setIsEditingUsername(true)}
+                                                />
+                                            </Tooltip>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
                             <div className="flex flex-col items-center">
                                 <span className="text-gray-500">Email</span>
                                 <span className="font-medium">{email}</span>
@@ -409,47 +452,13 @@ const AccountManagement = () => {
                     </div>
                 </div>
 
-                <Form
-                    onFinish={handleUpdate}
-                    layout="vertical"
-                    className="glassmorphism glassmorphism-filter-section w-full max-w-lg p-4"
+                <Button
+                    className="!bg-white !text-red-500 !border-red-500 hover:!text-gray-600 hover:!border-gray-600"
+                    onClick={() => navigate('/home')}
                 >
-                    <Form.Item 
-                        label="Tên đăng nhập" 
-                        required
-                        rules={[
-                            {
-                                required: true,
-                                message: 'Vui lòng nhập tên đăng nhập!'
-                            }
-                        ]}
-                    >
-                        <Input
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                        />
-                    </Form.Item>
+                    Quay lại trang chủ
+                </Button>
 
-                    <Form.Item>
-                        <div className="flex justify-center">
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                className="mr-4 !bg-white !text-blue-500 !border-blue-500 hover:!text-blue-600 hover:!border-blue-600"
-                            >
-                                Cập nhật thông tin
-                            </Button>
-                            <Button
-                                className="!bg-white !text-gray-500 !border-gray-500 hover:!text-gray-600 hover:!border-gray-600"
-                                onClick={() => navigate('/home')}
-                            >
-                                Quay lại trang chủ
-                            </Button>
-                        </div>
-                    </Form.Item>
-                </Form>
-
-                {/* Change Password Section - Only show for non-Google users */}
                 {!isGoogleUser && (
                     <>
                         <Button
@@ -498,12 +507,12 @@ const AccountManagement = () => {
                                         </Button>
                                     </div>
                                 </Form.Item>
+
                             </Form>
                         )}
                     </>
                 )}
             </div>
-            {/* Add ImageCropModal */}
             <ImageCropModal
                 visible={cropModalVisible}
                 image={selectedImage}
