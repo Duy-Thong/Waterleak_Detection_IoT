@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, remove, update } from 'firebase/database';
 import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
-import { Input, Button, List, Form, Modal, notification } from 'antd';
+import { Input, Button, List, Form, Modal, notification, Spin, Alert } from 'antd';
 import Navbar from '../components/Navbar';
 import './style.css'; // Đảm bảo import file CSS
 import RequireLogin from '../components/RequireLogin';
@@ -12,11 +12,15 @@ const ManageDevices = () => {
     const [newDeviceId, setNewDeviceId] = useState('');
     const [deviceToRemove, setDeviceToRemove] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const { userId, logout } = useUser();
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchDevices = async () => {
+            setLoading(true);
+            setError(null);
             const db = getDatabase();
             const userDevicesRef = ref(db, 'users/' + userId + '/devices');
             const devicesRef = ref(db, 'devices');
@@ -42,7 +46,9 @@ const ManageDevices = () => {
                 }
             } catch (error) {
                 console.error("Error fetching devices:", error);
-                
+                setError("Có lỗi xảy ra khi tải dữ liệu thiết bị. Vui lòng thử lại sau.");
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -135,16 +141,37 @@ const ManageDevices = () => {
             });
         }
     };
+    
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Spin size="large" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <Alert
+                message="Error"
+                description={error}
+                type="error"
+                showIcon
+                className="m-4"
+            />
+        );
+    }
 
     if (!userId) {
         return <RequireLogin />;
     }
 
+
     return (
 
         <div className="flex flex-col min-h-screen bg-gradient-to-t from-white to-blue-300">
             <Navbar onLogout={logout} />
-            <div className="flex items-center justify-center flex-1">
+            <div className="flex items-center justify-center flex-1 mt-20">
                 <div className="glassmorphism p-6 shadow-md rounded-lg flex flex-col justify-center items-center w-full max-w-md"> {/* Card container */}
                     <h2 className="text-2xl font-semibold mb-6 text-white text-center">Quản lý thiết bị</h2>
 
