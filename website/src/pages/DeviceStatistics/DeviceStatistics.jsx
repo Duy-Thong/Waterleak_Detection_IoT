@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getDatabase, ref, get, onValue, off } from "firebase/database";
+import { getDatabase, ref, onValue, off } from "firebase/database";
 import { Typography, Button, Card, Statistic, Spin, Alert, DatePicker, Radio } from 'antd';
-import { ArrowLeftOutlined, DropboxOutlined, DashboardOutlined, CalendarOutlined, RiseOutlined, FundOutlined, ClockCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DropboxOutlined, DashboardOutlined, CalendarOutlined, RiseOutlined, FundOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import Navbar from '../../components/Navbar';
 import { useUser } from '../../contexts/UserContext';
 import RequireLogin from '../../components/RequireLogin';
@@ -17,7 +17,7 @@ import {
     Tooltip,
     Legend
 } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 
 const { RangePicker } = DatePicker;
 const { Title: AntTitle } = Typography;
@@ -100,23 +100,34 @@ const DeviceStatistics = () => {
             });
         }
 
+        // Calculate volume (L) from flow rate (L/min) and time duration
+        const calculateVolume = (flowRate, durationSeconds) => {
+            return (flowRate * durationSeconds) / 60; // Convert to liters
+        };
+
         // Calculate statistics based on view type
         const dailyUsage = filteredData.reduce((acc, curr) => {
             const date = new Date(curr.timestamp).toLocaleDateString();
-            acc[date] = (acc[date] || 0) + (curr.sensor1 + curr.sensor2) / 2;
+            const avgFlowRate = (curr.sensor1 + curr.sensor2) / 2; // L/min
+            const volume = calculateVolume(avgFlowRate, 5); // Assuming 5 seconds between readings
+            acc[date] = (acc[date] || 0) + volume;
             return acc;
         }, {});
 
         const monthlyUsage = filteredData.reduce((acc, curr) => {
             const date = new Date(curr.timestamp);
             const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
-            acc[monthKey] = (acc[monthKey] || 0) + (curr.sensor1 + curr.sensor2) / 2;
+            const avgFlowRate = (curr.sensor1 + curr.sensor2) / 2;
+            const volume = calculateVolume(avgFlowRate, 5);
+            acc[monthKey] = (acc[monthKey] || 0) + volume;
             return acc;
         }, {});
 
         const hourlyUsage = filteredData.reduce((acc, curr) => {
             const hour = new Date(curr.timestamp).getHours();
-            acc[hour] = (acc[hour] || 0) + (curr.sensor1 + curr.sensor2) / 2;
+            const avgFlowRate = (curr.sensor1 + curr.sensor2) / 2;
+            const volume = calculateVolume(avgFlowRate, 5);
+            acc[hour] = (acc[hour] || 0) + volume;
             return acc;
         }, {});
 
@@ -136,34 +147,26 @@ const DeviceStatistics = () => {
         const stdDev = Math.sqrt(variance);
 
         // Calculate operating time (when flow > 0)
-        const operatingTime = filteredData.filter(item => (item.sensor1 + item.sensor2) / 2 > 0).length;
+        const operatingTime = filteredData.filter(item => (item.sensor1 + item.sensor2) / 2 > 0).length * 5; // multiply by 5 seconds
 
-        // Detect potential leaks (continuous flow for extended periods)
-        const LEAK_THRESHOLD = 0.1; // L/s
-        const consecutiveReadings = 10; // Number of consecutive readings to consider
-        let potentialLeak = false;
-        
-        for (let i = 0; i < filteredData.length - consecutiveReadings; i++) {
-            const segment = filteredData.slice(i, i + consecutiveReadings);
-            if (segment.every(item => (item.sensor1 + item.sensor2) / 2 > LEAK_THRESHOLD)) {
-                potentialLeak = true;
-                break;
-            }
-        }
+        // Calculate total volume
+        const totalVolume = filteredData.reduce((sum, item) => {
+            const avgFlowRate = (item.sensor1 + item.sensor2) / 2;
+            return sum + calculateVolume(avgFlowRate, 5);
+        }, 0);
 
         return {
             dailyUsage,
             monthlyUsage,
             hourlyUsage: sortedHourlyUsage,
-            totalFlow: filteredData.reduce((sum, item) => sum + (item.sensor1 + item.sensor2) / 2, 0),
+            totalFlow: totalVolume,
             averageFlow: filteredData.length > 0 
-                ? filteredData.reduce((sum, item) => sum + (item.sensor1 + item.sensor2) / 2, 0) / filteredData.length
+                ? totalVolume / (filteredData.length * 5 / 60) // average L/min
                 : 0,
             peakFlow,
             minFlow,
             flowVariability: stdDev,
-            operatingMinutes: operatingTime,
-            potentialLeak,
+            operatingMinutes: Math.round(operatingTime / 60), // Convert seconds to minutes
         };
     }, [deviceData, dateRange]);
 
@@ -355,19 +358,6 @@ const DeviceStatistics = () => {
                         ) : (
                             <div className="space-y-4">
                                 {renderStatistics()}
-                                {chartData?.potentialLeak && (
-                                    <Alert
-                                        message={
-                                            <span className="flex items-center gap-2">
-                                                <WarningOutlined className="text-yellow-500" />
-                                                Cảnh báo rò rỉ!
-                                            </span>
-                                        }
-                                        type="warning"
-                                        showIcon
-                                        banner
-                                    />
-                                )}
                                 <div className="bg-white/50 rounded-lg p-3 backdrop-blur-sm min-h-[300px] sm:min-h-[400px]">
                                     {renderChart(chartData)}
                                 </div>

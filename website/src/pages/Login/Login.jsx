@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from "firebase/auth";
 import { useUser } from '../../contexts/UserContext';
 import { Form, Input, Button, Alert, Divider, message } from 'antd';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import login from '../../assets/login.jpg';
 import { getDatabase, ref, get, set } from 'firebase/database'; // Add Realtime Database imports
 

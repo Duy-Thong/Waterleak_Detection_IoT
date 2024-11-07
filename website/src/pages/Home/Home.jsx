@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, get, onValue, off } from "firebase/database";  // Add onValue and off
 import { useUser } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Input, Tooltip, Row, Col, Modal, Form, Input as AntInput, Button, message, Badge, FloatButton } from 'antd';
-import { SearchOutlined, AppstoreOutlined, AlertOutlined, HomeOutlined, CustomerServiceOutlined, UserOutlined, MailOutlined, MessageOutlined, SendOutlined, CloseOutlined } from '@ant-design/icons';
+import { Typography, Input, Modal, Form, Input as AntInput, Button, message, Badge, FloatButton } from 'antd';
+import { SearchOutlined, AppstoreOutlined, AlertOutlined, HomeOutlined, CustomerServiceOutlined, UserOutlined, MailOutlined, SendOutlined, CloseOutlined } from '@ant-design/icons';
 import { Spin, Alert, Card, Statistic } from 'antd';
 import emailjs from '@emailjs/browser';
 
@@ -141,7 +141,7 @@ const Home = () => {
                         });
                     }
                 })
-                .catch((error) => {
+                .catch(() => {
                     setError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
                 })
                 .finally(() => setLoading(false));
@@ -227,7 +227,7 @@ const Home = () => {
                 )
             }));
             
-            setStats(prev => ({
+            setStats(() => ({
                 totalDevices: devices.length,
                 activeDevices: activeCount,
                 alertsToday: totalWarningsToday
