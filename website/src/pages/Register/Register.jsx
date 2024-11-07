@@ -8,6 +8,8 @@ import { Form, Input, Button, Alert, Progress, Divider } from 'antd';
 import { useUser } from '../../contexts/UserContext';
 import register from '../../assets/register.jpg';
 
+const DEFAULT_AVATAR = "https://vubtdxs1af4oyipf.public.blob.vercel-storage.com/default-zVurvnaf5BB60xeRyq39N7y707FtU6.png";
+
 function Register() {
   const [form] = Form.useForm(); // Add Form hook
   const [formData, setFormData] = useState({
@@ -116,6 +118,7 @@ function Register() {
             email: values.email,
             registrationMethod: 'email',
             password: values.password,
+            photoURL: DEFAULT_AVATAR,
             createdAt: new Date().toISOString(),
           });
 
