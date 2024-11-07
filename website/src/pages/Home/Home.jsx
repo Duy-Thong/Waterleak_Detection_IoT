@@ -288,8 +288,8 @@ const Home = () => {
             };
 
             await emailjs.send(
-                'service_qy5jnnk', // Replace with your EmailJS service ID
-                'template_5yxxvdd', // Replace with your EmailJS template ID
+                'service_zbhd07p', // Replace with your EmailJS service ID
+                'template_0iw66o9', // Replace with your EmailJS template ID
                 templateParams,
                 '6514CWFzELzPia5Wd' // Replace with your EmailJS public key
             );
