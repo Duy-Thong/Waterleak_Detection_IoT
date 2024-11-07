@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ref, set, get } from "firebase/database";
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from "firebase/auth";
 import { getFirestore, doc, setDoc } from 'firebase/firestore'; // Add Firestore imports
 import { database, auth } from "../../firebase";
 import { Form, Input, Button, Alert, Progress, Divider } from 'antd';
@@ -22,6 +22,7 @@ function Register() {
   const [strengthPercent, setStrengthPercent] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
   const navigate = useNavigate();
   const { setUserId } = useUser();
   const { state } = useLocation();
@@ -75,6 +76,7 @@ function Register() {
   const handleSubmit = async (values) => {
     setError("");
     setLoading(true);
+    setVerificationSent(false);
     
     try {
       // Validate password
@@ -107,6 +109,10 @@ function Register() {
           values.password
         );
 
+        // Send verification email
+        await sendEmailVerification(userCredential.user);
+        setVerificationSent(true);
+
         // Wait for auth state to be ready
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -119,13 +125,23 @@ function Register() {
             registrationMethod: 'email',
             password: values.password,
             photoURL: DEFAULT_AVATAR,
+            emailVerified: false,
             createdAt: new Date().toISOString(),
           });
 
-          // Set user ID and navigate
+          // Set user ID but don't navigate yet
           setUserId(userCredential.user.uid);
           localStorage.setItem('userId', userCredential.user.uid);
-          navigate('/home');
+          
+          // Show success message instead of navigating
+          setError("Vui lòng kiểm tra email của bạn để xác minh tài khoản. Sau khi xác minh, bạn có thể đăng nhập.");
+          
+          // Clear form and redirect to login after 5 seconds
+          form.resetFields();
+          setTimeout(() => {
+            navigate('/login');
+          }, 5000);
+
         } catch (dbError) {
           console.error("Database Error:", dbError);
           // If database write fails, delete the auth user
@@ -134,7 +150,6 @@ function Register() {
         }
       }
 
-      navigate("/home");
     } catch (error) {
       console.error("Registration Error:", error);
       if (error.code === 'auth/email-already-in-use') {
@@ -210,7 +225,12 @@ function Register() {
         <div className="w-full md:w-1/2 p-8">
           <h2 className="text-2xl font-bold text-center text-gray-700">Đăng ký</h2>
 
-          {error && <Alert message={error} type="error" showIcon className="mb-4" />}
+          {error && <Alert 
+            message={error} 
+            type={verificationSent ? "success" : "error"} 
+            showIcon 
+            className="mb-4" 
+          />}
 
           <Form
             onFinish={handleSubmit}

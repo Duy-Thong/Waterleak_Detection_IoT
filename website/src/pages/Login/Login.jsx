@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from "firebase/auth";
 import { useUser } from '../../contexts/UserContext';
-import { Form, Input, Button, Alert, Divider } from 'antd';
+import { Form, Input, Button, Alert, Divider, message } from 'antd';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import login from '../../assets/login.jpg';
 import { getDatabase, ref, get, set } from 'firebase/database'; // Add Realtime Database imports
@@ -11,6 +11,7 @@ import { getDatabase, ref, get, set } from 'firebase/database'; // Add Realtime 
 function Login() {
   const [error, setError] = useState(""); 
   const [loading, setLoading] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
   const navigate = useNavigate();
   const { setUserId } = useUser();
 
@@ -21,6 +22,35 @@ function Login() {
     const auth = getAuth();
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+
+      if (!userCredential.user.emailVerified) {
+        // Log out the user immediately
+        await auth.signOut();
+        setError(
+          <div>
+            Email chưa được xác minh. 
+            <Button 
+              type="link" 
+              onClick={async () => {
+                try {
+                  setResendingVerification(true);
+                  await sendEmailVerification(userCredential.user);
+                  message.success('Đã gửi lại email xác minh!');
+                } catch (error) {
+                  message.error('Không thể gửi lại email xác minh. Vui lòng thử lại sau.');
+                } finally {
+                  setResendingVerification(false);
+                }
+              }}
+              loading={resendingVerification}
+            >
+              Gửi lại email xác minh
+            </Button>
+          </div>
+        );
+        return;
+      }
+
       const user = userCredential.user;
       setUserId(user.uid);
       localStorage.setItem('userId', user.uid); // Lưu userId vào localStorage
