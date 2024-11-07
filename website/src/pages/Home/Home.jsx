@@ -289,9 +289,9 @@ const Home = () => {
 
             await emailjs.send(
                 'service_zbhd07p', // Replace with your EmailJS service ID
-                'template_0iw66o9', // Replace with your EmailJS template ID
+                'template_r6aj2sh', // Replace with your EmailJS template ID
                 templateParams,
-                '6514CWFzELzPia5Wd' // Replace with your EmailJS public key
+                'GMDxfdGqL-yu58YOF' // Replace with your EmailJS public key
             );
 
             message.success('Tin nhắn đã được gửi thành công!');
