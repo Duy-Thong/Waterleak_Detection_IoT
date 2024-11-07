@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, onValue, off } from "firebase/database";
 import { Typography, Button, Card, Statistic, Spin, Alert, DatePicker, Radio } from 'antd';
-import { ArrowLeftOutlined, DropboxOutlined, DashboardOutlined, CalendarOutlined, RiseOutlined, FundOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DropboxOutlined, DashboardOutlined, CalendarOutlined, RiseOutlined, FundOutlined, ClockCircleOutlined, WarningOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import Navbar from '../../components/Navbar';
 import { useUser } from '../../contexts/UserContext';
 import RequireLogin from '../../components/RequireLogin';
@@ -155,6 +155,18 @@ const DeviceStatistics = () => {
             return sum + calculateVolume(avgFlowRate, 5);
         }, 0);
 
+        const activeHours = Object.entries(hourlyUsage)
+            .filter(([_, value]) => value > 0).length;
+        
+        const unusualFlows = filteredData.filter(item => {
+            const avgFlow = (item.sensor1 + item.sensor2) / 2;
+            return avgFlow > mean + (2 * stdDev); // Flows outside 2 standard deviations
+        }).length;
+
+        const maxHourlyUsage = Math.max(...Object.values(sortedHourlyUsage));
+        const peakHour = Object.entries(sortedHourlyUsage)
+            .find(([_, value]) => value === maxHourlyUsage)?.[0];
+
         return {
             dailyUsage,
             monthlyUsage,
@@ -167,6 +179,10 @@ const DeviceStatistics = () => {
             minFlow,
             flowVariability: stdDev,
             operatingMinutes: Math.round(operatingTime / 60), // Convert seconds to minutes
+            activeHours,
+            unusualFlows,
+            peakHour: parseInt(peakHour),
+            maxHourlyUsage,
         };
     }, [deviceData, dateRange]);
 
@@ -268,7 +284,7 @@ const DeviceStatistics = () => {
     );
 
     const renderStatistics = () => (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
             <StatisticCard
                 title="Tổng nước"
                 value={chartData?.totalFlow.toFixed(1)}
@@ -282,12 +298,6 @@ const DeviceStatistics = () => {
                 icon={<DashboardOutlined className="text-green-500" />}
             />
             <StatisticCard
-                title="Số ngày"
-                value={chartData?.dailyUsage ? Object.keys(chartData.dailyUsage).length : 0}
-                suffix="ngày"
-                icon={<CalendarOutlined className="text-orange-500" />}
-            />
-            <StatisticCard
                 title="Cao nhất"
                 value={chartData?.peakFlow.toFixed(1)}
                 suffix="L/s"
@@ -298,6 +308,24 @@ const DeviceStatistics = () => {
                 value={chartData?.flowVariability.toFixed(1)}
                 suffix="L/s"
                 icon={<FundOutlined className="text-purple-500" />}
+            />
+            <StatisticCard
+                title="Giờ hoạt động"
+                value={chartData?.activeHours}
+                suffix="/24h"
+                icon={<ClockCircleOutlined className="text-cyan-500" />}
+            />
+            <StatisticCard
+                title="Giờ cao điểm"
+                value={chartData?.peakHour}
+                suffix="h"
+                icon={<ThunderboltOutlined className="text-yellow-500" />}
+            />
+            <StatisticCard
+                title="Bất thường"
+                value={chartData?.unusualFlows}
+                suffix="lần"
+                icon={<WarningOutlined className="text-orange-500" />}
             />
             <StatisticCard
                 title="T.gian chạy"
