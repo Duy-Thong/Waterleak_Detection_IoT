@@ -20,8 +20,12 @@ import AdminDashboard from './pages/Admin/AdminDashboard';
 const ProtectedRoute = ({ children }) => {
   const { userId } = useUser();
   const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin/');
 
   if (!userId) {
+    if (isAdminRoute) {
+      return <LoginAdmin />;
+    }
     return <RequireLogin returnUrl={location.pathname} />;
   }
 
