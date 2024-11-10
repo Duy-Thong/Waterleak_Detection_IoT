@@ -331,6 +331,7 @@ const AdminDashboard = () => {
             key: 'avatar',
             width: 80,
             align: 'center',
+            responsive: ['sm'],
             render: (text, record) => (
                 <Avatar 
                     src={record.photoURL} 
@@ -349,50 +350,64 @@ const AdminDashboard = () => {
                 value: user.name,
             })),
             onFilter: (value, record) => record.name.indexOf(value) === 0,
+            sorter: (a, b) => a.name.localeCompare(b.name),
+            sortDirections: ['ascend', 'descend'],
         },
         {
             title: 'Email',
             dataIndex: 'email',
             key: 'email',
             width: 200,
+            responsive: ['sm'],
             filterSearch: true,
             filters: users.map(user => ({
                 text: user.email,
                 value: user.email,
             })),
             onFilter: (value, record) => record.email.indexOf(value) === 0,
+            sorter: (a, b) => a.email.localeCompare(b.email),
+            sortDirections: ['ascend', 'descend'],
         },
         {
-            title: 'Phương thức đăng ký',
+            title: 'Đăng ký',
             dataIndex: 'registrationMethod',
             key: 'registrationMethod',
-            width: 160,
+            width: 120,
+            responsive: ['md'],
             filters: [
                 { text: 'Google', value: 'google' },
                 { text: 'Email', value: 'email' },
             ],
             onFilter: (value, record) => record.registrationMethod === value,
-            render: (method) => (
-                <span className="flex items-center gap-2">
-                    {method === 'google' ? (
-                        <>
-                            <GoogleOutlined style={{ color: '#DB4437' }} />
-                            <span>Google</span>
-                        </>
-                    ) : (
-                        <>
-                            <MailOutlined style={{ color: '#4285F4' }} />
-                            <span>Email</span>
-                        </>
-                    )}
-                </span>
-            )
+            sorter: (a, b) => a.registrationMethod.localeCompare(b.registrationMethod),
+            sortDirections: ['ascend', 'descend'],
+            render: (method) => {
+                const styles = {
+                    google: {
+                        color: '#DB4437',
+                        border: '1px solid #DB4437',
+                        backgroundColor: 'rgba(255, 255, 255, 0.5)'
+                    },
+                    email: {
+                        color: '#4285F4',
+                        border: '1px solid #4285F4',
+                        backgroundColor: 'rgba(255, 255, 255, 0.5)'
+                    }
+                };
+            
+                return (
+                    <Tag style={method === 'google' ? styles.google : styles.email}>
+                        {method === 'google' ? 'Google' : 'Email'}
+                    </Tag>
+                );
+            }
         },
         {
             title: 'Ngày đăng ký',
             dataIndex: 'createdAt',
             key: 'createdAt',
             width: 180,
+            responsive: ['lg'],
             filters: [
                 { text: 'Hôm nay', value: 'today' },
                 { text: 'Tuần này', value: 'week' },
@@ -419,6 +434,12 @@ const AdminDashboard = () => {
                         return true;
                 }
             },
+            sorter: (a, b) => {
+                if (a.createdAt === 'N/A') return -1;
+                if (b.createdAt === 'N/A') return 1;
+                return new Date(a.createdAt) - new Date(b.createdAt);
+            },
+            sortDirections: ['ascend', 'descend'],
             render: (dateStr) => {
                 if (!dateStr || dateStr === 'N/A') return 'N/A';
                 try {
@@ -442,20 +463,25 @@ const AdminDashboard = () => {
             key: 'role',
             width: 100,
             filters: [
-                { text: 'Quản trị viên', value: 'admin' },
-                { text: 'Người dùng', value: 'user' },
+                { text: 'Admin', value: 'admin' },
+                { text: 'User', value: 'user' },
             ],
             onFilter: (value, record) => record.role === value,
+            sorter: (a, b) => a.role.localeCompare(b.role),
+            sortDirections: ['ascend', 'descend'],
             render: (role) => (
-                <span className="capitalize">{role}</span>
+                <Tag color={role === 'admin' ? 'blue' : 'green'}>
+                    {role === 'admin' ? 'Admin' : 'User'}
+                </Tag>
             )
         },
         {
             title: 'Thao tác',
             key: 'action',
-            width: 150,
+            width: 100,
+            fixed: 'right',
             render: (_, record) => (
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-center">
                     <Button
                         type="primary"
                         icon={<EditOutlined />}
@@ -482,39 +508,50 @@ const AdminDashboard = () => {
             title: 'Mã thiết bị',
             dataIndex: 'id',
             key: 'id',
+            width: 120,
             filterSearch: true,
             filters: devices.map(device => ({
                 text: device.id,
                 value: device.id,
             })),
             onFilter: (value, record) => record.id.indexOf(value) === 0,
+            responsive: ['sm'],
+            sorter: (a, b) => a.id.localeCompare(b.id),
+            sortDirections: ['ascend', 'descend'],
         },
         {
             title: 'Tên thiết bị',
             dataIndex: 'name',
             key: 'name',
+            width: 150,
             filterSearch: true,
             filters: devices.map(device => ({
                 text: device.name,
                 value: device.name,
             })),
             onFilter: (value, record) => record.name.indexOf(value) === 0,
+            sorter: (a, b) => a.name.localeCompare(b.name),
+            sortDirections: ['ascend', 'descend'],
         },
         {
-            title: 'Số cảnh báo',
+            title: 'Cảnh báo',
             dataIndex: 'warningCount',
             key: 'warningCount',
+            width: 120,
             render: (count) => (
                 <Tag color={count > 0 ? 'red' : 'green'}>
                     {count} cảnh báo
                 </Tag>
             ),
             sorter: (a, b) => a.warningCount - b.warningCount,
+            sortDirections: ['ascend', 'descend'],
+            responsive: ['sm'],
         },
         {
-            title: 'Trạng thái Relay',
+            title: 'Relay',
             dataIndex: 'relayStatus',
             key: 'relayStatus',
+            width: 100,
             render: (status) => (
                 <Tag color={status === "ON" ? 'green' : 'red'}>
                     {status}
@@ -525,13 +562,16 @@ const AdminDashboard = () => {
                 { text: 'TẮT', value: "OFF" },
             ],
             onFilter: (value, record) => record.relayStatus === value,
+            sorter: (a, b) => a.relayStatus.localeCompare(b.relayStatus),
+            sortDirections: ['ascend', 'descend'],
         },
         {
             title: 'Thao tác',
             key: 'action',
-            width: 150,
+            width: 100,
+            fixed: 'right',
             render: (_, record) => (
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-center">
                     <Button
                         type="primary"
                         icon={<EditOutlined />}
@@ -554,29 +594,32 @@ const AdminDashboard = () => {
     ];
     
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-400 via-blue-300 to-blue-200">
-            {/* Navbar */}
-            <div className="glassmorphism p-4 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                    <img src={logo}  alt="PTIT Logo" className="h-10" />
-                    <span className="text-blue-900 font-semibold text-xl">System Admin</span>
+        <div className="min-h-screen bg-gradient-to-br from-blue-300 to-blue-100">
+            {/* Responsive Navbar */}
+            <div className="glassmorphism p-4 md:px-8 flex justify-between items-center sticky top-0 z-50">
+                <div className="flex items-center gap-3">
+                    <img src={logo} alt="PTIT Logo" className="h-8 md:h-10" />
+                    <span className="text-blue-900 font-semibold text-lg md:text-xl hidden sm:inline">System Admin</span>
                 </div>
                 <Button 
                     type="link"
                     icon={<LogoutOutlined />}
                     onClick={handleLogout}
-                    className="text-blue-900 hover:text-blue-700 font-medium "
+                    className="text-blue-900 hover:text-blue-700 font-medium"
                 >
-                    Đăng xuất
+                    <span className="hidden sm:inline">Đăng xuất</span>
                 </Button>
             </div>
 
-            <div className="p-6">
-                <Title level={2} className="!text-white mb-8 drop-shadow-lg">Bảng điều khiển quản trị</Title>
+            <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+                <Title level={2} className="!text-white mb-6 md:mb-8 text-center md:text-left">
+                    Bảng điều khiển quản trị
+                </Title>
                 
+                {/* Statistics Cards */}
                 <Row gutter={[16, 16]} className="mb-6">
-                    <Col xs={24} sm={12}>
-                        <Card className="glassmorphism">
+                    <Col xs={24} sm={12} lg={8}>
+                        <Card className="glassmorphism h-full">
                             <Statistic
                                 title={<span className="text-white font-semibold drop-shadow-md">Tổng người dùng</span>}
                                 value={users.length}
@@ -586,8 +629,8 @@ const AdminDashboard = () => {
                             />
                         </Card>
                     </Col>
-                    <Col xs={24} sm={12}>
-                        <Card className="glassmorphism">
+                    <Col xs={24} sm={12} lg={8}>
+                        <Card className="glassmorphism h-full">
                             <Statistic
                                 title={<span className="text-white font-semibold drop-shadow-md">Tổng thiết bị</span>}
                                 value={devices.length}
@@ -597,72 +640,105 @@ const AdminDashboard = () => {
                             />
                         </Card>
                     </Col>
+                    <Col xs={24} sm={12} lg={8}>
+                        <Card className="glassmorphism h-full">
+                            <Statistic
+                                title={<span className="text-white font-semibold drop-shadow-md">Tổng cảnh báo</span>}
+                                value={devices.reduce((sum, device) => sum + device.warningCount, 0)}
+                                prefix={<EnvironmentOutlined className="text-white" />}
+                                loading={loading}
+                                valueStyle={{ color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                            />
+                        </Card>
+                    </Col>
                 </Row>
 
-                <Tabs 
-                    defaultActiveKey="1"
-                    className="glassmorphism p-6"
-                    tabBarStyle={{ 
-                        marginBottom: 24,
-                        color: '#1e3a8a',
-                        borderBottom: '1px solid rgba(30, 58, 138, 0.3)'
-                    }}
-                >
-                    <TabPane tab={<span className="text-blue-900 font-medium">Quản lý người dùng</span>} key="1">
-                        <Card className="glassmorphism border-none">
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={() => {
-                                    setEditingUser(null);
-                                    form.resetFields();
-                                    setIsUserModalVisible(true);
-                                }}
-                                className="mb-4"
-                            >
-                                Thêm người dùng
-                            </Button>
-                            <Table
-                                columns={userColumns}
-                                dataSource={users}
-                                loading={loading}
-                                className="custom-table"
-                                rowClassName="hover:bg-white/10 transition-colors duration-200"
-                                pagination={{
-                                    className: "custom-pagination",
-                                    showSizeChanger: true
-                                }}
-                            />
-                        </Card>
-                    </TabPane>
-                    <TabPane tab={<span className="text-blue-900 font-medium">Quản lý thiết bị</span>} key="2">
-                        <Card className="glassmorphism border-none">
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={() => {
-                                    setEditingDevice(null);
-                                    form.resetFields();
-                                    setIsDeviceModalVisible(true);
-                                }}
-                                className="mb-4"
-                            >
-                                Thêm thiết bị
-                            </Button>
-                            <Table
-                                columns={deviceColumns}
-                                dataSource={devices}
-                                loading={loading}
-                                className="custom-table"
-                                rowClassName="hover:bg-black/10 transition-colors duration-200"
-                                pagination={{
-                                    className: "custom-pagination",
-                                    showSizeChanger: true
-                                }}
-                            />
-                        </Card>
-                    </TabPane>
-                </Tabs>
+                {/* Main Content Tabs */}
+                <Card className="glassmorphism !bg-white/30">
+                    <Tabs 
+                        defaultActiveKey="1"
+                        className="admin-tabs"
+                        tabBarStyle={{ 
+                            marginBottom: 24,
+                            color: '#1e3a8a',
+                            borderBottom: '1px solid rgba(30, 58, 138, 0.3)'
+                        }}
+                    >
+                        <TabPane tab={<span className="text-blue-900 font-medium">Quản lý người dùng</span>} key="1">
+                            <div className="overflow-x-auto">
+                                <Button
+                                    type="primary"
+                                    icon={<PlusOutlined />}
+                                    onClick={() => {
+                                        setEditingUser(null);
+                                        form.resetFields();
+                                        setIsUserModalVisible(true);
+                                    }}
+                                    className="mb-4 outline-btn"
+                                    style={{
+                                        backgroundColor: 'white',
+                                        opacity: 0.5,
+                                        borderColor: '#1890ff', // Primary color
+                                        color: 'blue'
+                                    }}
+                                >
+                                    Thêm người dùng
+                                </Button>
+                                <Table
+                                    columns={userColumns}
+                                    dataSource={users}
+                                    loading={loading}
+                                    className="custom-table"
+                                    scroll={{ x: 'max-content' }}
+                                    pagination={{
+                                        className: "custom-pagination",
+                                        responsive: true,
+                                        showSizeChanger: true,
+                                        showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} mục`,
+                                        pageSize: 10
+                                    }}
+                                />
+                            </div>
+                        </TabPane>
+                        {/* Similar update for devices TabPane */}
+                        <TabPane tab={<span className="text-blue-900 font-medium">Quản lý thiết bị</span>} key="2">
+                            <div className="overflow-x-auto">
+                                <Button
+                                    type="primary"
+                                    icon={<PlusOutlined />}
+                                    onClick={() => {
+                                        setEditingDevice(null);
+                                        form.resetFields();
+                                        setIsDeviceModalVisible(true);
+                                    }}
+                                    className="mb-4 outline-btn"
+                                    style={{ 
+                                        backgroundColor: 'white',
+                                        opacity: 0.5,
+                                        borderColor: '#1890ff', // Primary color
+                                        color: 'blue'  // Primary color
+                                    }}
+                                >
+                                    Thêm thiết bị
+                                </Button>
+                                <Table
+                                    columns={deviceColumns}
+                                    dataSource={devices}
+                                    loading={loading}
+                                    className="custom-table"
+                                    scroll={{ x: 'max-content' }}
+                                    pagination={{
+                                        className: "custom-pagination",
+                                        responsive: true,
+                                        showSizeChanger: true,
+                                        showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} mục`,
+                                        pageSize: 10
+                                    }}
+                                />
+                            </div>
+                        </TabPane>
+                    </Tabs>
+                </Card>
 
                 {/* User Modal */}
                 <Modal
@@ -771,44 +847,6 @@ const AdminDashboard = () => {
                         </Form.Item>
                     </Form>
                 </Modal>
-
-                <style jsx global>{`
-                    .custom-table .ant-table {
-                        background: transparent !important;
-                        color: #1e3a8a !important;
-                    }
-                    
-                    .custom-table .ant-table-thead > tr > th {
-                        background: rgba(255, 255, 255, 0.1) !important;
-                        color: #1e3a8a !important;
-                        border-bottom: 1px solid rgba(30, 58, 138, 0.2) !important;
-                    }
-
-                    .custom-table .ant-table-tbody > tr > td {
-                        border-bottom: 1px solid rgba(30, 58, 138, 0.1) !important;
-                        color: #1e3a8a !important;
-                    }
-
-                    .custom-pagination .ant-pagination-item-link,
-                    .custom-pagination .ant-pagination-item a {
-                        color: #1e3a8a !important;
-                    }
-
-                    .custom-pagination .ant-pagination-item-active {
-                        background: rgba(255, 255, 255, 0.2) !important;
-                        border-color: rgba(255, 255, 255, 0.3) !important;
-                    }
-
-                    
-
-                    .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
-                        color: #1e3a8a !important;
-                    }
-
-                    .ant-tabs-ink-bar {
-                        background: #1e3a8a !important;
-                    }
-                `}</style>
             </div>
         </div>
     );
