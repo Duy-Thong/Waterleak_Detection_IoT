@@ -152,10 +152,6 @@ function LoginAdmin() {
     }
   };
 
-  const handleForgotPassword = () => {
-    navigate("/forgot-password");
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-200">
       <div className="bg-white shadow-xl rounded-lg flex w-3/4 max-w-4xl overflow-hidden backdrop-blur-sm bg-opacity-80 border-gray-200">
@@ -220,19 +216,6 @@ function LoginAdmin() {
           >
             Đăng nhập với Google
           </Button>
-
-          <div className="mt-4 text-center">
-            <Button type="link" onClick={handleForgotPassword}>
-              Quên mật khẩu?
-            </Button>
-          </div>
-
-          <p className="mt-4 text-center text-sm text-gray-600">
-            Chưa có tài khoản?{" "}
-            <Button type="link" onClick={() => navigate("/register")}>
-              Đăng ký
-            </Button>
-          </p>
         </div>
       </div>
     </div>
