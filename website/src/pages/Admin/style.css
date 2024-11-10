@@ -11,7 +11,7 @@
     backdrop-filter: blur(12px) !important;
     border: 2px solid rgba(255, 255, 255, 0.4) !important;
     box-shadow: 0 8px 40px 0 rgba(31, 38, 135, 0.45) !important;
-    transform: translateY(-5px);
+    /* transform: translateY(-2px); */
 }
 
 .admin-tabs .ant-tabs-nav::before {
