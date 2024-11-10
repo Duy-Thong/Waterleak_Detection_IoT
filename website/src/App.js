@@ -13,6 +13,8 @@ import WarningPage from './pages/WarningPage/WarningPage';
 import RequireLogin from './components/RequireLogin';
 import './App.css';
 import DeviceStatistics from './pages/DeviceStatistics/DeviceStatistics';
+import LoginAdmin from './pages/Admin/LoginAdmin';
+import AdminDashboard from './pages/Admin/AdminDashboard';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -44,7 +46,7 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-
+        <Route path="/admin/login" element={<LoginAdmin />} />
         {/* Protected Routes */}
         <Route path="/" element={
           <ProtectedRoute>
@@ -88,6 +90,11 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin/dashboard" element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
 
         {/* Catch all redirect */}
         <Route path="*" element={<Navigate to="/home" replace />} />
