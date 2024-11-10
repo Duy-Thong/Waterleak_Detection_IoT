@@ -67,6 +67,23 @@ const RequireLogin = () => {
                                 <span>Đăng Ký</span>
                             </div>
                         </button>
+                        <div className="relative my-2 w-full">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-300"></div>
+                            </div>
+                            <div className="relative flex justify-center text-xs">
+                                <span className="px-2 bg-white text-gray-500">Hoặc</span>
+                            </div>
+                        </div>
+                        <button
+                            className="button w-3/4 px-6 py-2.5 rounded-lg bg-red-500 text-white font-semibold shadow-lg hover:bg-white hover:text-red-500 border-2 border-red-500 transition-all duration-300 transform hover:scale-105"
+                            onClick={() => navigate('/admin/login')}
+                        >
+                            <div className="flex items-center justify-center w-full">
+                                <UserAddOutlined className="mr-2" />
+                                <span>Đăng nhập Admin</span>
+                            </div>
+                        </button>
                     </div>
                 </div>
             </div>

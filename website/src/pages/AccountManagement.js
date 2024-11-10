@@ -189,22 +189,7 @@ const AccountManagement = () => {
         const userRef = ref(db, 'users/' + userId);
 
         try {
-            // Get auth provider information
-            const providers = currentUser.providerData.map(provider => provider.providerId);
-            setIsGoogleUser(providers.includes('google.com'));
             setEmail(currentUser.email);
-            setRegistrationMethod(providers[0]);
-
-            // Format creation date
-            const createdAtDate = new Date(currentUser.metadata.creationTime);
-            const options = { 
-                year: 'numeric', 
-                month: 'numeric', 
-                day: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric'
-            };
-            setCreatedAt(createdAtDate.toLocaleDateString('vi-VN', options));
 
             // Get database user data
             const snapshot = await get(userRef);
@@ -213,6 +198,19 @@ const AccountManagement = () => {
                 setUsername(userData.username || '');
                 setCurrentUsername(userData.username || '');
                 setAvatarUrl(userData.photoURL || '');
+                setRegistrationMethod(userData.registrationMethod || '');
+                setIsGoogleUser(userData.registrationMethod === 'google');
+
+                // Format creation date
+                const createdAtDate = new Date(currentUser.metadata.creationTime);
+                const options = { 
+                    year: 'numeric', 
+                    month: 'numeric', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric'
+                };
+                setCreatedAt(createdAtDate.toLocaleDateString('vi-VN', options));
             } else {
                 openNotificationWithIcon('error', 'Không tìm thấy thông tin người dùng');
             }
@@ -322,6 +320,7 @@ const AccountManagement = () => {
     const handleChangePassword = async () => {
         const auth = getAuth();
         const currentUser = auth.currentUser;
+        const db = getDatabase();
 
         try {
             if (newPassword !== confirmPassword) {
@@ -346,7 +345,14 @@ const AccountManagement = () => {
                 return;
             }
 
+            // Update password in Auth
             await updatePassword(currentUser, newPassword);
+
+            // Update password hash in Database
+            const userRef = ref(db, 'users/' + userId);
+            await update(userRef, {
+                password : newPassword // Simple base64 encoding for example
+            });
 
             openNotificationWithIcon('success', 'Mật khẩu đã được cập nhật thành công');
             setShowChangePassword(false);
@@ -515,7 +521,7 @@ const AccountManagement = () => {
 
     const getProviderIcon = (providerType) => {
         switch (providerType) {
-            case 'google.com':
+            case 'google':
                 return <GoogleIcon className="text-red-500" />;
             case 'password':
                 return <MailOutlined className="text-blue-500" />;
@@ -619,7 +625,7 @@ const AccountManagement = () => {
                             <div className="flex flex-col items-center">
                                 <span className="text-gray-500">Phương thức đăng ký</span>
                                 <div className="flex items-center">
-                                    {registrationMethod === 'google.com' ? (
+                                    {registrationMethod === 'google' ? (
                                         <>
                                             <div className="mr-2">
                                                 <GoogleIcon />
