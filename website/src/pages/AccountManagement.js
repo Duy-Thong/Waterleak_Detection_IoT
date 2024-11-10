@@ -166,6 +166,7 @@ const AccountManagement = () => {
     const [isUsersModalVisible, setIsUsersModalVisible] = useState(false);
     const [usersWithAccess, setUsersWithAccess] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
+    const [isPreviewVisible, setIsPreviewVisible] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -540,7 +541,8 @@ const AccountManagement = () => {
                             <img
                                 src={avatarUrl || 'https://via.placeholder.com/128'}
                                 alt="Avatar"
-                                className="w-full h-full object-cover rounded-full"
+                                className="w-full h-full object-cover rounded-full cursor-pointer"
+                                onClick={() => setIsPreviewVisible(true)}
                             />
                             <label
                                 htmlFor="avatar-upload"
@@ -840,6 +842,22 @@ const AccountManagement = () => {
                         className="px-0 sm:px-2"
                     />
                 )}
+            </Modal>
+
+            {/* Add Preview Modal */}
+            <Modal
+                visible={isPreviewVisible}
+                footer={null}
+                onCancel={() => setIsPreviewVisible(false)}
+                width={400}
+                centered
+                className='rounded-full'
+            >
+                <img
+                    src={avatarUrl || 'https://via.placeholder.com/400'}
+                    alt="Avatar Preview"
+                    className="w-full h-full object-contain rounded-full"
+                />
             </Modal>
 
         </div>
