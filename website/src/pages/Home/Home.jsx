@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getDatabase, ref, get, onValue, off } from "firebase/database";  // Add onValue and off
+import { getDatabase, ref, get, onValue, off, set } from "firebase/database";  // Add onValue and off
 import { useUser } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Input, Modal, Form, Input as AntInput, Button, message, Badge, FloatButton } from 'antd';
+import { Typography, Input, Modal, Form, Input as AntInput, Button, message, Badge, FloatButton, Tour } from 'antd';
 import { SearchOutlined, AppstoreOutlined, AlertOutlined, HomeOutlined, CustomerServiceOutlined, UserOutlined, MailOutlined, SendOutlined, CloseOutlined } from '@ant-design/icons';
 import { Spin, Alert, Card, Statistic } from 'antd';
 import emailjs from '@emailjs/browser';
@@ -263,6 +263,23 @@ const Home = () => {
         };
     }, []);
 
+    useEffect(() => {
+        if (!userId) return;
+
+        const db = getDatabase();
+        const firstLoginRef = ref(db, `users/${userId}/tourhome`);
+        
+        get(firstLoginRef).then((snapshot) => {
+            const firstLogin = snapshot.exists() ? snapshot.val() : true;
+            
+            if (firstLogin !== true) {
+                setOpen(true);
+                // Update firstLogin to true after showing the tour
+                set(firstLoginRef, true);
+            }
+        });
+    }, [userId]);
+
     const handleDeviceClick = (deviceId) => {
         navigate(`/device/${deviceId}`);
     };
@@ -309,6 +326,53 @@ const Home = () => {
         deviceNames[deviceId]?.toLowerCase().includes(searchText.toLowerCase())
     );
 
+    const [open, setOpen] = useState(false);
+    const [tourRef1] = useState(() => React.createRef());
+    const [tourRef2] = useState(() => React.createRef());
+    const [tourRef3] = useState(() => React.createRef());
+    const [tourRef4] = useState(() => React.createRef());
+
+    const steps = [
+        {
+            title: 'Chào mừng!',
+            description: 'Đây là trang chủ của bạn, nơi bạn có thể quản lý tất cả thiết bị.',
+            target: null,
+        },
+        {
+            title: 'Thống kê tổng quan',
+            description: 'Xem nhanh số lượng thiết bị, thiết bị đang hoạt động và cảnh báo trong ngày.',
+            target: () => tourRef1.current,
+        },
+        {
+            title: 'Tìm kiếm thiết bị',
+            description: 'Tìm kiếm nhanh thiết bị theo tên.',
+            target: () => tourRef2.current,
+        },
+        {
+            title: 'Danh sách thiết bị',
+            description: 'Xem và quản lý các thiết bị của bạn.',
+            target: () => tourRef3.current,
+        },
+        {
+            title: 'Thêm thiết bị mới',
+            description: 'Nhấn vào nút "+" để thêm thiết bị mới vào hệ thống của bạn.',
+            target: () => tourRef3.current,
+        },
+        {
+            title: 'Hỗ trợ',
+            description: 'Cần giúp đỡ? Nhấn vào đây để liên hệ với chúng tôi.',
+            target: () => tourRef4.current,
+        },
+    ];
+
+    useEffect(() => {
+        const hasSeenTour = localStorage.getItem('hasSeenTour');
+        if (!hasSeenTour && userId) {
+            setOpen(true);
+            localStorage.setItem('hasSeenTour', 'true');
+        }
+    }, [userId]);
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -348,7 +412,7 @@ const Home = () => {
                 </div>
 
                 {/* Statistics Section */}
-                <div className="w-full max-w-6xl mx-auto mb-8 px-4">
+                <div className="w-full max-w-6xl mx-auto mb-8 px-4" ref={tourRef1}>
                     <div className="grid grid-cols-3 gap-2 md:gap-4">
                         <Card 
                             hoverable 
@@ -402,7 +466,7 @@ const Home = () => {
                 </div>
 
                 {/* Search Bar */}
-                <div className="mb-6 max-w-md w-full">
+                <div className="mb-6 max-w-md w-full" ref={tourRef2}>
                     <Input
                         size="large"
                         placeholder="Tìm kiếm thiết bị..."
@@ -418,7 +482,7 @@ const Home = () => {
                 </div>
 
                 {/* Devices List */}
-                <div className="max-w-7xl mx-auto">
+                <div className="max-w-7xl mx-auto" ref={tourRef3}>
                     <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
                         {filteredDevices.map(deviceId => (
                             <div className="w-full sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)] min-w-[280px] flex items-center justify-center" key={deviceId}>
@@ -446,11 +510,26 @@ const Home = () => {
             </div>
 
             {/* Replace the custom floating button with this */}
-            <FloatButton
-                tooltip="Liên hệ hỗ trợ"
-                icon={<CustomerServiceOutlined />}
-                onClick={() => setIsContactModalVisible(true)}
-                type="primary"
+            <div ref={tourRef4}>
+                <FloatButton
+                    tooltip="Liên hệ hỗ trợ"
+                    icon={<CustomerServiceOutlined />}
+                    onClick={() => setIsContactModalVisible(true)}
+                    type="primary"
+                />
+            </div>
+
+            <Tour
+                open={open}
+                onClose={() => {
+                    setOpen(false);
+                    // Update tourhome in Firebase when tour ends
+                    const db = getDatabase();
+                    const tourHomeRef = ref(db, `users/${userId}/tourhome`);
+                    set(tourHomeRef, true);
+                }}
+                steps={steps}
+                placement="bottom"
             />
 
             {/* Contact Modal */}

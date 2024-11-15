@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, onValue, off } from "firebase/database";
-import { Typography, Button, Card, Statistic, Spin, Alert, DatePicker, Radio } from 'antd';
+import { Typography, Button, Card, Statistic, Spin, Alert, Radio } from 'antd';
 import { ArrowLeftOutlined, DropboxOutlined, DashboardOutlined, CalendarOutlined, RiseOutlined, FundOutlined, ClockCircleOutlined, WarningOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import Navbar from '../../components/Navbar';
 import { useUser } from '../../contexts/UserContext';
@@ -19,7 +19,6 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
-const { RangePicker } = DatePicker;
 const { Title: AntTitle } = Typography;
 
 ChartJS.register(
@@ -57,7 +56,6 @@ const DeviceStatistics = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [deviceData, setDeviceData] = useState(null);
-    const [dateRange, setDateRange] = useState([null, null]);
     const [viewType, setViewType] = useState('daily');
 
     useEffect(() => {
@@ -91,14 +89,7 @@ const DeviceStatistics = () => {
         if (!deviceData?.flow_sensor) return null;
 
         const data = Object.values(deviceData.flow_sensor);
-        let filteredData = data;
-
-        if (dateRange[0] && dateRange[1]) {
-            filteredData = data.filter(item => {
-                const itemDate = new Date(item.timestamp);
-                return itemDate >= dateRange[0] && itemDate <= dateRange[1];
-            });
-        }
+        const filteredData = data;
 
         // Calculate volume (L) from flow rate (L/min) and time duration
         const calculateVolume = (flowRate, durationSeconds) => {
@@ -184,7 +175,7 @@ const DeviceStatistics = () => {
             peakHour: parseInt(peakHour),
             maxHourlyUsage,
         };
-    }, [deviceData, dateRange]);
+    }, [deviceData]);
 
     const chartConfigs = useMemo(() => ({
         daily: {
@@ -263,23 +254,16 @@ const DeviceStatistics = () => {
                     {deviceData?.name || deviceId}
                 </AntTitle>
             </div>
-            <div className="flex flex-wrap gap-3 items-center w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0">
-                <RangePicker 
-                    onChange={(dates) => setDateRange(dates)}
-                    size="middle"
-                    className="w-full sm:w-auto shadow-sm"
-                />
-                <Radio.Group 
-                    value={viewType} 
-                    onChange={e => setViewType(e.target.value)}
-                    size="middle"
-                    className="w-full sm:w-auto shadow-sm"
-                >
-                    <Radio.Button value="daily">Ngày</Radio.Button>
-                    <Radio.Button value="monthly">Tháng</Radio.Button>
-                    <Radio.Button value="hourly">Giờ</Radio.Button>
-                </Radio.Group>
-            </div>
+            <Radio.Group 
+                value={viewType} 
+                onChange={e => setViewType(e.target.value)}
+                size="middle"
+                className="shadow-sm"
+            >
+                <Radio.Button value="daily">Ngày</Radio.Button>
+                <Radio.Button value="monthly">Tháng</Radio.Button>
+                <Radio.Button value="hourly">Giờ</Radio.Button>
+            </Radio.Group>
         </div>
     );
 
