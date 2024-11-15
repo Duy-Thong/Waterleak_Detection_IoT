@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { getDatabase, ref, get, update, remove } from "firebase/database";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { getDatabase, ref, get, update, remove, set } from "firebase/database";
 import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
 import { put, del, list } from '@vercel/blob';
 import { useUser } from '../contexts/UserContext';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Typography, notification, Modal, Tooltip, Spin, Table, message, Avatar, List } from 'antd';
+import { Form, Input, Button, Typography, notification, Modal, Tooltip, Spin, Table, message, Avatar, List, Tour } from 'antd';
 import { 
     CameraFilled, 
     MailOutlined, 
@@ -167,6 +167,13 @@ const AccountManagement = () => {
     const [usersWithAccess, setUsersWithAccess] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+    const [tourOpen, setTourOpen] = useState(false);
+    const tourRefs = useRef({
+        avatarRef: null,
+        usernameRef: null,
+        devicesRef: null,
+        passwordRef: null
+    });
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -529,6 +536,56 @@ const AccountManagement = () => {
                 return null;
         }
     };
+    
+    useEffect(() => {
+        const checkTourStatus = async () => {
+            const db = getDatabase();
+            const tourRef = ref(db, `users/${userId}/tourAccount`);
+            
+            try {
+                const snapshot = await get(tourRef);
+                // Show tour if tourAccount node doesn't exist or is not explicitly set to true
+                if (!snapshot.exists() || snapshot.val() !== true) {
+                    setTourOpen(true);
+                    // Set tourAccount to true once shown
+                    await set(tourRef, true);
+                }
+            } catch (error) {
+                console.error("Error checking tour status:", error);
+            }
+        };
+
+        if (userId) {
+            checkTourStatus();
+        }
+    }, [userId]);
+
+    const steps = [
+        {
+            title: 'Ảnh đại diện',
+            description: 'Nhấp vào biểu tượng máy ảnh để thay đổi ảnh đại diện của bạn',
+            target: () => tourRefs.current.avatarRef,
+            placement: 'bottom',
+        },
+        {
+            title: 'Tên tài khoản',
+            description: 'Bạn có thể thay đổi tên tài khoản bằng cách nhấp vào biểu tượng chỉnh sửa',
+            target: () => tourRefs.current.usernameRef,
+            placement: 'bottom',
+        },
+        {
+            title: 'Thiết bị',
+            description: 'Quản lý các thiết bị đã liên kết và xem người dùng có quyền truy cập',
+            target: () => tourRefs.current.devicesRef,
+            placement: 'bottom',
+        },
+        {
+            title: 'Mật khẩu',
+            description: 'Thay đổi mật khẩu tài khoản của bạn tại đây',
+            target: () => tourRefs.current.passwordRef,
+            placement: 'bottom',
+        },
+    ];
 
     if (!userId) {
         return <RequireLogin />;
@@ -543,7 +600,7 @@ const AccountManagement = () => {
                 <div className="glassmorphism glassmorphism-filter-section w-full max-w-lg p-4 mb-4">
                     <div className="flex flex-col items-center mb-4">
                         <h2 className="text-xl font-semibold mb-4 text-gray-700">Thông tin tài khoản</h2>
-                        <div className="w-24 h-24 overflow-visible mb-4 relative">
+                        <div className="w-24 h-24 overflow-visible mb-4 relative" ref={el => tourRefs.current.avatarRef = el}>
                             <img
                                 src={avatarUrl || 'https://via.placeholder.com/128'}
                                 alt="Avatar"
@@ -566,7 +623,7 @@ const AccountManagement = () => {
                         />
 
                         <div className="w-full grid grid-cols-1 gap-3 mt-4">
-                            <div className="flex flex-col items-center">
+                            <div className="flex flex-col items-center" ref={el => tourRefs.current.usernameRef = el}>
                                 <span className="text-gray-500 text-lg">Tên đăng nhập</span>
                                 <div className="flex items-center gap-2">
                                     {isEditingUsername ? (
@@ -644,7 +701,7 @@ const AccountManagement = () => {
                     </div>
                 </div>
 
-                <div className="glassmorphism glassmorphism-filter-section w-full max-w-lg p-4 mt-4">
+                <div className="glassmorphism glassmorphism-filter-section w-full max-w-lg p-4 mt-4" ref={el => tourRefs.current.devicesRef = el}>
                     <h2 className="text-xl font-semibold mb-4 text-gray-700 text-center">Danh sách thiết bị</h2>
                     {devices.length > 0 ? (
                         <div className="grid grid-cols-2 gap-4">
@@ -682,7 +739,7 @@ const AccountManagement = () => {
                 </div>
 
                 {!isGoogleUser && (
-                    <>
+                    <div ref={el => tourRefs.current.passwordRef = el}>
                         <Button
                             type="default"
                             onClick={() => setShowChangePassword(!showChangePassword)}
@@ -732,7 +789,7 @@ const AccountManagement = () => {
 
                             </Form>
                         )}
-                    </>
+                    </div>
                 )}
 
                 {/* Move the "Quay lại trang chủ" button to the bottom */}
@@ -865,6 +922,18 @@ const AccountManagement = () => {
                     className="w-full h-full object-contain rounded-full"
                 />
             </Modal>
+
+            <Tour
+                open={tourOpen}
+                onClose={() => {
+                    setTourOpen(false);
+                    const db = getDatabase();
+                    const tourAccountRef = ref(db, `users/${userId}/tourAccount`);
+                    set(tourAccountRef, true);
+                }}
+                steps={steps}
+                placement="bottom"
+            />
 
         </div>
     );

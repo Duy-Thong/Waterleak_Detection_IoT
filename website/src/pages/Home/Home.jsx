@@ -270,12 +270,12 @@ const Home = () => {
         const firstLoginRef = ref(db, `users/${userId}/tourhome`);
         
         get(firstLoginRef).then((snapshot) => {
-            const firstLogin = snapshot.exists() ? snapshot.val() : true;
-            
-            if (firstLogin !== true) {
+            // Hiện tour nếu không có tourhome hoặc giá trị là true
+            const shouldShowTour = !snapshot.exists() || snapshot.val() === true;
+            if (shouldShowTour) {
                 setOpen(true);
-                // Update firstLogin to true after showing the tour
-                set(firstLoginRef, true);
+                // Cập nhật tourhome thành false sau khi hiển thị tour
+                set(firstLoginRef, false);
             }
         });
     }, [userId]);
@@ -335,32 +335,32 @@ const Home = () => {
 
     const steps = [
         {
-            title: 'Chào mừng!',
-            description: 'Đây là trang chủ của bạn, nơi bạn có thể quản lý tất cả thiết bị.',
+            title: 'Chào mừng! 🎉',
+            description: 'Đây là trang chủ của bạn, nơi bạn có thể quản lý tất cả thiết bị. 🤓',
             target: null,
         },
         {
-            title: 'Thống kê tổng quan',
+            title: 'Thống kê tổng quan 📊',
             description: 'Xem nhanh số lượng thiết bị, thiết bị đang hoạt động và cảnh báo trong ngày.',
             target: () => tourRef1.current,
         },
         {
-            title: 'Tìm kiếm thiết bị',
+            title: 'Tìm kiếm thiết bị 🧐',
             description: 'Tìm kiếm nhanh thiết bị theo tên.',
             target: () => tourRef2.current,
         },
         {
-            title: 'Danh sách thiết bị',
+            title: 'Danh sách thiết bị 📱',
             description: 'Xem và quản lý các thiết bị của bạn.',
             target: () => tourRef3.current,
         },
         {
-            title: 'Thêm thiết bị mới',
+            title: 'Thêm thiết bị mới ➕',
             description: 'Nhấn vào nút "+" để thêm thiết bị mới vào hệ thống của bạn.',
             target: () => tourRef4.current,
         },
         {
-            title: 'Hỗ trợ',
+            title: 'Hỗ trợ và liên hệ 📞',
             description: 'Cần giúp đỡ? Nhấn vào đây để liên hệ với chúng tôi.',
             target: () => tourRef5.current,
         },
