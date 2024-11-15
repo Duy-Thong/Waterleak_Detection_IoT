@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Typography, Statistic, Tabs, Avatar, Tag, Button, Modal, Form, Input, Select, message, Popconfirm } from 'antd';
-import { UserOutlined, EnvironmentOutlined, GoogleOutlined, MailOutlined, LogoutOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { UserOutlined, EnvironmentOutlined, GoogleOutlined, MailOutlined, LogoutOutlined, EditOutlined, DeleteOutlined, PlusOutlined, WarningOutlined, DropboxSquareFilled, ApiOutlined } from '@ant-design/icons';
 import { ref, get, set, remove, update } from 'firebase/database';
 import { database } from '../../firebase';
 import { getAuth, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
@@ -21,7 +21,13 @@ const AdminDashboard = () => {
     const [isDeviceModalVisible, setIsDeviceModalVisible] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [editingDevice, setEditingDevice] = useState(null);
+    const [isUserInfoModalVisible, setIsUserInfoModalVisible] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
     const [form] = Form.useForm();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDeletingUser, setIsDeletingUser] = useState(null);
+    const [isDeletingDevice, setIsDeletingDevice] = useState(null);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -134,6 +140,7 @@ const AdminDashboard = () => {
     };
 
     const handleLogout = async () => {
+        setIsLoggingOut(true);
         const auth = getAuth();
         try {
             await signOut(auth);
@@ -141,10 +148,13 @@ const AdminDashboard = () => {
             navigate('/admin/login');
         } catch (error) {
             console.error("Lỗi đăng xuất:", error);
+        } finally {
+            setIsLoggingOut(false);
         }
     };
 
     const handleAddUser = async (values) => {
+        setIsSubmitting(true);
         try {
             // Check if email already exists in database
             const usersRef = ref(database, 'users');
@@ -192,10 +202,13 @@ const AdminDashboard = () => {
             } else {
                 message.error('Lỗi khi thêm người dùng: ' + error.message);
             }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleEditUser = async (values) => {
+        setIsSubmitting(true);
         try {
             // Check if email already exists in database (excluding current user)
             const usersRef = ref(database, 'users');
@@ -227,10 +240,13 @@ const AdminDashboard = () => {
             fetchData();
         } catch (error) {
             message.error('Lỗi khi cập nhật người dùng: ' + error.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleDeleteUser = async (userId) => {
+        setIsDeletingUser(userId);
         try {
             const userRef = ref(database, `users/${userId}`);
             await remove(userRef);
@@ -238,10 +254,13 @@ const AdminDashboard = () => {
             fetchData();
         } catch (error) {
             message.error('Lỗi khi xóa người dùng');
+        } finally {
+            setIsDeletingUser(null);
         }
     };
 
     const handleAddDevice = async (values) => {
+        setIsSubmitting(true);
         try {
             // Validate device ID format
             const deviceId = values.id.trim();
@@ -281,10 +300,13 @@ const AdminDashboard = () => {
         } catch (error) {
             console.error("Error adding device:", error);
             message.error('Lỗi khi thêm thiết bị: ' + error.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleEditDevice = async (values) => {
+        setIsSubmitting(true);
         try {
             if (!editingDevice?.id) {
                 message.error('Không tìm thấy ID thiết bị');
@@ -311,10 +333,13 @@ const AdminDashboard = () => {
         } catch (error) {
             console.error("Error updating device:", error);
             message.error('Lỗi khi cập nhật thiết bị: ' + error.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleDeleteDevice = async (deviceId) => {
+        setIsDeletingDevice(deviceId);
         try {
             const deviceRef = ref(database, `devices/${deviceId}`);
             await remove(deviceRef);
@@ -322,6 +347,8 @@ const AdminDashboard = () => {
             fetchData();
         } catch (error) {
             message.error('Lỗi khi xóa thiết bị');
+        } finally {
+            setIsDeletingDevice(null);
         }
     };
 
@@ -336,6 +363,11 @@ const AdminDashboard = () => {
                 <Avatar 
                     src={record.photoURL} 
                     icon={!record.photoURL && <UserOutlined />}
+                    className="cursor-pointer hover:opacity-80"
+                    onClick={() => {
+                        setSelectedUser(record);
+                        setIsUserInfoModalVisible(true);
+                    }}
                 />
             ),
         },
@@ -347,9 +379,10 @@ const AdminDashboard = () => {
             filterSearch: true,
             filters: users.map(user => ({
                 text: user.name,
-                value: user.name,
+                value: user.id, // Use user.id as value instead of name
+                key: `name-${user.id}` // Add unique key
             })),
-            onFilter: (value, record) => record.name.indexOf(value) === 0,
+            onFilter: (value, record) => record.id === value, // Update filter logic
             sorter: (a, b) => a.name.localeCompare(b.name),
             sortDirections: ['ascend', 'descend'],
         },
@@ -362,9 +395,10 @@ const AdminDashboard = () => {
             filterSearch: true,
             filters: users.map(user => ({
                 text: user.email,
-                value: user.email,
+                value: user.id, // Use user.id as value
+                key: `email-${user.id}` // Add unique key
             })),
-            onFilter: (value, record) => record.email.indexOf(value) === 0,
+            onFilter: (value, record) => record.id === value, // Update filter logic
             sorter: (a, b) => a.email.localeCompare(b.email),
             sortDirections: ['ascend', 'descend'],
         },
@@ -390,7 +424,7 @@ const AdminDashboard = () => {
                     },
                     email: {
                         color: '#4285F4',
-                        border: '1px solid #4285F4',
+                        border: '1px solid #4285F4',  // Fixed syntax error here
                         backgroundColor: 'rgba(255, 255, 255, 0.5)'
                     }
                 };
@@ -491,12 +525,19 @@ const AdminDashboard = () => {
                             form.setFieldsValue(record);
                             setIsUserModalVisible(true);
                         }}
+                        loading={isSubmitting && editingUser?.id === record.id}
                     />
                     <Popconfirm
                         title="Bạn có chắc chắn muốn xóa?"
                         onConfirm={() => handleDeleteUser(record.id)}
                     >
-                        <Button type="primary" danger icon={<DeleteOutlined />} size="small" />
+                        <Button 
+                            type="primary" 
+                            danger 
+                            icon={<DeleteOutlined />} 
+                            size="small"
+                            loading={isDeletingUser === record.id} 
+                        />
                     </Popconfirm>
                 </div>
             )
@@ -581,31 +622,122 @@ const AdminDashboard = () => {
                             form.setFieldsValue(record);
                             setIsDeviceModalVisible(true);
                         }}
+                        loading={isSubmitting && editingDevice?.id === record.id}
                     />
                     <Popconfirm
                         title="Bạn có chắc chắn muốn xóa?"
                         onConfirm={() => handleDeleteDevice(record.id)}
                     >
-                        <Button type="primary" danger icon={<DeleteOutlined />} size="small" />
+                        <Button 
+                            type="primary" 
+                            danger 
+                            icon={<DeleteOutlined />} 
+                            size="small"
+                            loading={isDeletingDevice === record.id}
+                        />
                     </Popconfirm>
                 </div>
             )
         }
     ];
     
+    const tabItems = [
+        {
+            key: '1',
+            label: <span className="text-blue-900 font-medium">Quản lý người dùng</span>,
+            children: (
+                <div className="overflow-x-auto">
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => {
+                            setEditingUser(null);
+                            form.resetFields();
+                            setIsUserModalVisible(true);
+                        }}
+                        className="mb-4 outline-btn"
+                        style={{
+                            backgroundColor: 'white',
+                            opacity: 0.5,
+                            borderColor: '#1890ff',
+                            color: 'blue'
+                        }}
+                    >
+                        Thêm người dùng
+                    </Button>
+                    <Table
+                        columns={userColumns}
+                        dataSource={users}
+                        loading={loading}
+                        className="custom-table"
+                        scroll={{ x: 'max-content' }}
+                        pagination={{
+                            className: "custom-pagination",
+                            responsive: true,
+                            showSizeChanger: true,
+                            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} mục`,
+                            pageSize: 10
+                        }}
+                    />
+                </div>
+            )
+        },
+        {
+            key: '2',
+            label: <span className="text-blue-900 font-medium">Quản lý thiết bị</span>,
+            children: (
+                <div className="overflow-x-auto">
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => {
+                            setEditingDevice(null);
+                            form.resetFields();
+                            setIsDeviceModalVisible(true);
+                        }}
+                        className="mb-4 outline-btn"
+                        style={{ 
+                            backgroundColor: 'white',
+                            opacity: 0.5,
+                            borderColor: '#1890ff',
+                            color: 'blue'
+                        }}
+                    >
+                        Thêm thiết bị
+                    </Button>
+                    <Table
+                        columns={deviceColumns}
+                        dataSource={devices}
+                        loading={loading}
+                        className="custom-table"
+                        scroll={{ x: 'max-content' }}
+                        pagination={{
+                            className: "custom-pagination",
+                            responsive: true,
+                            showSizeChanger: true,
+                            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} mục`,
+                            pageSize: 10
+                        }}
+                    />
+                </div>
+            )
+        }
+    ];
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-300 to-blue-100">
+        <div className="min-h-screen bg-gradient-to-br from-blue-300 to-green-100">
             {/* Responsive Navbar */}
             <div className="glassmorphism p-4 md:px-8 flex justify-between items-center sticky top-0 z-50">
                 <div className="flex items-center gap-3">
                     <img src={logo} alt="PTIT Logo" className="h-8 md:h-10" />
-                    <span className="text-blue-900 font-semibold text-lg md:text-xl hidden sm:inline">System Admin</span>
+                    <span className="text-blue-900 font-semibold text-lg md:text-xl hidden sm:inline"></span>
                 </div>
                 <Button 
                     type="link"
                     icon={<LogoutOutlined />}
                     onClick={handleLogout}
-                    className="text-blue-900 hover:text-blue-700 font-medium"
+                    loading={isLoggingOut}
+                    className="text-red-600 hover:text-red-800"
                 >
                     <span className="hidden sm:inline">Đăng xuất</span>
                 </Button>
@@ -613,39 +745,39 @@ const AdminDashboard = () => {
 
             <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
                 <Title level={2} className="!text-white mb-6 md:mb-8 text-center md:text-left">
-                    Bảng điều khiển quản trị
+                    Bảng điều khiển
                 </Title>
                 
                 {/* Statistics Cards */}
                 <Row gutter={[16, 16]} className="mb-6">
-                    <Col xs={24} sm={12} lg={8}>
+                    <Col className='w-1/3'>
                         <Card className="glassmorphism h-full">
                             <Statistic
-                                title={<span className="text-white font-semibold drop-shadow-md">Tổng người dùng</span>}
+                                title={<span className="text-blue-900 font-semibold drop-shadow-md hidden sm:block">Tổng người dùng</span>}
                                 value={users.length}
-                                prefix={<UserOutlined className="text-white" />}
+                                prefix={<UserOutlined className="text-green-500" />}
                                 loading={loading}
                                 valueStyle={{ color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
                             />
                         </Card>
                     </Col>
-                    <Col xs={24} sm={12} lg={8}>
+                    <Col className='w-1/3'>
                         <Card className="glassmorphism h-full">
                             <Statistic
-                                title={<span className="text-white font-semibold drop-shadow-md">Tổng thiết bị</span>}
+                                title={<span className="text-blue-900 font-semibold drop-shadow-md hidden sm:block">Tổng thiết bị</span>}
                                 value={devices.length}
-                                prefix={<EnvironmentOutlined className="text-white" />}
+                                prefix={<ApiOutlined className="text-blue-500" />}
                                 loading={loading}
                                 valueStyle={{ color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
                             />
                         </Card>
                     </Col>
-                    <Col xs={24} sm={12} lg={8}>
+                    <Col className='w-1/3'>
                         <Card className="glassmorphism h-full">
                             <Statistic
-                                title={<span className="text-white font-semibold drop-shadow-md">Tổng cảnh báo</span>}
+                                title={<span className="text-blue-900 font-semibold drop-shadow-md hidden sm:block">Tổng cảnh báo</span>}
                                 value={devices.reduce((sum, device) => sum + device.warningCount, 0)}
-                                prefix={<EnvironmentOutlined className="text-white" />}
+                                prefix={<WarningOutlined className="text-red-500" />}
                                 loading={loading}
                                 valueStyle={{ color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
                             />
@@ -657,87 +789,14 @@ const AdminDashboard = () => {
                 <Card className="glassmorphism !bg-white/30">
                     <Tabs 
                         defaultActiveKey="1"
+                        items={tabItems}
                         className="admin-tabs"
                         tabBarStyle={{ 
                             marginBottom: 24,
                             color: '#1e3a8a',
                             borderBottom: '1px solid rgba(30, 58, 138, 0.3)'
                         }}
-                    >
-                        <TabPane tab={<span className="text-blue-900 font-medium">Quản lý người dùng</span>} key="1">
-                            <div className="overflow-x-auto">
-                                <Button
-                                    type="primary"
-                                    icon={<PlusOutlined />}
-                                    onClick={() => {
-                                        setEditingUser(null);
-                                        form.resetFields();
-                                        setIsUserModalVisible(true);
-                                    }}
-                                    className="mb-4 outline-btn"
-                                    style={{
-                                        backgroundColor: 'white',
-                                        opacity: 0.5,
-                                        borderColor: '#1890ff', // Primary color
-                                        color: 'blue'
-                                    }}
-                                >
-                                    Thêm người dùng
-                                </Button>
-                                <Table
-                                    columns={userColumns}
-                                    dataSource={users}
-                                    loading={loading}
-                                    className="custom-table"
-                                    scroll={{ x: 'max-content' }}
-                                    pagination={{
-                                        className: "custom-pagination",
-                                        responsive: true,
-                                        showSizeChanger: true,
-                                        showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} mục`,
-                                        pageSize: 10
-                                    }}
-                                />
-                            </div>
-                        </TabPane>
-                        {/* Similar update for devices TabPane */}
-                        <TabPane tab={<span className="text-blue-900 font-medium">Quản lý thiết bị</span>} key="2">
-                            <div className="overflow-x-auto">
-                                <Button
-                                    type="primary"
-                                    icon={<PlusOutlined />}
-                                    onClick={() => {
-                                        setEditingDevice(null);
-                                        form.resetFields();
-                                        setIsDeviceModalVisible(true);
-                                    }}
-                                    className="mb-4 outline-btn"
-                                    style={{ 
-                                        backgroundColor: 'white',
-                                        opacity: 0.5,
-                                        borderColor: '#1890ff', // Primary color
-                                        color: 'blue'  // Primary color
-                                    }}
-                                >
-                                    Thêm thiết bị
-                                </Button>
-                                <Table
-                                    columns={deviceColumns}
-                                    dataSource={devices}
-                                    loading={loading}
-                                    className="custom-table"
-                                    scroll={{ x: 'max-content' }}
-                                    pagination={{
-                                        className: "custom-pagination",
-                                        responsive: true,
-                                        showSizeChanger: true,
-                                        showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} mục`,
-                                        pageSize: 10
-                                    }}
-                                />
-                            </div>
-                        </TabPane>
-                    </Tabs>
+                    />
                 </Card>
 
                 {/* User Modal */}
@@ -794,7 +853,7 @@ const AdminDashboard = () => {
                             </Select>
                         </Form.Item>
                         <Form.Item>
-                            <Button type="primary" htmlType="submit">
+                            <Button type="primary" htmlType="submit" loading={isSubmitting}>
                                 {editingUser ? "Cập nhật" : "Thêm"}
                             </Button>
                         </Form.Item>
@@ -841,11 +900,91 @@ const AdminDashboard = () => {
                             <Input placeholder="Nhập tên thiết bị" />
                         </Form.Item>
                         <Form.Item>
-                            <Button type="primary" htmlType="submit">
+                            <Button type="primary" htmlType="submit" loading={isSubmitting}>
                                 {editingDevice ? "Cập nhật" : "Thêm"}
                             </Button>
                         </Form.Item>
                     </Form>
+                </Modal>
+
+                {/* User Info Modal */}
+                <Modal
+                    title={
+                        <div className="flex items-center gap-3">
+                            <UserOutlined className="text-blue-500" />
+                            <span>Thông tin người dùng</span>
+                        </div>
+                    }
+                    open={isUserInfoModalVisible}
+                    onCancel={() => {
+                        setIsUserInfoModalVisible(false);
+                        setSelectedUser(null);
+                    }}
+                    footer={null}
+                    width={400}
+                >
+                    {selectedUser && (
+                        <div className="space-y-6">
+                            <div className="flex flex-col items-center gap-3 pb-4 border-b">
+                                <Avatar 
+                                    size={100} 
+                                    src={selectedUser.photoURL}
+                                    icon={!selectedUser.photoURL && <UserOutlined />}
+                                    className="shadow-lg"
+                                />
+                                <div className="text-center">
+                                    <h3 className="text-xl font-semibold text-gray-800">
+                                        {selectedUser.name}
+                                    </h3>
+                                    <Tag color={selectedUser.role === 'admin' ? 'blue' : 'green'}>
+                                        {selectedUser.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}
+                                    </Tag>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="bg-gray-50 p-3 rounded-lg flex items-start gap-3">
+                                    <MailOutlined className="text-blue-500 mt-0.5" />
+                                    <div>
+                                        <div className="text-xs text-gray-500">Email</div>
+                                        <div className="font-medium text-gray-700">{selectedUser.email}</div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 p-3 rounded-lg flex items-start gap-3">
+                                    <GoogleOutlined className="text-blue-500 mt-0.5" />
+                                    <div>
+                                        <div className="text-xs text-gray-500">Phương thức đăng ký</div>
+                                        <Tag 
+                                            className="mt-1"
+                                            color={selectedUser.registrationMethod === 'google' ? '#DB4437' : '#4285F4'}
+                                        >
+                                            {selectedUser.registrationMethod === 'google' ? 'Google' : 'Email'}
+                                        </Tag>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 p-3 rounded-lg flex items-start gap-3">
+                                    <UserOutlined className="text-blue-500 mt-0.5" />
+                                    <div>
+                                        <div className="text-xs text-gray-500">Ngày đăng ký</div>
+                                        <div className="font-medium text-gray-700">
+                                            {selectedUser.createdAt !== 'N/A' 
+                                                ? new Date(selectedUser.createdAt).toLocaleDateString('vi-VN', {
+                                                    day: '2-digit',
+                                                    month: '2-digit',
+                                                    year: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })
+                                                : 'N/A'
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </Modal>
             </div>
         </div>

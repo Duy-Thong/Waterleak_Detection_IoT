@@ -116,3 +116,22 @@
         font-size: 12px !important;
     }
 }
+
+/* Add at the bottom of your existing CSS */
+.ant-row::-webkit-scrollbar {
+    height: 6px;
+}
+
+.ant-row::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+.ant-row::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.ant-row::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+}

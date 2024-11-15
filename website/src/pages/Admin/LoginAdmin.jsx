@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from "firebase/auth";
 import { useUser } from '../../contexts/UserContext';
 import { Form, Input, Button, Alert, Divider, message } from 'antd';
-import login from '../../assets/adminlogin.webp';
+import login from '../../assets/adminlogin.png';
 import { getDatabase, ref, get, set } from 'firebase/database'; // Add Realtime Database imports
 
 
@@ -153,7 +153,7 @@ function LoginAdmin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-200">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 to-green-500">
       <div className="bg-white shadow-xl rounded-lg flex w-3/4 max-w-4xl overflow-hidden backdrop-blur-sm bg-opacity-80 border-gray-200">
         
         {/* Left side with illustration */}
@@ -167,7 +167,7 @@ function LoginAdmin() {
 
         {/* Right side with login form */}
         <div className="w-full md:w-1/2 p-8">
-          <h2 className="text-2xl font-bold text-center text-gray-700">Đăng nhập</h2>
+          <h2 className="text-2xl font-bold text-center text-gray-700">Đăng nhập quản trị</h2>
 
           {error && <Alert message={error} type="error" showIcon className="mb-4" />}
 
@@ -202,7 +202,7 @@ function LoginAdmin() {
 
           <Button 
             onClick={handleGoogleLogin} 
-            className="w-full flex items-center justify-center gap-2"
+            className="w-full flex items-center justify-center gap-2 mb-4"
             loading={loading}
             icon={
               !loading && (
@@ -215,6 +215,14 @@ function LoginAdmin() {
             }
           >
             Đăng nhập với Google
+          </Button>
+
+          <Button 
+            onClick={() => navigate('/login')} 
+            className="w-full"
+            type="default"
+          >
+            Đăng nhập người dùng
           </Button>
         </div>
       </div>
