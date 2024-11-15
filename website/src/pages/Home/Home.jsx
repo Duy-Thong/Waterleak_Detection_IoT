@@ -331,6 +331,7 @@ const Home = () => {
     const [tourRef2] = useState(() => React.createRef());
     const [tourRef3] = useState(() => React.createRef());
     const [tourRef4] = useState(() => React.createRef());
+    const [tourRef5] = useState(() => React.createRef());
 
     const steps = [
         {
@@ -356,12 +357,12 @@ const Home = () => {
         {
             title: 'Thêm thiết bị mới',
             description: 'Nhấn vào nút "+" để thêm thiết bị mới vào hệ thống của bạn.',
-            target: () => tourRef3.current,
+            target: () => tourRef4.current,
         },
         {
             title: 'Hỗ trợ',
             description: 'Cần giúp đỡ? Nhấn vào đây để liên hệ với chúng tôi.',
-            target: () => tourRef4.current,
+            target: () => tourRef5.current,
         },
     ];
 
@@ -495,7 +496,7 @@ const Home = () => {
                                 </Badge>
                             </div>
                         ))}
-                        <div className="w-full sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)] min-w-[280px] flex items-center justify-center">
+                        <div className="w-full sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)] min-w-[280px] flex items-center justify-center" ref={tourRef4}>
                             <DeviceCard
                                 isAddCard
                                 onClick={handleAddDevice}
@@ -509,13 +510,14 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Replace the custom floating button with this */}
-            <div ref={tourRef4}>
-                <FloatButton
+            {/* Floating Contact Button */}
+            <div >
+                <FloatButton 
                     tooltip="Liên hệ hỗ trợ"
                     icon={<CustomerServiceOutlined />}
                     onClick={() => setIsContactModalVisible(true)}
                     type="primary"
+                    className="contact-support-button"                    
                 />
             </div>
 
@@ -530,6 +532,14 @@ const Home = () => {
                 }}
                 steps={steps}
                 placement="bottom"
+                locale={{
+                    previous: 'Trước',
+                    next: 'Tiếp',
+                    finish: 'Hoàn tất',
+                    skip: 'Bỏ qua',
+                    total: 'Tổng {{total}} bước', // thêm mới
+                    current: 'Bước {{current}}',   // thêm mới
+                }}
             />
 
             {/* Contact Modal */}
