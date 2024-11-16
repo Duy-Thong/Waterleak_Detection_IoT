@@ -270,12 +270,10 @@ const Home = () => {
         const firstLoginRef = ref(db, `users/${userId}/tourhome`);
         
         get(firstLoginRef).then((snapshot) => {
-            // Hiện tour nếu không có tourhome hoặc giá trị là true
-            const shouldShowTour = !snapshot.exists() || snapshot.val() === true;
+            // Show tour if tourhome is false or doesn't exist
+            const shouldShowTour = !snapshot.exists() || snapshot.val() !== true;
             if (shouldShowTour) {
                 setOpen(true);
-                // Cập nhật tourhome thành false sau khi hiển thị tour
-                set(firstLoginRef, false);
             }
         });
     }, [userId]);
@@ -368,7 +366,10 @@ const Home = () => {
 
     useEffect(() => {
         const hasSeenTour = localStorage.getItem('hasSeenTour');
-        if (!hasSeenTour && userId) {
+        const db = getDatabase();
+        const tourHomeRef = ref(db, `users/${userId}/tourhome`);
+
+        if (!hasSeenTour && userId  && !open) {
             setOpen(true);
             localStorage.setItem('hasSeenTour', 'true');
         }
@@ -525,7 +526,7 @@ const Home = () => {
                 open={open}
                 onClose={() => {
                     setOpen(false);
-                    // Update tourhome in Firebase when tour ends
+                    // Update tourhome to true in Firebase when tour ends
                     const db = getDatabase();
                     const tourHomeRef = ref(db, `users/${userId}/tourhome`);
                     set(tourHomeRef, true);
