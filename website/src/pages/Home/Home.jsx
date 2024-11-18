@@ -555,18 +555,14 @@ const Home = () => {
                 onCancel={() => setIsContactModalVisible(false)}
                 footer={null}
                 width={480}
-                className="custom-modal glassmorphism"
+                className="custom-modal"
                 centered
-                maskStyle={{ 
-                    backgroundColor: 'rgba(0, 0, 0, 0.35)',
-                    backdropFilter: 'blur(4px)'
-                }}
                 styles={{
                     content: {
-                        background: 'rgba(255, 255, 255, 0.3)',
+                        background: 'rgba(255, 255, 255, 0.7)',
                         backdropFilter: 'blur(5px)',
                         borderRadius: '16px',
-                        border: '1px solid rgba(255, 255, 255, 0.8)',
+                        border: '2px solid rgba(255, 255, 255, 0.8)',
                     },
                     mask: {
                         backdropFilter: 'blur(4px)'
